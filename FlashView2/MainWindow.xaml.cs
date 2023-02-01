@@ -237,5 +237,22 @@ namespace FlashView2
         {
             Application.Current.Shutdown();
         }
+
+        private void r2_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
+        {
+            char[] values = new char[] {'.', '\\'};
+            if (e.PropertyName.Contains(values) && e.Column is DataGridBoundColumn)
+            {
+                DataGridBoundColumn dataGridBoundColumn = e.Column as DataGridBoundColumn;
+                dataGridBoundColumn.Binding = new Binding("[" + e.PropertyName + "]");
+            }
+
+            if (e.PropertyName.Contains('/') && e.Column is DataGridBoundColumn)
+            {
+                DataGridBoundColumn dataGridBoundColumn = e.Column as DataGridBoundColumn;
+                dataGridBoundColumn.Binding = new Binding("[" + e.PropertyName + "]");
+            }
+
+        }
     }
 }

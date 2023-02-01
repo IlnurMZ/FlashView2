@@ -120,16 +120,16 @@ namespace FlashView2
 
         DataTable LoadDataTable(List<Packet> PacketsSettings, byte[] FlashFile)
         {            
-            DataTable dt = new DataTable();
+            DataTable dt = new DataTable();          
 
-            //foreach (var column in PacketsSettings[0].HeaderColumns)
+            //for (int i = 0; i < PacketsSettings[0].HeaderColumns.Count; i++)
             //{
-            //    dt.Columns.Add(column);
+            //    dt.Columns.Add();
             //}
 
-            for (int i = 0; i < PacketsSettings[0].HeaderColumns.Count; i++)
+            foreach (var item in PacketsSettings[0].HeaderColumns)
             {
-                dt.Columns.Add();
+                dt.Columns.Add(item);
             }
 
             int countColumn = PacketsSettings[0].HeaderColumns.Count;        
