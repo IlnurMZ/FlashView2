@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FlashViewer2
+namespace FlashView2
 {
-    internal class Packet
+    public class Packet
     {
         // данные для строк
         public byte ID_Packet { get; set; } // ID пакета
