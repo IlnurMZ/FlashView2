@@ -5,9 +5,11 @@ using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Threading;
 
@@ -15,8 +17,21 @@ namespace FlashView2
 {
     public class ApplicationViewModel : INotifyPropertyChanged
     {
-        //public DataTableFlash? DataTableFlash { get; set; }
-        private DataTable dataTable;        
+        
+        private DataTable dataTable; // таблица для datagrid1
+        private int percent; // проценты загрузки для прогресбара
+        public int Percent 
+        { 
+            get
+            {
+                return percent;
+            } 
+            set
+            {
+                percent = value;
+                OnPropertyChanged("Percent");
+            } 
+        }
         public DataTable DataTable 
         {
             get
@@ -34,10 +49,19 @@ namespace FlashView2
         public List<Packet> Packets { get; set; }        
         public ApplicationViewModel(byte[] flash, List<Packet> packets)
         {
+            Percent = 0;
             Packets = packets;
             ID_Device = flash[1];
-            ID_Packet = flash[0];            
-            DataTable = LoadDataTable(packets, flash);           
+            ID_Packet = flash[0];
+            UpdateTable(flash, packets);            
+        }
+
+        async void UpdateTable(byte[] flash, List<Packet> packets)
+        {
+            await Task.Run(() =>
+            {
+                DataTable = LoadDataTable(packets, flash);
+            });           
         }
 
         string CalculateValueByType(string typeCalc, string value, double[] data) // по типу вычисления выдаем результат
@@ -118,81 +142,72 @@ namespace FlashView2
             return date;
         }
 
-        DataTable LoadDataTable(List<Packet> PacketsSettings, byte[] FlashFile)
+        DataTable LoadDataTable(List<Packet> packets, byte[] flash)
         {            
-            DataTable dt = new DataTable();          
+            DataTable myTable = new DataTable();
 
-            //for (int i = 0; i < PacketsSettings[0].HeaderColumns.Count; i++)
-            //{
-            //    dt.Columns.Add();
-            //}
-
-            foreach (var item in PacketsSettings[0].HeaderColumns)
+            foreach (var item in packets[0].HeaderColumns)
             {
-                dt.Columns.Add(item);
+                myTable.Columns.Add(item);
             }
 
-            int countColumn = PacketsSettings[0].HeaderColumns.Count;        
+            int countColumn = packets[0].HeaderColumns.Count;        
 
             // вычисляем изначальные id пакета и устройства
-            byte idPacketArray = FlashFile[0];
-            byte idDeviceArray = FlashFile[1];
+            byte idPacketArray = flash[0];
+            byte idDeviceArray = flash[1];
             // выбираем нужный пакет исходя из id-шников 
-            var myPacket = PacketsSettings[0];
+            var myPacket = packets[0];
             byte[] endLinePacket = myPacket.endLine;
             int countByteRow = myPacket.LengthLine; // количество байт на строку
             byte countParams = (byte)myPacket.TypeParams.Count; // количество столбцов
             int countBadByte = 0;
             DataRow row;
             byte loadStatus = 0;
-            byte tempVal = 0;
-
-            for (int i = 0; i < 100; i++) // FlashFile.Length; i++)
+            byte tempVal;
+            
+            for (int i = 0; i < flash.Length; i++) // FlashFile.Length; i++)
             {
                 // условие захода в начало строки
-                bool isGoodStartLine = FlashFile[i] == idPacketArray && FlashFile[i + 1] == idDeviceArray;
+                bool isGoodStartLine = flash[i] == idPacketArray && flash[i + 1] == idDeviceArray;
 
-                if (i + countByteRow > FlashFile.Length) // проверка завершенности строки, чтобы исключить выход за пределы массива байт
+                if (i + countByteRow > flash.Length) // проверка завершенности строки, чтобы исключить выход за пределы массива байт
                 {
                     break;
                 }
                 // проверка двух байт на конец строки
-                bool isGoodEndLine = FlashFile[i + countByteRow - 2] == endLinePacket[0] && FlashFile[i + countByteRow - 1] == endLinePacket[1];
+                bool isGoodEndLine = flash[i + countByteRow - 2] == endLinePacket[0] && flash[i + countByteRow - 1] == endLinePacket[1];
 
                 if (isGoodStartLine && isGoodEndLine) // проверка совпадения на начало строки
                 {
-                    row = dt.NewRow(); // создаем строку для таблицы
+                    row = myTable.NewRow(); // создаем строку для таблицы
                     for (int j = 0; j < countParams; j++)
                     {
                         byte countByte = myPacket.LengthParams[j]; // определяем количество байт на параметр
                         byte[] values = new byte[countByte]; // берем необходимое количество байт                   
-                        Array.Copy(FlashFile, i, values, 0, countByte); // копируем наш кусок
+                        Array.Copy(flash, i, values, 0, countByte); // копируем наш кусок
                         string valueA = GetValueByType(myPacket.TypeParams[j], values); // вычисляем значение по типу данных
                         string valueB = CalculateValueByType(myPacket.TypeCalculate[j], valueA, myPacket.DataCalculation[j]); // вычисляем пересчет данного по типу
                         row[j] = valueB;
                         i += countByte; // смещаем курсор по общему массиву байт                        
                     }
                     i--;
-                    dt.Rows.Add(row);                    
+                    myTable.Rows.Add(row);                    
                 }
                 else
                 {
                     countBadByte++;
                 }
 
-                //tempVal = (byte)(i * 1.0 / FlashFile.Length * 100);
-                //if (tempVal >= loadStatus)
-                //{
-                //    loadStatus = (byte)(tempVal + 10);
-                //    Dispatcher.Invoke(() =>
-                //    {
-                //        //var progress = new Progress<int>(value => progBar.Value = value);
-                //        //((IProgress<int>)progress).Report(loadStatus);
-                //        progBar.Value = loadStatus;
-                //    });
-                //}
+                tempVal = (byte)(i * 1.0 / flash.Length * 100);
+                if (tempVal >= loadStatus)
+                {
+                    loadStatus = (byte)(tempVal + 10);
+                    Percent = loadStatus;            
+                }
             }
-            return dt;
+            Percent = 0;            
+            return myTable;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

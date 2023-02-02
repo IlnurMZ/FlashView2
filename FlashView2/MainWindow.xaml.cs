@@ -25,10 +25,11 @@ namespace FlashView2
     public partial class MainWindow : Window
     {
         public byte[]? FlashFile { get; set; }
-        public ApplicationViewModel _appViewModel { get; set; }
+        public ApplicationViewModel AppViewModel { get; set; }
+        
         public MainWindow()
         {
-            InitializeComponent();            
+            InitializeComponent();          
         }
 
         private void MenuItemOpenFile_Click(object sender, RoutedEventArgs e)
@@ -74,11 +75,8 @@ namespace FlashView2
             }
 
             List<Packet> packets = HandleConfigData(dataConfig);
-            _appViewModel = new ApplicationViewModel(FlashFile, packets);
-            //datagrid1.ItemsSource = _appViewModel.DataTable.AsDataView();
-
-            
-            datagrid1.DataContext = _appViewModel;            
+            AppViewModel = new ApplicationViewModel(FlashFile, packets);            
+            DataContext = AppViewModel;            
         }
 
         List<Packet> HandleConfigData(List<List<string>> dataConfig)
@@ -233,25 +231,18 @@ namespace FlashView2
             return PacketsSettings;
         }
 
-        private void MenuItemCloseProgram_Click(object sender, RoutedEventArgs e)
+        void MenuItemCloseProgram_Click(object sender, RoutedEventArgs e)
         {
             Application.Current.Shutdown();
         }
 
-        private void r2_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
-        {
-            char[] values = new char[] {'.', '\\'};
-            if (e.PropertyName.Contains(values) && e.Column is DataGridBoundColumn)
+        void r2_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
+        {            
+            if (e.PropertyName.Contains('[') || e.PropertyName.Contains(']') && e.Column is DataGridBoundColumn)
             {
                 DataGridBoundColumn dataGridBoundColumn = e.Column as DataGridBoundColumn;
                 dataGridBoundColumn.Binding = new Binding("[" + e.PropertyName + "]");
-            }
-
-            if (e.PropertyName.Contains('/') && e.Column is DataGridBoundColumn)
-            {
-                DataGridBoundColumn dataGridBoundColumn = e.Column as DataGridBoundColumn;
-                dataGridBoundColumn.Binding = new Binding("[" + e.PropertyName + "]");
-            }
+            }     
 
         }
     }
