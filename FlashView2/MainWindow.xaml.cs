@@ -26,10 +26,11 @@ namespace FlashView2
     {
         public byte[]? FlashFile { get; set; }
         public ApplicationViewModel AppViewModel { get; set; }
+        LasMenuForm _lasMenuForm;
         
         public MainWindow()
         {
-            InitializeComponent();          
+            InitializeComponent();            
         }
 
         private void MenuItemOpenFile_Click(object sender, RoutedEventArgs e)
@@ -76,7 +77,12 @@ namespace FlashView2
 
             List<Packet> packets = HandleConfigData(dataConfig);
             AppViewModel = new ApplicationViewModel(FlashFile, packets);            
-            DataContext = AppViewModel;            
+            DataContext = AppViewModel;
+            // делаем привязку кнопки формирования las-файла к переменной IsLasFile
+            Binding binding = new Binding();
+            binding.ElementName = "IsLasFile";
+            binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
+            menuButtonFormLas.SetBinding(MenuItem.IsEnabledProperty, binding);
         }
 
         List<Packet> HandleConfigData(List<List<string>> dataConfig)
@@ -242,8 +248,26 @@ namespace FlashView2
             {
                 DataGridBoundColumn dataGridBoundColumn = e.Column as DataGridBoundColumn;
                 dataGridBoundColumn.Binding = new Binding("[" + e.PropertyName + "]");
-            }     
+            }
+        }
 
+        private void menuButtonFormLas_Click(object sender, RoutedEventArgs e)
+        {
+           
+        }
+
+        private void TestBut_Click(object sender, RoutedEventArgs e)
+        {
+            _lasMenuForm = new LasMenuForm();
+            _lasMenuForm.Owner = this;
+            if (_lasMenuForm.ShowDialog() == true)
+            {
+                MessageBox.Show("Yes");
+            }
+            else
+            {
+                MessageBox.Show("No");
+            }
         }
     }
 }

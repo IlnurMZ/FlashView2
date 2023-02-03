@@ -17,8 +17,22 @@ namespace FlashView2
 {
     public class ApplicationViewModel : INotifyPropertyChanged
     {
-        
-        private DataTable dataTable; // таблица для datagrid1
+        private bool isLasFile = false;
+
+        public bool IsLasFile
+        {
+            get 
+            { 
+                return isLasFile; 
+            }
+            set 
+            { 
+                isLasFile = value;
+                OnPropertyChanged("IsLasFile");
+            }
+        }
+
+        private DataTable dataTable; // таблица для datagrid1        
         private int percent; // проценты загрузки для прогресбара
         public int Percent 
         { 
@@ -53,7 +67,8 @@ namespace FlashView2
             Packets = packets;
             ID_Device = flash[1];
             ID_Packet = flash[0];
-            UpdateTable(flash, packets);            
+            UpdateTable(flash, packets);
+            IsLasFile = true;
         }
 
         async void UpdateTable(byte[] flash, List<Packet> packets)
