@@ -260,14 +260,7 @@ namespace FlashView2
         {
             _lasMenuForm = new LasMenuForm();
             _lasMenuForm.Owner = this;
-            if (_lasMenuForm.ShowDialog() == true)
-            {
-                MessageBox.Show("Yes");
-            }
-            else
-            {
-                MessageBox.Show("No");
-            }
+            _lasMenuForm.ShowDialog();
         }
     }
 }
