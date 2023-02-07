@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using Microsoft.Win32;
 
 namespace FlashView2
 {
@@ -19,14 +21,15 @@ namespace FlashView2
     /// </summary>
     public partial class LasMenuForm : Window
     {
-        public string DateA { get; set; }
-        public string DateB { get; set; }
-        public string DiamOfTrub { get; set; }
-        public bool isLin { get; set; }
+        public string StartTimeRead { get; set; } // Стартовое время считывания
+        public string EndTimeRead { get; set; } // Конечное время считывания
+        public string DiamOfTrub { get; set; } // диаметр трубы
+        public bool isLineCalc { get; set; } // тип расчета Кп (линейный или квардратичный)
+        public List<string> FileDepthAndTime { get; set; }
         public LasMenuForm()
         {
-            DateA = DateTime.Now.ToString();
-            DateB = DateTime.Now.AddHours(2).ToString();
+            StartTimeRead = DateTime.Now.ToString();
+            EndTimeRead = DateTime.Now.AddHours(2).ToString();
             InitializeComponent();
             DataContext = this;
         }
@@ -34,8 +37,41 @@ namespace FlashView2
         private void Button_Click(object sender, RoutedEventArgs e)
         {            
             DiamOfTrub = lb1_truba.Text;
-            isLin = rb1_Lin.IsChecked.Value;
+            isLineCalc = rb1_Lin.IsChecked.Value;
             this.DialogResult = true;
+        }
+
+        private void btn_LoadDepthAndTime_Click(object sender, RoutedEventArgs e)
+        {           
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            string path;
+
+            if (openFileDialog.ShowDialog()==true)
+            {
+                path = openFileDialog.FileName;
+                try
+                {
+                    using (var reader = new StreamReader(path))
+                    {
+                        while (!reader.EndOfStream)
+                        {
+                            var row1 = reader.ReadLine();                            
+                            if (!string.IsNullOrEmpty(row1))
+                            {
+                                if (row1.Contains('|') && row1.Contains("Забой"))
+                                {
+                                    
+                                }
+                                
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }                
+            }
         }
     }
 }

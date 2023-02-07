@@ -7,57 +7,60 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
         Title="Задание временного интервала, сдвига и корректировки" 
-        Height="460" Width="510" 
+        Height="800" Width="754" 
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="250"/>
-            <ColumnDefinition Width="30"/>
-            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="260"/>
-            <RowDefinition Height="170"/>            
+            <RowDefinition Height="194"/>
+            <RowDefinition Height="236"/>
         </Grid.RowDefinitions>
-        <Button Grid.Row="1" Grid.Column="2" Click="Button_Click" Content="Задать" Width="180" Height="80"/>
-        <GroupBox Header="Считать данные" Padding="5" Width="230" Height="230" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0">
-            <StackPanel>
-                <RadioButton IsChecked="True" Margin="3">Все</RadioButton>
-                <RadioButton Margin="3">В интервале определения</RadioButton>
-                <RadioButton Margin="3">В задаваемом интервале</RadioButton>
-                <GroupBox Header="Задать время">
-                    <StackPanel>
-                        <Label>с</Label>
-                        <xctk:DateTimePicker Name="dtp1" TimeFormat="LongTime" Text="{Binding dateA, Mode=TwoWay}"/>
-                        <Label>по</Label>
-                        <xctk:DateTimePicker Name="dtp2" TimeFormat="LongTime" Text="{Binding dateB, Mode=TwoWay}" />
-                    </StackPanel>                   
-                </GroupBox>                
-            </StackPanel>
-        </GroupBox>
-        <StackPanel Grid.Row="1">
-            <Label Grid.Row="1" Margin="15,0,0,0" Width="150" HorizontalAlignment="Left">Труба для МНК</Label>
+        <StackPanel Grid.Row="0" Grid.Column="0">
+            <Button x:Name="btn_LoadDepthAndTime" Content="Открыть файл с глубиной" Click="btn_LoadDepthAndTime_Click" Margin="10"/>
+            <GroupBox Header="Считать данные" Padding="5" Width="230" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Height="170">
+                    <RadioButton IsChecked="True" Margin="3">В интервале определения</RadioButton>
+                    <RadioButton Margin="3">В задаваемом интервале</RadioButton>
+                    <GroupBox Header="Задать время">
+                        <StackPanel>
+                            <Label>с</Label>
+                            <xctk:DateTimePicker Name="dtp1" TimeFormat="ShortDate" Text="{Binding StartTimeRead, Mode=TwoWay}"/>
+                            <Label>по</Label>
+                            <xctk:DateTimePicker Name="dtp2" TimeFormat="ShortDate" Text="{Binding EndTimeRead, Mode=TwoWay}" />
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
+        <StackPanel Grid.Row="2">
+            <Label Margin="15,0,0,0" Width="150" HorizontalAlignment="Left">Труба для МНК</Label>
             <ComboBox Name="lb1_truba" Grid.Row="1" Grid.Column="0" Height="25" Width="100" HorizontalAlignment="Left" Margin="15,0,0,0" SelectedIndex="0">
                 <TextBlock>108</TextBlock>
                 <TextBlock>120</TextBlock>
                 <TextBlock>178</TextBlock>
             </ComboBox>
-            <GroupBox Header="Расчет КП" Margin="15,15,0,0" Padding="5" Width="200" HorizontalAlignment="Left">
+            <GroupBox Header="Расчет Кп" Margin="15,15,0,0" Padding="5" Width="220" HorizontalAlignment="Left">
                 <StackPanel>
-                    <RadioButton IsChecked="True" Name="rb1_Lin" Margin="5">Линейный</RadioButton>
-                    <RadioButton Name="rb2_Kvad" Margin="5">Квадратичный</RadioButton>
+                    <RadioButton IsChecked="True" Name="rb1_Lin" Margin="5">По линейной зависимости</RadioButton>
+                    <RadioButton Name="rb2_Kvad" Margin="5">По квадратичной зависимости</RadioButton>
                 </StackPanel>
             </GroupBox>
+            <Button  Click="Button_Click" Content="Задать" Margin="15" Width="200" Height="40" HorizontalAlignment="Left"/>
         </StackPanel>
-        <GroupBox Grid.Column="2" Grid.Row="0" Height="150" Margin="10,10,10,0" VerticalAlignment="Top">
+        <GroupBox Grid.Column="0" Grid.Row="1" Height="140" Width="200" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
             <GroupBox.Header>
                 <CheckBox Name="checkBox1Sdvig" Content="Сдигать время" Margin="15"/>
             </GroupBox.Header>
-            <StackPanel>                
+            <StackPanel>
                 <RadioButton Name="rb1_Sdvig" IsChecked="True" Margin="5" Content="Вперед"/>
                 <RadioButton Name="rb2_Sdvig" Margin="5" Content="Назад"/>
                 <xctk:TimePicker Format="LongTime" Width="100" HorizontalAlignment="Left" Margin="5" Text="00:00:00"></xctk:TimePicker>
             </StackPanel>
-        </GroupBox>        
+        </GroupBox>
+        <DataGrid x:Name="dtg_DepthAndTime" Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" Margin="10,10,10,10"/>
     </Grid>
 </Window>
