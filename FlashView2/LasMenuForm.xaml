@@ -7,8 +7,13 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
         Title="Задание временного интервала, сдвига и корректировки" 
-        Height="800" Width="754" 
+        Height="800" Width="870" 
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+    <Window.Resources>
+        <Style x:Key="CenterGridHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="250"/>
@@ -61,6 +66,10 @@
                 <xctk:TimePicker Format="LongTime" Width="100" HorizontalAlignment="Left" Margin="5" Text="00:00:00"></xctk:TimePicker>
             </StackPanel>
         </GroupBox>
-        <DataGrid x:Name="dtg_DepthAndTime" Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" Margin="10,10,10,10"/>
+        <StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="3">
+            <Label Content="{Binding FileName, UpdateSourceTrigger=PropertyChanged}" Margin="10" HorizontalAlignment="Center"/>
+            <DataGrid x:Name="dtg_DepthAndTime" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" HorizontalContentAlignment="Center" Margin="10,10,10,10" ItemsSource="{Binding DataTable, UpdateSourceTrigger=PropertyChanged}" AutoGeneratingColumn="r2_AutoGeneratingColumn" Height="640" />
+        </StackPanel>        
+
     </Grid>
 </Window>

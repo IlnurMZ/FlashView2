@@ -78,7 +78,6 @@ namespace FlashView2
                 DataTable = LoadDataTable(packets, flash);
             });           
         }
-
         string CalculateValueByType(string typeCalc, string value, double[] data) // по типу вычисления выдаем результат
         {
             string result = "";
