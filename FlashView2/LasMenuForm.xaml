@@ -20,12 +20,15 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="260"/>
-            <RowDefinition Height="194"/>
+            <RowDefinition Height="278"/>
+            <RowDefinition Height="176"/>
             <RowDefinition Height="236"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Grid.Column="0">
             <Button x:Name="btn_LoadDepthAndTime" Content="Открыть файл с глубиной" Click="btn_LoadDepthAndTime_Click" Margin="10"/>
+            <Button x:Name="btn_LookColibFile" Margin="10,5,10,5" Click="btn_LookColibFile_Click">
+                <TextBlock>Посмотреть данные<LineBreak/>калибровочного файла</TextBlock>
+            </Button>
             <GroupBox Header="Считать данные" Padding="5" Width="230" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel Height="170">
                     <RadioButton IsChecked="True" Margin="3">В интервале определения</RadioButton>
@@ -33,9 +36,9 @@
                     <GroupBox Header="Задать время">
                         <StackPanel>
                             <Label>с</Label>
-                            <xctk:DateTimePicker Name="dtp1" TimeFormat="ShortDate" Text="{Binding StartTimeRead, Mode=TwoWay}"/>
+                            <xctk:DateTimePicker Name="dtp1" Text="{Binding StartTimeRead, Mode=TwoWay}" FormatString="HH:mm:ss dd.MM.yyyy" Format="Custom" />
                             <Label>по</Label>
-                            <xctk:DateTimePicker Name="dtp2" TimeFormat="ShortDate" Text="{Binding EndTimeRead, Mode=TwoWay}" />
+                            <xctk:DateTimePicker Name="dtp2" FormatString="HH:mm:ss dd.MM.yyyy" Format="Custom" Text="{Binding EndTimeRead, Mode=TwoWay}" />
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>
@@ -50,7 +53,7 @@
             </ComboBox>
             <GroupBox Header="Расчет Кп" Margin="15,15,0,0" Padding="5" Width="220" HorizontalAlignment="Left">
                 <StackPanel>
-                    <RadioButton IsChecked="True" Name="rb1_Lin" Margin="5">По линейной зависимости</RadioButton>
+                    <RadioButton IsChecked="{Binding isLineCalc, Mode=TwoWay}" Name="rb1_Lin" Margin="5">По линейной зависимости</RadioButton>
                     <RadioButton Name="rb2_Kvad" Margin="5">По квадратичной зависимости</RadioButton>
                 </StackPanel>
             </GroupBox>
@@ -68,8 +71,11 @@
         </GroupBox>
         <StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="3">
             <Label Content="{Binding FileName, UpdateSourceTrigger=PropertyChanged}" Margin="10" HorizontalAlignment="Center"/>
-            <DataGrid x:Name="dtg_DepthAndTime" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" HorizontalContentAlignment="Center" Margin="10,10,10,10" ItemsSource="{Binding DataTable, UpdateSourceTrigger=PropertyChanged}" AutoGeneratingColumn="r2_AutoGeneratingColumn" Height="640" />
-        </StackPanel>        
+            <DataGrid x:Name="dtg_DepthAndTime" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" 
+                      HorizontalContentAlignment="Center" Margin="10,10,10,10" ItemsSource="{Binding DataTable, UpdateSourceTrigger=PropertyChanged}" 
+                      AutoGeneratingColumn="r2_AutoGeneratingColumn" Height="640">
+            </DataGrid>
+        </StackPanel>
 
     </Grid>
 </Window>

@@ -28,7 +28,20 @@ namespace FlashView2
         public string EndTimeRead { get; set; } // Конечное время считывания
         public string DiamOfTrub { get; set; } // диаметр трубы
         public bool isLineCalc { get; set; } // тип расчета Кп (линейный или квардратичный)
-        public List<string[]> FileDepthAndTime { get; set; }
+        public List<string[]> FileDepthAndTime { get; set; } // файл с данными по глубине и времени
+        public List<string[]> FileColibr { get; set; } // файл с колибровочными данными
+        private string diamTruba;
+        public string DiamTruba
+        {
+            get { return diamTruba; }
+            set 
+            { 
+                diamTruba = value;
+                //OnPropertyChanged("DiamTruba");
+            }
+        }
+
+
         string fileName;
         public string FileName 
         { 
@@ -55,9 +68,11 @@ namespace FlashView2
                 OnPropertyChanged("DataTable");
             }
         }
+
         public LasMenuForm()
         {
             FileName = "File name";
+            isLineCalc = true;
             StartTimeRead = DateTime.Now.ToString();
             EndTimeRead = DateTime.Now.AddHours(2).ToString();
             InitializeComponent();
@@ -184,9 +199,43 @@ namespace FlashView2
                 {
                     MessageBox.Show("Файл не содержит достаточное количество данных");
                 }
+
                 dt.Columns.Remove("Время");
                 DataTable = dt;
-                dtg_DepthAndTime.HorizontalAlignment = HorizontalAlignment.Right;
+                dtg_DepthAndTime.HorizontalAlignment = HorizontalAlignment.Center;
+
+                try
+                {
+                    FileColibr = new();
+                    using (var reader = new StreamReader(@"Calibrations\NNK_10_25.08.2022.nk", Encoding.GetEncoding(1251)))
+                    {
+                        while(!reader.EndOfStream)
+                        {
+                            string line = reader.ReadLine();
+                            if (!string.IsNullOrEmpty(line))
+                            {
+                                var splitLine = line.Split();
+                                if (splitLine.Length > 1)
+                                {
+                                    FileColibr.Add(splitLine);
+                                }                                
+                            }
+                        }
+                    }                                       
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+
+                DiamTruba = "труба " + lb1_truba.Text;
+                for (int i = 0; i < FileColibr.Count; i++)
+                {
+                    if (FileColibr[i].Contains(DiamTruba) && FileColibr[i].Contains("линейная зависимость")) 
+                    {
+                        MessageBox.Show("Yes");
+                    }
+                }
             }
         }
 
@@ -197,6 +246,11 @@ namespace FlashView2
                 DataGridBoundColumn dataGridBoundColumn = e.Column as DataGridBoundColumn;
                 dataGridBoundColumn.Binding = new Binding("[" + e.PropertyName + "]");
             }
+        }
+
+        private void btn_LookColibFile_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Hi");
         }
     }
 }
