@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -29,18 +30,9 @@ namespace FlashView2
         public string DiamOfTrub { get; set; } // диаметр трубы
         public bool isLineCalc { get; set; } // тип расчета Кп (линейный или квардратичный)
         public List<string[]> FileDepthAndTime { get; set; } // файл с данными по глубине и времени
-        public List<string[]> FileColibr { get; set; } // файл с колибровочными данными
-        private string diamTruba;
-        public string DiamTruba
-        {
-            get { return diamTruba; }
-            set 
-            { 
-                diamTruba = value;
-                //OnPropertyChanged("DiamTruba");
-            }
-        }
-
+        public List<string[]> FileColibr { get; set; } // файл с колибровочными данными        
+        double[] Coef { get; set; } // коэффициенты для расчета Кп
+        DataRowCollection DataRowAVM { get; set; }
 
         string fileName;
         public string FileName 
@@ -69,8 +61,9 @@ namespace FlashView2
             }
         }
 
-        public LasMenuForm()
+        public LasMenuForm(DataRowCollection dataRows)
         {
+            DataRowAVM = dataRows;
             FileName = "File name";
             isLineCalc = true;
             StartTimeRead = DateTime.Now.ToString();
@@ -86,10 +79,54 @@ namespace FlashView2
                 PropertyChanged(this, new PropertyChangedEventArgs(prop));
         }
         private void Button_Click(object sender, RoutedEventArgs e)
-        {            
-            DiamOfTrub = lb1_truba.Text;
-            isLineCalc = rb1_Lin.IsChecked.Value;
-            this.DialogResult = true;
+        {           
+            string typeOfCalc;
+            string diamTruba = "труба " + lb1_truba.Text;
+            //double[] coef;
+
+            if (isLineCalc)
+            {
+                typeOfCalc = "линейная зависимость";
+                Coef = new double[2];
+            }
+            else
+            {
+                typeOfCalc = "квадратичная зависимость";
+                Coef = new double[3];
+            }
+
+            for (int i = 0; i < FileColibr.Count; i++)
+            {
+
+                if (FileColibr[i][1].Contains(diamTruba) && FileColibr[i][1].Contains(typeOfCalc))
+                {
+                    string[] values = FileColibr[i][0].Split(" ", StringSplitOptions.RemoveEmptyEntries);
+                    if (values.Length == Coef.Length)
+                    {
+                        for (int j = 0; j < values.Length; j++)
+                        {
+                            try
+                            {
+                                Coef[j] = double.Parse(values[j], CultureInfo.GetCultureInfo("en-US"));
+                            }
+                            catch
+                            {
+                                MessageBox.Show("Неудалось привести данные коэффициентов к нужному типу");
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Несоответствие количества данных коэффициентов");
+                        break;
+                    }
+                    break;
+                }
+            }
+
+
+            //this.DialogResult = true;
         }
 
         private void btn_LoadDepthAndTime_Click(object sender, RoutedEventArgs e)
@@ -101,7 +138,7 @@ namespace FlashView2
             int posDate = 0;            
             int year = 0;
             int month = 0;
-
+            // выводим данные из файла на экран
             if (openFileDialog.ShowDialog()==true)
             {
                 FileDepthAndTime = new List<string[]>();
@@ -117,7 +154,22 @@ namespace FlashView2
                             var row = reader.ReadLine();
                             if (!string.IsNullOrEmpty(row))
                             {
-                                if (row.Contains('|') && row.Contains("Забой")) // ищем начало названия столбцов
+                                // ищем год по выражению
+                                if (row.ToLower().Contains("данные с"))
+                                {
+                                    string[] arrayDate = row.Split();
+                                    foreach (string date in arrayDate)
+                                    {
+                                        if (DateTime.TryParse(date, out DateTime result))
+                                        {
+                                            year = result.Year;
+                                            month = result.Month;
+                                            break;
+                                        }                                      
+                                    }
+                                }
+                                // ищем начало названия столбцов
+                                if (row.Contains('|') && row.Contains("Забой"))
                                 {
                                     isTable = true;
                                     var tempArray = row.Split('|', StringSplitOptions.RemoveEmptyEntries);
@@ -129,27 +181,15 @@ namespace FlashView2
                                         }
                                     }
                                     countHeaders = tempArray.Length;
-                                }
-
-                                if (row.ToLower().Contains("данные с") ) // ищем год по выражению
-                                {
-                                    string[] arrayDate = row.Split();
-                                    foreach(string date in arrayDate)
-                                    {
-                                        if (DateTime.TryParse(date, out DateTime result))
-                                        {
-                                            year = result.Year;
-                                            month = result.Month;
-                                            break;
-                                        }                                        
-                                    }
-                                }
-
+                                    tempArray[posDate - 1] = "Дата";
+                                    FileDepthAndTime.Add(tempArray.SkipLast(1).ToArray());
+                                }                                
+                                // записываем табличные данные
                                 if (isTable)
                                 {
                                     string[] array = row.Split('|', StringSplitOptions.RemoveEmptyEntries).Select(x=>x.Trim()).ToArray(); // массив с данными
-                                    
-                                    bool isTableData = int.TryParse(array[0], out int temRes);
+                                    // проверка начала численных данных
+                                    bool isTableData = int.TryParse(array[0], out int temRes); 
                                     if (isTableData)
                                     {
                                         var dayAndMOnth = array[posDate].Split('.');
@@ -157,14 +197,14 @@ namespace FlashView2
                                         {
                                             month = resultMonth;
                                             year++;
-                                        }                                        
-                                        array[posDate] = $"{array[array.Length - 2]}:00 {array[array.Length - 1]}.{year}";                                      
-                                    }
-                                    
-                                    if (array.Length == countHeaders)
-                                    {
-                                        FileDepthAndTime.Add(array);
-                                    }
+                                        }
+                                     
+                                        array[posDate-1] = $"{array[array.Length - 2]}:00 {array[array.Length - 1]}.{year}";                                        
+                                        if (array.Length == countHeaders)
+                                        {
+                                            FileDepthAndTime.Add(array.SkipLast(1).ToArray());
+                                        }
+                                    }                
                                 }
                             }
                         }
@@ -200,42 +240,32 @@ namespace FlashView2
                     MessageBox.Show("Файл не содержит достаточное количество данных");
                 }
 
-                dt.Columns.Remove("Время");
                 DataTable = dt;
-                dtg_DepthAndTime.HorizontalAlignment = HorizontalAlignment.Center;
-
-                try
+                dtg_DepthAndTime.HorizontalAlignment = HorizontalAlignment.Center;                            
+            }
+            // считываем данные из калибровочного файла
+            try
+            {
+                FileColibr = new List<string[]>();
+                using (var reader = new StreamReader(@"Calibrations\NNK_10_25.08.2022.nk", Encoding.GetEncoding(1251)))
                 {
-                    FileColibr = new();
-                    using (var reader = new StreamReader(@"Calibrations\NNK_10_25.08.2022.nk", Encoding.GetEncoding(1251)))
+                    while (!reader.EndOfStream)
                     {
-                        while(!reader.EndOfStream)
+                        string line = reader.ReadLine();
+                        if (!string.IsNullOrEmpty(line))
                         {
-                            string line = reader.ReadLine();
-                            if (!string.IsNullOrEmpty(line))
+                            var splitLine = line.Split(':');
+                            if (splitLine.Length > 1)
                             {
-                                var splitLine = line.Split();
-                                if (splitLine.Length > 1)
-                                {
-                                    FileColibr.Add(splitLine);
-                                }                                
+                                FileColibr.Add(splitLine);
                             }
                         }
-                    }                                       
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
-
-                DiamTruba = "труба " + lb1_truba.Text;
-                for (int i = 0; i < FileColibr.Count; i++)
-                {
-                    if (FileColibr[i].Contains(DiamTruba) && FileColibr[i].Contains("линейная зависимость")) 
-                    {
-                        MessageBox.Show("Yes");
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
             }
         }
 
@@ -248,9 +278,14 @@ namespace FlashView2
             }
         }
 
-        private void btn_LookColibFile_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Hi");
-        }
+        //private void btn_LookColibFile_Click(object sender, RoutedEventArgs e)
+        //{
+        //    StringBuilder coefForShow = new StringBuilder();
+        //    for (int i = 0; i < coef.Length; i++)
+        //    {
+        //        coefForShow.AppendLine($"{i + 1} коэфц.: {coef[i]}");
+        //    }
+        //    MessageBox.Show(coefForShow.ToString());
+        //}
     }
 }
