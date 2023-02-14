@@ -61,9 +61,9 @@ namespace FlashView2
             }
         }
 
-        public LasMenuForm(DataRowCollection dataRows)
+        public LasMenuForm()//DataRowCollection dataRows)
         {
-            DataRowAVM = dataRows;
+            //DataRowAVM = dataRows;
             FileName = "File name";
             isLineCalc = true;
             StartTimeRead = DateTime.Now.ToString();
@@ -81,8 +81,7 @@ namespace FlashView2
         private void Button_Click(object sender, RoutedEventArgs e)
         {           
             string typeOfCalc;
-            string diamTruba = "труба " + lb1_truba.Text;
-            //double[] coef;
+            string diamTruba = "труба " + lb1_truba.Text;            
 
             if (isLineCalc)
             {
@@ -124,9 +123,59 @@ namespace FlashView2
                     break;
                 }
             }
-
-
+            UpdateDepthDate();
             //this.DialogResult = true;
+        }
+
+        void UpdateDepthDate()
+        {
+            Dictionary<int, List<string>> dicr = new Dictionary<int, List<string>>();
+            List<string> times = new List<string>();
+            int posTime = -1;
+            int posDepth = -1;
+            
+            for (int i = 0; i < FileDepthAndTime[0].Length; i++)
+            {
+                if (FileDepthAndTime[0][i].Trim() == "Забой")
+                    posDepth = i;
+                if (FileDepthAndTime[0][i].Trim() == "Дата")
+                    posTime = i;
+            }
+
+            if (posTime != -1 && posDepth != -1)
+            {
+                var depth1 = int.Parse(FileDepthAndTime[1][posDepth]);
+                var timeStart = FileDepthAndTime[1][posTime];
+                for (int i = 2; i < FileDepthAndTime.Count; i++)
+                {
+                    times.Add(timeStart);
+                    for (int j = i; j < FileDepthAndTime.Count; j++)
+                    {
+                        var depth2 = int.Parse(FileDepthAndTime[j][posDepth]);                                              
+
+                        if (depth2 > depth1 && depth2 - depth1 <= 10)
+                        {
+                            int deltaDepth = depth2 - depth1;
+                            for (double k = 0; k < deltaDepth; k += 0.1)
+                            {
+
+                            }
+
+                            var timeStop = FileDepthAndTime[j][posTime];
+                            DateTime time2 = DateTime.Parse(timeStop);
+                            DateTime time1 = DateTime.Parse(timeStart);
+                            TimeSpan deltaTime = time2 - time1;
+
+                            dicr.Add(depth1, times);
+                            depth1 = depth2;
+                            timeStart = timeStop;
+                            times.Clear();
+                        }
+                        i++;
+                    }
+
+                }                
+            }         
         }
 
         private void btn_LoadDepthAndTime_Click(object sender, RoutedEventArgs e)

@@ -259,23 +259,22 @@ namespace FlashView2
         private void TestBut_Click(object sender, RoutedEventArgs e)
         {
             int s= 0;
-            List<string> abc = new List<string>();
-            //var dataColumn1 = AppViewModel.DataTable.Columns["[ННК1/ННК1(вода)]"];
-            var dataRows = AppViewModel.DataTable.Rows;
-            foreach (DataRow row in AppViewModel.DataTable.Rows)
-            {
-                var a = row["[ННК1/ННК1(вода)]"].ToString();
-                if (a != null)
-                {
-                    abc.Add(a);
-                }
-                s++;
-                if (s == 3)
-                    break;
-            }
+            List<string> abc = new List<string>();           
+            //var dataRows = AppViewModel.DataTable.Rows;
+            //foreach (DataRow row in AppViewModel.DataTable.Rows)
+            //{
+            //    var a = row["[ННК1/ННК1(вода)]"].ToString();
+            //    if (a != null)
+            //    {
+            //        abc.Add(a);
+            //    }
+            //    s++;
+            //    if (s == 3)
+            //        break;
+            //}
             
-            var dataColumn2 = AppViewModel.DataTable.Columns["[ННК2/ННК2(вода)]"];
-            _lasMenuForm = new LasMenuForm(dataRows);
+            //var dataColumn2 = AppViewModel.DataTable.Columns["[ННК2/ННК2(вода)]"];
+            _lasMenuForm = new LasMenuForm();//dataRows);
             _lasMenuForm.Owner = this;
             //_lasMenuForm.ShowDialog();
             _lasMenuForm.Show();
