@@ -33,6 +33,7 @@ namespace FlashView2
         public List<string[]> FileColibr { get; set; } // файл с колибровочными данными        
         double[] Coef { get; set; } // коэффициенты для расчета Кп
         DataRowCollection DataRowAVM { get; set; }
+        Dictionary<double, List<string>> DepthTimeDetail;
 
         string fileName;
         public string FileName 
@@ -129,8 +130,7 @@ namespace FlashView2
 
         void UpdateDepthDate()
         {
-            Dictionary<int, List<string>> dicr = new Dictionary<int, List<string>>();
-            List<string> times = new List<string>();
+            DepthTimeDetail = new Dictionary<double, List<string>>();
             int posTime = -1;
             int posDepth = -1;
             
@@ -144,33 +144,60 @@ namespace FlashView2
 
             if (posTime != -1 && posDepth != -1)
             {
-                var depth1 = int.Parse(FileDepthAndTime[1][posDepth]);
+                var depthStart = double.Parse(FileDepthAndTime[1][posDepth]);
                 var timeStart = FileDepthAndTime[1][posTime];
+                DepthTimeDetail.Add(depthStart, new List<string>() {timeStart});
                 for (int i = 2; i < FileDepthAndTime.Count; i++)
-                {
-                    times.Add(timeStart);
+                {                    
                     for (int j = i; j < FileDepthAndTime.Count; j++)
                     {
-                        var depth2 = int.Parse(FileDepthAndTime[j][posDepth]);                                              
+                        var depthStop = int.Parse(FileDepthAndTime[j][posDepth]);
+                        var timeStop = FileDepthAndTime[j][posTime];
 
-                        if (depth2 > depth1 && depth2 - depth1 <= 10)
+                        if (depthStop > depthStart && depthStop - depthStart <= 10)
                         {
-                            int deltaDepth = depth2 - depth1;
-                            for (double k = 0; k < deltaDepth; k += 0.1)
-                            {
-
-                            }
-
-                            var timeStop = FileDepthAndTime[j][posTime];
+                            double deltaDepth = depthStop - depthStart;                            
                             DateTime time2 = DateTime.Parse(timeStop);
                             DateTime time1 = DateTime.Parse(timeStart);
                             TimeSpan deltaTime = time2 - time1;
 
-                            dicr.Add(depth1, times);
-                            depth1 = depth2;
+                            for (double k = 0.1; k <= deltaDepth; k = Math.Round(k = k + 0.1,1))
+                            {
+                                double newDepth = depthStart + k;                                
+                                string newTime = (time1 + (deltaTime * k)).ToString();
+                              
+                                if (!DepthTimeDetail.TryAdd(newDepth, new List<string>() {newTime})) 
+                                {
+                                    DepthTimeDetail[newDepth].Add(newTime);
+                                }                                
+                            }                            
+                            depthStart = depthStop;
+                            timeStart = timeStop;                            
+                        } 
+                        else if (depthStop < depthStart && depthStart - depthStop <= 10)
+                        {
+                            double deltaDepth = depthStart - depthStop;                            
+                            DateTime time2 = DateTime.Parse(timeStop);
+                            DateTime time1 = DateTime.Parse(timeStart);
+                            TimeSpan deltaTime = time2 - time1;
+
+                            for (double k = 0.1; k <= deltaDepth; k = Math.Round(k = k + 0.1, 1))
+                            {
+                                double newDepth = depthStart - k;
+                                string newTime = (time1 + (deltaTime * k)).ToString();
+                                if (!DepthTimeDetail.TryAdd(newDepth, new List<string>() { newTime }))
+                                {
+                                    DepthTimeDetail[newDepth].Add(newTime);
+                                }
+                            }
+                            depthStart = depthStop;
                             timeStart = timeStop;
-                            times.Clear();
                         }
+                        else if (depthStart != depthStop)
+                        {                            
+                            depthStart = depthStop;
+                            timeStart = timeStop;
+                        }                        
                         i++;
                     }
 
@@ -274,7 +301,7 @@ namespace FlashView2
                 
                 if (FileDepthAndTime.Count>2)
                 {                    
-                    for(int i = 2; i < FileDepthAndTime.Count; i++)
+                    for(int i = 1; i < FileDepthAndTime.Count; i++)
                     {
                         var rowTable = dt.NewRow();
                         for (int j = 0; j < FileDepthAndTime[i].Length; j++)
