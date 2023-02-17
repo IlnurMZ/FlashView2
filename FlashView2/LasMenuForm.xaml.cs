@@ -14,6 +14,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
@@ -62,9 +63,9 @@ namespace FlashView2
             }
         }
 
-        public LasMenuForm()//DataRowCollection dataRows)
+        public LasMenuForm(DataRowCollection dataRows)
         {
-            //DataRowAVM = dataRows;
+            DataRowAVM = dataRows;
             FileName = "File name";
             isLineCalc = true;
             StartTimeRead = DateTime.Now.ToString();
@@ -126,6 +127,7 @@ namespace FlashView2
             }
             UpdateDepthDate();
             //this.DialogResult = true;
+            FindNearestTimeValue();
         }
 
         void UpdateDepthDate()
@@ -151,7 +153,7 @@ namespace FlashView2
                 {                    
                     for (int j = i; j < FileDepthAndTime.Count; j++)
                     {
-                        var depthStop = int.Parse(FileDepthAndTime[j][posDepth]);
+                        var depthStop = int.Parse(FileDepthAndTime[j][posDepth]);                       
                         var timeStop = FileDepthAndTime[j][posTime];
 
                         if (depthStop > depthStart && depthStop - depthStart <= 10)
@@ -160,10 +162,12 @@ namespace FlashView2
                             DateTime time2 = DateTime.Parse(timeStop);
                             DateTime time1 = DateTime.Parse(timeStart);
                             TimeSpan deltaTime = time2 - time1;
-
-                            for (double k = 0.1; k <= deltaDepth; k = Math.Round(k = k + 0.1,1))
+                            double timeStep = 1.0 / (deltaDepth * 10);
+                            double depthStep = 0.1;
+                            for (double k = timeStep; k <= 1; k += timeStep)
                             {
-                                double newDepth = depthStart + k;                                
+                                double newDepth = depthStart + depthStep;
+                                depthStep = Math.Round(depthStep += 0.1, 1);                                
                                 string newTime = (time1 + (deltaTime * k)).ToString();
                               
                                 if (!DepthTimeDetail.TryAdd(newDepth, new List<string>() {newTime})) 
@@ -176,14 +180,21 @@ namespace FlashView2
                         } 
                         else if (depthStop < depthStart && depthStart - depthStop <= 10)
                         {
+                            //if (depthStop == 1752)
+                            //{
+
+                            //}
                             double deltaDepth = depthStart - depthStop;                            
                             DateTime time2 = DateTime.Parse(timeStop);
                             DateTime time1 = DateTime.Parse(timeStart);
                             TimeSpan deltaTime = time2 - time1;
 
-                            for (double k = 0.1; k <= deltaDepth; k = Math.Round(k = k + 0.1, 1))
+                            double timeStep = 1.0 / (deltaDepth * 10);
+                            double depthStep = 0.1;
+                            for (double k = timeStep; k <= 1; k += timeStep)
                             {
-                                double newDepth = depthStart - k;
+                                double newDepth = depthStart - depthStep;
+                                depthStep = Math.Round(depthStep += 0.1, 1);
                                 string newTime = (time1 + (deltaTime * k)).ToString();
                                 if (!DepthTimeDetail.TryAdd(newDepth, new List<string>() { newTime }))
                                 {
@@ -194,7 +205,11 @@ namespace FlashView2
                             timeStart = timeStop;
                         }
                         else if (depthStart != depthStop)
-                        {                            
+                        {
+                            if (!DepthTimeDetail.TryAdd(depthStop, new List<string>() { timeStop }))
+                            {
+                                DepthTimeDetail[depthStop].Add(timeStop);
+                            }
                             depthStart = depthStop;
                             timeStart = timeStop;
                         }                        
@@ -204,7 +219,106 @@ namespace FlashView2
                 }                
             }         
         }
+        void FindNearestTimeValue()
+        {
+            // Надо переделать изначальное хранилище данных с глубиной по ключу. Сделать ключом время
+            SortedDictionary<DateTime, double> dicr = new SortedDictionary<DateTime, double>();            
+            var list = DepthTimeDetail.ToList();
+            for (int i1 = 0; i1 < list.Count; i1++)
+            {
+                for (int j1 = 0; j1 < list[i1].Value.Count; j1++)
+                {
+                    dicr.Add(DateTime.Parse(list[i1].Value[j1]), list[i1].Key);
+                }
+            }
+            var listTimeKey = dicr.ToList();
 
+            DateTime timeStartMetr = listTimeKey[0].Key;
+            double depthStartMetr = listTimeKey[0].Value;
+
+            DateTime timeEndStartMetr = new DateTime();
+
+            for (int i = 0; i < listTimeKey.Count; i++)
+            {
+                double depthEndMetr = listTimeKey[i].Value;
+                
+                if (depthStartMetr - depthEndMetr == 1)
+                {                    
+                    timeEndStartMetr = listTimeKey[i].Key;
+                }               
+                else if (Math.Abs(depthStartMetr - depthEndMetr) > 1)  // надо доработать логику если отличие более метра
+                {
+                    depthStartMetr = depthEndMetr;
+                    timeStartMetr = listTimeKey[i].Key;
+                }
+
+                int startPosTimeMetr = -1;
+                int endPosTimeMetr = -1;
+                for (int j = 0; j < DataRowAVM.Count; j++)
+                {
+                    DataRow row = DataRowAVM[j];
+                    var timeValue = row["[Время/Дата]"].ToString(); // время во флешке
+                    DateTime timeValueRow = new DateTime();
+                    if (timeValue != null)
+                    {
+                        timeValueRow = DateTime.Parse(timeValue);
+                        if (timeValueRow >= timeStartMetr && timeValueRow - timeStartMetr <= TimeSpan.FromSeconds(60))
+                        {
+
+                        }
+                        //var ts = timeValueRow - timeStartMetr;
+                        //if (ts)
+                    }
+                    
+                    
+                    //var mz = row["[ННК1/ННК1(вода)]"].ToString();
+                    //var bz = row["[ННК2/ННК2(вода)]"].ToString();
+                    //foreach (DataRow row in DataRowAVM)
+                    //{
+                    //    var timeValueRow = row["[Время/Дата]"].ToString();
+                    //    var mz = row["[ННК1/ННК1(вода)]"].ToString();
+                    //    var bz = row["[ННК2/ННК2(вода)]"].ToString();
+                    //    if (timeValueRow != null)
+                    //    {
+                    //        DateTime timeFlash = DateTime.Parse(timeValueRow);
+                    //    }
+                    //}
+                }
+
+            }
+
+
+            for (int i = 0; i - 1 < DepthTimeDetail.Count; i++)
+            {
+                var timeList1 = list[i].Value;
+                var depth1 = list[i].Key;
+                var timeList2 = list[i + 1].Value;
+                var depth2 = list[i + 1].Key;
+                if (depth1 - depth2 == 0.1)
+                {
+                    for (int z = 0; z < timeList1.Count; z++)
+                    {
+                        DateTime t1 = DateTime.Parse(timeList1[z]);
+                        DateTime t2 = DateTime.Parse(timeList2[z]);
+                    }
+                }
+                
+
+                for (int j = 1; j < DataRowAVM.Count; j++)
+                {
+                    foreach (DataRow row in DataRowAVM)
+                    {
+                        var timeValueRow = row["[Время/Дата]"].ToString();
+                        var mz = row["[ННК1/ННК1(вода)]"].ToString();
+                        var bz = row["[ННК2/ННК2(вода)]"].ToString();
+                        if (timeValueRow != null)
+                        {
+                            DateTime timeFlash = DateTime.Parse(timeValueRow);
+                        }                        
+                    }
+                }
+            }
+        }
         private void btn_LoadDepthAndTime_Click(object sender, RoutedEventArgs e)
         {           
             OpenFileDialog openFileDialog = new OpenFileDialog();

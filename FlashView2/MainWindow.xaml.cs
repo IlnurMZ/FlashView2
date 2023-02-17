@@ -260,7 +260,7 @@ namespace FlashView2
         {
             int s= 0;
             List<string> abc = new List<string>();           
-            //var dataRows = AppViewModel.DataTable.Rows;
+            var dataRows = AppViewModel.DataTable.Rows;
             //foreach (DataRow row in AppViewModel.DataTable.Rows)
             //{
             //    var a = row["[ННК1/ННК1(вода)]"].ToString();
@@ -274,7 +274,7 @@ namespace FlashView2
             //}
             
             //var dataColumn2 = AppViewModel.DataTable.Columns["[ННК2/ННК2(вода)]"];
-            _lasMenuForm = new LasMenuForm();//dataRows);
+            _lasMenuForm = new LasMenuForm(dataRows);
             _lasMenuForm.Owner = this;
             //_lasMenuForm.ShowDialog();
             _lasMenuForm.Show();
