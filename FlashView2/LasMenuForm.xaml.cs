@@ -221,6 +221,7 @@ namespace FlashView2
         }
         void FindNearestTimeValue()
         {
+            Dictionary<double, double> fileDepthAndCP = new Dictionary<double, double>();
             // Надо переделать изначальное хранилище данных с глубиной по ключу. Сделать ключом время
             SortedDictionary<DateTime, double> dicr = new SortedDictionary<DateTime, double>();            
             var list = DepthTimeDetail.ToList();
@@ -231,60 +232,97 @@ namespace FlashView2
                     dicr.Add(DateTime.Parse(list[i1].Value[j1]), list[i1].Key);
                 }
             }
-            var listTimeKey = dicr.ToList();
+            var listTimeAndDepth = dicr.ToList();
 
-            DateTime timeStartMetr = listTimeKey[0].Key;
-            double depthStartMetr = listTimeKey[0].Value;
+            DateTime timeStartMetr = listTimeAndDepth[0].Key;
+            double depthStartMetr = listTimeAndDepth[0].Value;            
+            DateTime timeEndMetr = new DateTime();
+            int startPosDepTime = 0;
+            int endPosDepTime = 0;// позиция начала метра в файле глубина и время
+            int posLastValue = 0;
+            //int countSdvig = 0;
 
-            DateTime timeEndStartMetr = new DateTime();
-
-            for (int i = 0; i < listTimeKey.Count; i++)
+            for (int i = 1; i < listTimeAndDepth.Count; i++)
             {
-                double depthEndMetr = listTimeKey[i].Value;
+                double depthEndMetr = listTimeAndDepth[i].Value;
                 
-                if (depthStartMetr - depthEndMetr == 1)
+                if (depthEndMetr - depthStartMetr == 1)
                 {                    
-                    timeEndStartMetr = listTimeKey[i].Key;
+                    timeEndMetr = listTimeAndDepth[i-1].Key;
+                    endPosDepTime = i-1;
                 }               
                 else if (Math.Abs(depthStartMetr - depthEndMetr) > 1)  // надо доработать логику если отличие более метра
                 {
                     depthStartMetr = depthEndMetr;
-                    timeStartMetr = listTimeKey[i].Key;
+                    timeStartMetr = listTimeAndDepth[i].Key;
                 }
 
-                int startPosTimeMetr = -1;
-                int endPosTimeMetr = -1;
-                for (int j = 0; j < DataRowAVM.Count; j++)
+                if (timeStartMetr != new DateTime() && timeEndMetr != new DateTime())
                 {
-                    DataRow row = DataRowAVM[j];
-                    var timeValue = row["[Время/Дата]"].ToString(); // время во флешке
-                    DateTime timeValueRow = new DateTime();
-                    if (timeValue != null)
+                    int startPosTimeMetr = -1; // стартовая позиция в файле флеш
+                    int endPosTimeMetr = -1; // конец метра в файле флеш
+
+                    for (int j = posLastValue; j < DataRowAVM.Count; j++)
                     {
-                        timeValueRow = DateTime.Parse(timeValue);
-                        if (timeValueRow >= timeStartMetr && timeValueRow - timeStartMetr <= TimeSpan.FromSeconds(60))
+                        DataRow row = DataRowAVM[j];
+                        var timeValue = row["[Время/Дата]"].ToString(); // время во флешке
+                        DateTime timeValueRow = new DateTime();
+                        if (timeValue != null)
                         {
-
+                            timeValueRow = DateTime.Parse(timeValue);
+                            // ищем позицию по времени начала метра в файле флеш
+                            if (startPosTimeMetr == -1 && timeValueRow >= timeStartMetr && timeValueRow - timeStartMetr <= TimeSpan.FromSeconds(60))
+                            {
+                                startPosTimeMetr = j;
+                            }
+                            // ищем позицию по времени конца метра в файле флеш
+                            else if (endPosTimeMetr == -1 && timeValueRow >= timeEndMetr && timeValueRow - timeEndMetr <= TimeSpan.FromSeconds(60))
+                            {
+                                DateTime time = new DateTime();
+                                DataRow rowPrev = DataRowAVM[j-1];
+                                time = DateTime.Parse(rowPrev["[Время/Дата]"].ToString());
+                                if (timeValueRow-time <= TimeSpan.FromSeconds(60))
+                                {
+                                    endPosTimeMetr = j-1;
+                                }
+                                else
+                                {
+                                    endPosTimeMetr = j;
+                                }                                
+                                break;
+                            }
+                            // если мы вышли за временные пределы начала метра
+                            else if (startPosTimeMetr != -1 && timeValueRow >= timeStartMetr && timeValueRow - timeStartMetr > TimeSpan.FromSeconds(60))
+                            {                               
+                                startPosDepTime++;
+                                if (startPosDepTime >= endPosDepTime)
+                                {
+                                    startPosDepTime = i;
+                                    timeStartMetr = listTimeAndDepth[i].Key;
+                                }
+                                timeStartMetr = listTimeAndDepth[startPosDepTime].Key;
+                                j--;
+                            }
+                            else if (endPosTimeMetr != -1 && timeValueRow >= timeEndMetr && timeValueRow - timeEndMetr > TimeSpan.FromSeconds(60))
+                            {
+                                endPosTimeMetr--;
+                                if (endPosTimeMetr <= startPosDepTime)
+                                {
+                                    startPosDepTime = i;
+                                    timeStartMetr = listTimeAndDepth[i].Key;
+                                }
+                                timeEndMetr = listTimeAndDepth[endPosTimeMetr].Key;
+                            }
+                            
                         }
-                        //var ts = timeValueRow - timeStartMetr;
-                        //if (ts)
-                    }
-                    
-                    
-                    //var mz = row["[ННК1/ННК1(вода)]"].ToString();
-                    //var bz = row["[ННК2/ННК2(вода)]"].ToString();
-                    //foreach (DataRow row in DataRowAVM)
-                    //{
-                    //    var timeValueRow = row["[Время/Дата]"].ToString();
-                    //    var mz = row["[ННК1/ННК1(вода)]"].ToString();
-                    //    var bz = row["[ННК2/ННК2(вода)]"].ToString();
-                    //    if (timeValueRow != null)
-                    //    {
-                    //        DateTime timeFlash = DateTime.Parse(timeValueRow);
-                    //    }
-                    //}
-                }
+                        
 
+
+                        posLastValue++;
+                    }
+
+                    
+                }
             }
 
 
