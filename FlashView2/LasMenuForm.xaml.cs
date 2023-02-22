@@ -221,7 +221,7 @@ namespace FlashView2
         }
         void FindNearestTimeValue()
         {
-            Dictionary<double, double> fileDepthAndCP = new Dictionary<double, double>();
+            Dictionary<double, double> fileDepthAndKP = new Dictionary<double, double>();
             // Надо переделать изначальное хранилище данных с глубиной по ключу. Сделать ключом время
             SortedDictionary<DateTime, double> dicr = new SortedDictionary<DateTime, double>();            
             var list = DepthTimeDetail.ToList();
@@ -237,10 +237,9 @@ namespace FlashView2
             DateTime timeStartMetr = listTimeAndDepth[0].Key;
             double depthStartMetr = listTimeAndDepth[0].Value;            
             DateTime timeEndMetr = new DateTime();
-            int startPosDepTime = 0;
-            int endPosDepTime = 0;// позиция начала метра в файле глубина и время
-            int posLastValue = 0;
-            //int countSdvig = 0;
+            int startPosDepTime = 0; // позиция начала метра в файле глубина и время
+            int endPosDepTime = 0; 
+            int posLastValue = 0;            
 
             for (int i = 1; i < listTimeAndDepth.Count; i++)
             {
@@ -259,8 +258,8 @@ namespace FlashView2
 
                 if (timeStartMetr != new DateTime() && timeEndMetr != new DateTime())
                 {
-                    int startPosTimeMetr = -1; // стартовая позиция в файле флеш
-                    int endPosTimeMetr = -1; // конец метра в файле флеш
+                    int startPosFlashTime = -1; // стартовая позиция в файле флеш
+                    int endPosFlashTime = -1; // конец метра в файле флеш
 
                     for (int j = posLastValue; j < DataRowAVM.Count; j++)
                     {
@@ -271,47 +270,49 @@ namespace FlashView2
                         {
                             timeValueRow = DateTime.Parse(timeValue);
                             // ищем позицию по времени начала метра в файле флеш
-                            if (startPosTimeMetr == -1 && timeValueRow >= timeStartMetr && timeValueRow - timeStartMetr <= TimeSpan.FromSeconds(60))
+                            if (startPosFlashTime == -1 && timeValueRow >= timeStartMetr && timeValueRow - timeStartMetr <= TimeSpan.FromSeconds(60))
                             {
-                                startPosTimeMetr = j;
+                                startPosFlashTime = j;
                             }
                             // ищем позицию по времени конца метра в файле флеш
-                            else if (endPosTimeMetr == -1 && timeValueRow >= timeEndMetr && timeValueRow - timeEndMetr <= TimeSpan.FromSeconds(60))
+                            else if (endPosFlashTime == -1 && timeValueRow >= timeEndMetr && timeValueRow - timeEndMetr <= TimeSpan.FromSeconds(60))
                             {
                                 DateTime time = new DateTime();
                                 DataRow rowPrev = DataRowAVM[j-1];
                                 time = DateTime.Parse(rowPrev["[Время/Дата]"].ToString());
                                 if (timeValueRow-time <= TimeSpan.FromSeconds(60))
                                 {
-                                    endPosTimeMetr = j-1;
+                                    endPosFlashTime = j-1;
                                 }
                                 else
                                 {
-                                    endPosTimeMetr = j;
+                                    endPosFlashTime = j;
                                 }                                
                                 break;
                             }
                             // если мы вышли за временные пределы начала метра
-                            else if (startPosTimeMetr != -1 && timeValueRow >= timeStartMetr && timeValueRow - timeStartMetr > TimeSpan.FromSeconds(60))
-                            {                               
-                                startPosDepTime++;
+                            // и не нашли стартовое временное значение
+                            else if (startPosFlashTime == -1 && timeValueRow >= timeStartMetr && timeValueRow - timeStartMetr > TimeSpan.FromSeconds(60))
+                            {
+                                
+                                startPosDepTime++; // позиция в файле глубина-время
                                 if (startPosDepTime >= endPosDepTime)
                                 {
-                                    startPosDepTime = i;
-                                    timeStartMetr = listTimeAndDepth[i].Key;
+                                    startPosDepTime = endPosDepTime;
+                                    timeStartMetr = listTimeAndDepth[endPosDepTime].Key;
                                 }
                                 timeStartMetr = listTimeAndDepth[startPosDepTime].Key;
                                 j--;
                             }
-                            else if (endPosTimeMetr != -1 && timeValueRow >= timeEndMetr && timeValueRow - timeEndMetr > TimeSpan.FromSeconds(60))
+                            else if (endPosFlashTime != -1 && timeValueRow >= timeEndMetr && timeValueRow - timeEndMetr > TimeSpan.FromSeconds(60))
                             {
-                                endPosTimeMetr--;
-                                if (endPosTimeMetr <= startPosDepTime)
+                                endPosFlashTime--;
+                                if (endPosFlashTime <= startPosDepTime)
                                 {
                                     startPosDepTime = i;
                                     timeStartMetr = listTimeAndDepth[i].Key;
                                 }
-                                timeEndMetr = listTimeAndDepth[endPosTimeMetr].Key;
+                                timeEndMetr = listTimeAndDepth[endPosFlashTime].Key;
                             }
                             
                         }
@@ -321,7 +322,73 @@ namespace FlashView2
                         posLastValue++;
                     }
 
-                    
+                    var deltaTime = (listTimeAndDepth[startPosDepTime + 1].Key - listTimeAndDepth[startPosDepTime].Key) / 2;
+                    int counterFlash = startPosFlashTime;
+                    for (int k1 = startPosDepTime; k1<= endPosDepTime; k1++)
+                    {
+                        DateTime a = new DateTime();
+                        DateTime b = new DateTime();
+
+                        if (k1 == 0)
+                        {
+                            a = listTimeAndDepth[k1].Key;
+                            b = listTimeAndDepth[k1].Key + deltaTime;
+                        }
+                        else if (k1 >0 && k1 < endPosDepTime)
+                        {
+                            a = listTimeAndDepth[k1].Key - deltaTime;
+                            b = listTimeAndDepth[k1].Key + deltaTime;
+                        }
+                        else
+                        {
+                            a = listTimeAndDepth[k1].Key - deltaTime;
+                            b = listTimeAndDepth[k1].Key;
+                        }
+
+                        List<double> KPs = new List<double>();
+                        // перебираем данные флеш файла по времени                        
+                        for (int k2 = counterFlash; k2 <= endPosFlashTime; k2++)
+                        {
+                            DataRow rowFl = DataRowAVM[k2];
+                            var timeFl = DateTime.Parse(rowFl["[Время/Дата]"].ToString());
+
+                            if (timeFl >= a && timeFl < b)
+                            {
+                                double mz = double.Parse(rowFl["[ННК1/ННК1(вода)]"].ToString());
+                                double bz = double.Parse(rowFl["[ННК2/ННК2(вода)]"].ToString());
+                                double x;
+                                double KP = 0;
+                                if (bz != 0)
+                                {
+                                    x = mz / bz;
+                                    if (Coef.Length == 2)
+                                    {
+                                        KP = Coef[0] * x + Coef[1];
+                                    }
+                                    else if (Coef.Length == 3)
+                                    {
+                                        KP = Coef[0] * x * x + Coef[1] * x + Coef[2];
+                                    }
+                                    counterFlash++;
+                                    KPs.Add(KP);
+                                }
+                                else
+                                {
+                                    continue;
+                                }
+                            }            
+                        }
+                        double midValueKP = 0;
+                        if (KPs.Count > 0)
+                        {
+                            midValueKP = KPs.Average();
+                        }
+                        else
+                        {
+                            midValueKP = -999.9;
+                        }                        
+                        fileDepthAndKP.Add(listTimeAndDepth[k1].Value, midValueKP);
+                    }                    
                 }
             }
 
