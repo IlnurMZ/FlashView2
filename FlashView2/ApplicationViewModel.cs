@@ -152,7 +152,10 @@ namespace FlashView2
             year = dateTime[10].ToString() + dateTime[11].ToString();
             //date = new DateTime(year, month, day, hour, minute, second);
             date = $"{hour}:{minute}:{second} {day}.{month}.{year}";
-
+            if (!DateTime.TryParse(date, out DateTime timeTest))
+            {
+                throw new FormatException("Ошибка формата времени");
+            }
             return date;
         }
 
@@ -191,28 +194,40 @@ namespace FlashView2
                 }
                 // проверка двух байт на конец строки
                 bool isGoodEndLine = flash[i + countByteRow - 2] == endLinePacket[0] && flash[i + countByteRow - 1] == endLinePacket[1];
-
-                if (isGoodStartLine && isGoodEndLine) // проверка совпадения на начало строки
+                try
                 {
-                    row = myTable.NewRow(); // создаем строку для таблицы
-                    for (int j = 0; j < countParams; j++)
+                    if (isGoodStartLine && isGoodEndLine) // проверка совпадения на начало строки
                     {
-                        byte countByte = myPacket.LengthParams[j]; // определяем количество байт на параметр
-                        byte[] values = new byte[countByte]; // берем необходимое количество байт                   
-                        Array.Copy(flash, i, values, 0, countByte); // копируем наш кусок
-                        string valueA = GetValueByType(myPacket.TypeParams[j], values); // вычисляем значение по типу данных
-                        string valueB = CalculateValueByType(myPacket.TypeCalculate[j], valueA, myPacket.DataCalculation[j]); // вычисляем пересчет данного по типу
-                        row[j] = valueB;
-                        i += countByte; // смещаем курсор по общему массиву байт                        
-                    }
-                    i--;
-                    myTable.Rows.Add(row);                    
-                }
-                else
-                {
-                    countBadByte++;
-                }
+                        row = myTable.NewRow(); // создаем строку для таблицы
+                        for (int j = 0; j < countParams; j++)
+                        {
+                            byte countByte = myPacket.LengthParams[j]; // определяем количество байт на параметр
+                            byte[] values = new byte[countByte]; // берем необходимое количество байт                   
+                            Array.Copy(flash, i, values, 0, countByte); // копируем наш кусок
 
+                            string valueA = GetValueByType(myPacket.TypeParams[j], values); // вычисляем значение по типу данных
+                            string valueB = CalculateValueByType(myPacket.TypeCalculate[j], valueA, myPacket.DataCalculation[j]); // вычисляем пересчет данного по типу
+                            row[j] = valueB;
+                            i += countByte; // смещаем курсор по общему массиву байт
+                        }
+                        i--;
+                        myTable.Rows.Add(row);
+                    }
+                    else
+                    {
+                        countBadByte++;
+                    }
+                }
+                catch (FormatException)
+                {
+                    i += 29;
+                    continue;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                    continue;
+                }
                 tempVal = (byte)(i * 1.0 / flash.Length * 100);
                 if (tempVal >= loadStatus)
                 {
