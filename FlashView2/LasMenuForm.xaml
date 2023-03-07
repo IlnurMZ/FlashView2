@@ -7,7 +7,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
         Title="Задание временного интервала, сдвига и корректировки" 
-        Height="800" Width="870" 
+        Height="780" Width="870" 
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
     <Window.Resources>
         <Style x:Key="CenterGridHeaderStyle" TargetType="DataGridColumnHeader">
@@ -23,9 +23,10 @@
             <RowDefinition Height="278"/>
             <RowDefinition Height="176"/>
             <RowDefinition Height="236"/>
+            <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Grid.Column="0">
-            <Button x:Name="btn_LoadDepthAndTime" Content="Открыть файл с глубиной" Click="btn_LoadDepthAndTime_Click" Margin="10"/>
+            <Button x:Name="btn_LoadDepthAndTime" Content="Открыть файл с глубиной" Click="btn_LoadDepthAndTime_Click" Height="30" Margin="10,15,10,10"/>
             <GroupBox Header="Считать данные" Padding="5" Width="230" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel Height="170">
                     <RadioButton IsChecked="True" Margin="3">В интервале определения</RadioButton>
@@ -54,7 +55,7 @@
                     <RadioButton Name="rb2_Kvad" Margin="5">По квадратичной зависимости</RadioButton>
                 </StackPanel>
             </GroupBox>
-            <Button  Click="Button_Click" Content="Задать" Margin="15" Width="200" Height="40" HorizontalAlignment="Left"/>
+            <Button Name="btn_FormLas" Click="Button_Click" Content="Сформировать LAS" Margin="15" Width="200" Height="40" HorizontalAlignment="Left" IsEnabled="False"/>
         </StackPanel>
         <GroupBox Grid.Column="0" Grid.Row="1" Height="140" Width="200" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
             <GroupBox.Header>
@@ -67,12 +68,33 @@
             </StackPanel>
         </GroupBox>
         <StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="3">
-            <Label Content="{Binding FileName, UpdateSourceTrigger=PropertyChanged}" Margin="10" HorizontalAlignment="Center"/>
+            <!--<Label Content="{Binding FileName, UpdateSourceTrigger=PropertyChanged}" Margin="10" HorizontalAlignment="Center"/>-->
             <DataGrid x:Name="dtg_DepthAndTime" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" 
-                      HorizontalContentAlignment="Center" Margin="10,10,10,10" ItemsSource="{Binding DataTable, UpdateSourceTrigger=PropertyChanged}" 
+                      HorizontalContentAlignment="Center" Margin="10,15,10,10" ItemsSource="{Binding DataTable, UpdateSourceTrigger=PropertyChanged}" 
                       AutoGeneratingColumn="r2_AutoGeneratingColumn" Height="640" >
             </DataGrid>
         </StackPanel>
-
+        <DockPanel Grid.Row="3" Grid.ColumnSpan="3">
+            <StatusBar DockPanel.Dock="Bottom">
+                <StatusBar.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="110" />
+                            </Grid.ColumnDefinitions>
+                        </Grid>
+                    </ItemsPanelTemplate>
+                </StatusBar.ItemsPanel>
+                <StatusBarItem Margin="5">
+                    <TextBlock Name="lblStatus" Text="{Binding FileName, UpdateSourceTrigger=PropertyChanged}" Margin="10"/>
+                </StatusBarItem>
+                <Separator Grid.Column="1" />
+                <StatusBarItem Grid.Column="2">
+                    <ProgressBar Value="0" Width="90" Height="20" />
+                </StatusBarItem>
+            </StatusBar>
+        </DockPanel>
     </Grid>
 </Window>

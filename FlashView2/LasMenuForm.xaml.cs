@@ -127,11 +127,12 @@ namespace FlashView2
                     break;
                 }
             }
-            UpdateDepthDate();
-            //this.DialogResult = true;
+            UpdateDepthDate();           
             FindNearestTimeValue();
+            MessageBox.Show("Las file сформирован!");
         }
 
+        // метод деления глубины по 10 см и перераспределения времени
         void UpdateDepthDate()
         {
             DepthTimeDetail = new Dictionary<double, List<string>>();
@@ -224,7 +225,8 @@ namespace FlashView2
                 }                
             }         
         }
-        void FindNearestTimeValue()
+
+        private void FindNearestTimeValue()
         {
             SortedDictionary<double, List<double>> fileDepthAndKP = new SortedDictionary<double, List<double>>();
             // Надо переделать изначальное хранилище данных с глубиной по ключу. Сделать ключом время
@@ -471,6 +473,7 @@ namespace FlashView2
         private void btn_LoadDepthAndTime_Click(object sender, RoutedEventArgs e)
         {           
             OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Файл глубина-время|*.txt";
             string path;
             bool isTable = false;
             int countHeaders = 0;
@@ -606,6 +609,7 @@ namespace FlashView2
             {
                 MessageBox.Show(ex.Message);
             }
+            btn_FormLas.IsEnabled = true;
         }
 
         void r2_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
