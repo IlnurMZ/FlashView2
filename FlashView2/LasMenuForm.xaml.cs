@@ -165,13 +165,15 @@ namespace FlashView2
                             DateTime time1 = DateTime.Parse(timeStart);
                             TimeSpan deltaTime = time2 - time1;
                             double timeStep = 1.0 / (deltaDepth * 10);
+                            double time3 = timeStep;
+                            int stepFinish = (int)(deltaDepth / 0.1);                            
                             double depthStep = 0.1;
-                            for (double k = timeStep; k <= 1; k += timeStep)
-                            {
+                            for (int k = 1; k <= stepFinish; k++) // округление, проблема
+                            {                                
                                 double newDepth = depthStart + depthStep;
-                                depthStep = Math.Round(depthStep += 0.1, 1);                                
-                                string newTime = (time1 + (deltaTime * k)).ToString();
-                              
+                                depthStep = Math.Round(depthStep += 0.1, 1);                            
+                                string newTime = (time1 + (deltaTime * time3)).ToString();
+                                time3 += timeStep;
                                 if (!DepthTimeDetail.TryAdd(newDepth, new List<string>() {newTime})) 
                                 {
                                     DepthTimeDetail[newDepth].Add(newTime);
@@ -192,11 +194,14 @@ namespace FlashView2
                             }
                             double timeStep = 1.0 / (deltaDepth * 10);
                             double depthStep = 0.1;
-                            for (double k = timeStep; k <= 1; k += timeStep)
+                            int stepFinish = (int)(deltaDepth / 0.1);
+                            double time3 = timeStep;
+                            for (int k = 1; k <= stepFinish; k ++)
                             {
                                 double newDepth = depthStart - depthStep;
                                 depthStep = Math.Round(depthStep += 0.1, 1);
-                                string newTime = (time1 + (deltaTime * k)).ToString();
+                                string newTime = (time1 + (deltaTime * time3)).ToString();
+                                time3 += timeStep;
                                 if (!DepthTimeDetail.TryAdd(newDepth, new List<string>() { newTime }))
                                 {
                                     DepthTimeDetail[newDepth].Add(newTime);
@@ -216,7 +221,6 @@ namespace FlashView2
                         }                        
                         i++;
                     }
-
                 }                
             }         
         }
@@ -258,12 +262,9 @@ namespace FlashView2
             int dopusk = 0;
 
             for (int i = 1; i < listTimeAndDepth.Count; i++)
-            {                
-                double depthEndMetr = listTimeAndDepth[i].Value;
-                if (i == listTimeAndDepth.Count - 2)
-                {
+            {                               
+                double depthEndMetr = listTimeAndDepth[i].Value;              
 
-                }
                 if (Math.Abs(depthEndMetr - depthStartMetr) == 1)
                 {                    
                     timeEndMetr = listTimeAndDepth[i-1].Key;
@@ -292,8 +293,7 @@ namespace FlashView2
                             if (!DateTime.TryParse(timeValue, out timeValueRow))
                             {
                                 continue;
-                            }
-                           // timeValueRow = DateTime.Parse(timeValue);
+                            }                           
                             // ищем позицию по времени начала метра в файле флеш
                             if (startPosFlashTime == -1 && timeValueRow >= timeStartMetr - deltaTime && timeValueRow - timeStartMetr <= TimeSpan.FromSeconds(60))
                             {
@@ -322,216 +322,151 @@ namespace FlashView2
                             // и не нашли стартовое временное значение
                             else if (startPosFlashTime == -1 && timeValueRow - timeStartMetr > TimeSpan.FromSeconds(60))
                             {
-                                dopusk++;
-                                //startPosDepTime++; // позиция в файле глубина-время
+                                dopusk++;                                
 
                                 if (startPosDepTime + dopusk == endPosDepTime)
-                                {
-                                    startPosDepTime = endPosDepTime;
-                                    timeStartMetr = listTimeAndDepth[endPosDepTime + 1].Key;
-                                    depthStartMetr = depthEndMetr;
-                                    timeEndMetr = new DateTime();
+                                {                                   
                                     break;
                                 }
                                 timeStartMetr = listTimeAndDepth[startPosDepTime+dopusk].Key;
                                 j--;
                             }
-                            else if (endPosFlashTime == -1 && timeValueRow - timeEndMetr > TimeSpan.FromSeconds(60))
-                            {
-                                //endPosDepTime--;
-                                dopusk++;
-                                if (endPosDepTime - dopusk == startPosDepTime)
-                                {
-                                    //endPosDepTime++;
-                                    break;        
-                                }
-                                //timeEndMetr = listTimeAndDepth[endPosDepTime].Key;
-                                if (j >=2)
-                                {
-                                    j -= 2;
-                                }
-                                else
-                                {
-                                    break;
-                                }                                
-                            }
-                            // есть первое значение(время) начала метра и предыдущее значение флеш меньше конечного времени конца метра
-                            else if (startPosFlashTime != -1 && dopusk > 0 && endPosFlashTime == -1 && timeEndMetr > timeValueRow)
-                            {
-                                endPosFlashTime = j;
+                            // если вышли за пределы конца метра более чем на минуту
+                            // но нашли стартовое временное значение
+                            else if (startPosFlashTime != -1 && endPosFlashTime == -1 && timeValueRow - timeEndMetr > TimeSpan.FromSeconds(60))
+                            {                                                      
+                                endPosFlashTime = j - 1;
                                 j--;
-                                depthStartMetr = depthEndMetr;
-                                dopusk = 0;
                                 break;
-                            }
+                            }                       
                         }                 
                         posLastValue++;
                     }
-                    
-                    if (timeEndMetr == new DateTime())
+                    // добавляем метры без данных в файле флеш
+                    if ( startPosFlashTime == -1 && endPosFlashTime == -1)
                     {
-                        continue;
+                        for (int k3 = startPosDepTime; k3 <= endPosDepTime; k3++)
+                        {
+                            List<double> emptyList = new List<double>();
+                            fileDepthAndKP.TryAdd(listTimeAndDepth[k3].Value, emptyList);                            
+                        }
+                        startPosDepTime = endPosDepTime;
+                        timeStartMetr = listTimeAndDepth[endPosDepTime + 1].Key;
+                        depthStartMetr = depthEndMetr;
+                        timeEndMetr = new DateTime();
                     }
-
-                    int counterFlash = startPosFlashTime;
-                    for (int k1 = startPosDepTime; k1<= endPosDepTime; k1++)
+                    else
                     {
-                        DateTime a = new DateTime();
-                        DateTime b = new DateTime();
-
-                        if (k1 == startPosDepTime)
+                        //int counterFlash = startPosFlashTime;
+                        for (int k1 = startPosDepTime; k1 <= endPosDepTime; k1++)
                         {
-                            a = listTimeAndDepth[k1].Key - deltaTime;
-                            deltaTime = (listTimeAndDepth[startPosDepTime + 1].Key - listTimeAndDepth[startPosDepTime].Key) / 2;
+                            DateTime a = new DateTime();
+                            DateTime b = new DateTime();
 
-                            b = listTimeAndDepth[k1].Key + deltaTime;                            
-                        }
-                        else if (k1 >0 && k1 < endPosDepTime)
-                        {
-                            a = listTimeAndDepth[k1].Key - deltaTime;
-                            b = listTimeAndDepth[k1].Key + deltaTime;
-                        }
-                        else
-                        {
-                            a = listTimeAndDepth[k1].Key - deltaTime;
-                            b = listTimeAndDepth[k1].Key;
-                        }
-
-                        List<double> KPs = new List<double>();
-                        // перебираем данные флеш файла по времени                        
-                        for (int k2 = counterFlash; k2 <= endPosFlashTime; k2++)
-                        {
-                            DataRow rowFl = DataRowAVM[k2];
-                            var timeFl = DateTime.Parse(rowFl["[Время/Дата]"].ToString());
-
-                            if (timeFl >= a && timeFl < b)
+                            if (k1 == startPosDepTime)
                             {
-                                double mz = double.Parse(rowFl["[ННК1/ННК1(вода)]"].ToString());
-                                double bz = double.Parse(rowFl["[ННК2/ННК2(вода)]"].ToString());
-                                double x;
-                                double KP = 0;
-                                if (bz != 0)
+                                if (deltaTime > TimeSpan.FromMinutes(1))
                                 {
-                                    x = mz / bz;
-                                    if (Coef.Length == 2)
-                                    {
-                                        KP = Coef[0] * x + Coef[1];
-                                    }
-                                    else if (Coef.Length == 3)
-                                    {
-                                        KP = Coef[0] * x * x + Coef[1] * x + Coef[2];
-                                    }
-                                    counterFlash++;
-                                    KPs.Add(KP);
+                                    deltaTime = TimeSpan.FromMinutes(1);
                                 }
-                                else
-                                {
-                                    counterFlash++;
-                                    continue;
-                                }
-                            }
-                            else if (timeFl > b) 
-                            {
-                                //counterFlash++;
-                                break;
-                            }
-                        }
-                        //double midValueKP = 0;
-                        //if (KPs.Count > 0)
-                        //{
-                        //    midValueKP = KPs.Average();
-                        //}
-                        //else
-                        //{
-                        //    midValueKP = -999.9;
-                        //}                        
-                        //fileDepthAndKP.Add(listTimeAndDepth[k1].Value, KPs);
-                        if (KPs.Count == 0)
-                        {
-                            KPs.Add(-999.9);
-                        }
+                                a = listTimeAndDepth[k1].Key - deltaTime;
+                                deltaTime = (listTimeAndDepth[startPosDepTime + 1].Key - listTimeAndDepth[startPosDepTime].Key) / 2;
 
-                        if (!fileDepthAndKP.TryAdd(listTimeAndDepth[k1].Value, KPs))
-                        {
-                            //if (KPs.Count == 0)
-                            //{
-                            //    KPs.Add(-999.9);
-                            //}
-                            fileDepthAndKP[listTimeAndDepth[k1].Value].AddRange(KPs);
+                                b = listTimeAndDepth[k1].Key + deltaTime;
+                            }
+                            else if (k1 > 0 && k1 < endPosDepTime)
+                            {
+                                a = listTimeAndDepth[k1].Key - deltaTime;
+                                b = listTimeAndDepth[k1].Key + deltaTime;
+                            }
+                            else
+                            {
+                                a = listTimeAndDepth[k1].Key - deltaTime;
+                                b = listTimeAndDepth[k1].Key;
+                            }
+
+                            List<double> KPs = new List<double>();
+                            // перебираем данные флеш файла по времени                        
+                            for (int k2 = startPosFlashTime; k2 <= endPosFlashTime; k2++)
+                            {
+                                DataRow rowFl = DataRowAVM[k2];
+                                var timeFl = DateTime.Parse(rowFl["[Время/Дата]"].ToString());
+
+                                if (timeFl >= a && timeFl < b)
+                                {
+                                    double mz = double.Parse(rowFl["[ННК1/ННК1(вода)]"].ToString());
+                                    double bz = double.Parse(rowFl["[ННК2/ННК2(вода)]"].ToString());
+                                    double x;
+                                    double KP = 0;
+                                    if (mz != 0)
+                                    {
+                                        x = bz / mz;
+                                        if (Coef.Length == 2)
+                                        {
+                                            KP = Coef[0] * x + Coef[1];
+                                        }
+                                        else if (Coef.Length == 3)
+                                        {
+                                            KP = Coef[0] * x * x + Coef[1] * x + Coef[2];
+                                        }
+                                        startPosFlashTime++;
+                                        KPs.Add(KP);
+                                    }
+                                    else
+                                    {
+                                        startPosFlashTime++;
+                                        continue;
+                                    }
+                                }
+                                else if (timeFl > b)
+                                {
+                                    break;
+                                }
+                            }                         
+
+                            if (!fileDepthAndKP.TryAdd(listTimeAndDepth[k1].Value, KPs))
+                            {
+                                fileDepthAndKP[listTimeAndDepth[k1].Value].AddRange(KPs);
+                            }
                         }
-                    }
-                    startPosDepTime = i;
-                    timeStartMetr = listTimeAndDepth[startPosDepTime].Key;
-                    timeEndMetr = new DateTime();
-                    dopusk = 0;
-                }
-                
+                        depthStartMetr = depthEndMetr;
+                        startPosDepTime = i;
+                        timeStartMetr = listTimeAndDepth[startPosDepTime].Key;
+                        timeEndMetr = new DateTime();
+                        dopusk = 0;
+                    }                    
+                }                
             }
 
             var list2 = fileDepthAndKP.ToList();
             fileDepthAndKP.Clear();
 
             string name = "ResultFileLas.txt";
-            string[] customPath = new[] { "E:\\", "C#", "JOB", "ResultFiles" };
-            string catalog = Combine(customPath);
-            string path = Combine(catalog, name);
+            string directory = "LAS_Files";
+
+            DirectoryInfo directoryInfo = new DirectoryInfo(directory);
+            directoryInfo.Create();
+            string path = Combine(directory, name);           
 
             for (int i = 0; i < list2.Count; i++)
             {
-                for (int j = 0; j < list2[i].Value.Count; j++)
+                if (list2[i].Value.Count == 0)
                 {
-                    if (list2[i].Value.Count > 1)
-                    {
-                        if (list2[i].Value[j] == -999.9)
-                        {
-                            list2[i].Value.Remove(j);                            
-                        }                        
-                    }
+                    list2[i].Value.Add(-999.9);
                 }
-
                 try
                 {
                     using (var writer = new StreamWriter(path, true))
                     {
-                        writer.WriteLine($"{list2[i].Key.ToString("0.00", CultureInfo.GetCultureInfo("en-US"))}     {Math.Round(list2[i].Value.Average(),2).ToString(CultureInfo.GetCultureInfo("en-US"))}");
+                        writer.WriteLine($"{list2[i].Key.ToString("0.00", CultureInfo.GetCultureInfo("en-US"))}     {Math.Round(list2[i].Value.Average(), 2).ToString("0.00", CultureInfo.GetCultureInfo("en-US"))}");
                     }
                 }
                 catch (Exception exception)
                 {
                     Console.WriteLine(exception.Message);
                 }
-
             }
-            //for (int i = 0; i - 1 < DepthTimeDetail.Count; i++)
-            //{
-            //    var timeList1 = list[i].Value;
-            //    var depth1 = list[i].Key;
-            //    var timeList2 = list[i + 1].Value;
-            //    var depth2 = list[i + 1].Key;
-            //    if (depth1 - depth2 == 0.1)
-            //    {
-            //        for (int z = 0; z < timeList1.Count; z++)
-            //        {
-            //            DateTime t1 = DateTime.Parse(timeList1[z]);
-            //            DateTime t2 = DateTime.Parse(timeList2[z]);
-            //        }
-            //    }
-                
 
-            //    for (int j = 1; j < DataRowAVM.Count; j++)
-            //    {
-            //        foreach (DataRow row in DataRowAVM)
-            //        {
-            //            var timeValueRow = row["[Время/Дата]"].ToString();
-            //            var mz = row["[ННК1/ННК1(вода)]"].ToString();
-            //            var bz = row["[ННК2/ННК2(вода)]"].ToString();
-            //            if (timeValueRow != null)
-            //            {
-            //                DateTime timeFlash = DateTime.Parse(timeValueRow);
-            //            }                        
-            //        }
-            //    }
-            //}
         }
         private void btn_LoadDepthAndTime_Click(object sender, RoutedEventArgs e)
         {           
@@ -680,16 +615,6 @@ namespace FlashView2
                 DataGridBoundColumn dataGridBoundColumn = e.Column as DataGridBoundColumn;
                 dataGridBoundColumn.Binding = new Binding("[" + e.PropertyName + "]");
             }
-        }
-
-        //private void btn_LookColibFile_Click(object sender, RoutedEventArgs e)
-        //{
-        //    StringBuilder coefForShow = new StringBuilder();
-        //    for (int i = 0; i < coef.Length; i++)
-        //    {
-        //        coefForShow.AppendLine($"{i + 1} коэфц.: {coef[i]}");
-        //    }
-        //    MessageBox.Show(coefForShow.ToString());
-        //}
+        }        
     }
 }

@@ -24,7 +24,7 @@
                 <MenuItem Header="Закрыть" Click="MenuItemCloseProgram_Click"/>
             </MenuItem>
             <MenuItem x:Name="menuButtonFormLas" Header="Сформировать las" BorderBrush="Black" IsEnabled="False" Click="menuButtonFormLas_Click"/>
-            <MenuItem x:Name="TestBut" Header="Кнопка" BorderBrush="Black" Click="TestBut_Click"/>
+            <!--<MenuItem x:Name="TestBut" Header="Кнопка" BorderBrush="Black" Click="TestBut_Click"/>-->
         </Menu>
         <ProgressBar x:Name ="progBar" HorizontalAlignment="Right" Height="30" Margin="0,0,20,0" Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" Width="300" Value="{Binding Percent, UpdateSourceTrigger=PropertyChanged}"/>        
     </Grid>
