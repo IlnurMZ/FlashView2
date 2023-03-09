@@ -17,8 +17,22 @@ namespace FlashView2
 {
     public class ApplicationViewModel : INotifyPropertyChanged
     {
-        private bool isLasFile = false;
+        private string statusMainWindow;
 
+        public string StatusMainWindow
+        {
+            get
+            {
+                return statusMainWindow;
+            }
+            set
+            {
+                statusMainWindow = value;
+                OnPropertyChanged("StatusMainWindow");
+            }
+        }
+
+        private bool isLasFile = false;
         public bool IsLasFile
         {
             get 
@@ -61,21 +75,23 @@ namespace FlashView2
         public byte ID_Device { get; set; }
         public byte ID_Packet { get; set; }
         public List<Packet> Packets { get; set; }        
-        public ApplicationViewModel(byte[] flash, List<Packet> packets)
-        {
+        public ApplicationViewModel(byte[] flash, List<Packet> packets, string nameFile)
+        {            
+            StatusMainWindow = $"Загрузка файла началась: {nameFile} \n";
             Percent = 0;
             Packets = packets;
             ID_Device = flash[1];
             ID_Packet = flash[0];
-            UpdateTable(flash, packets);
-            IsLasFile = true;
+            UpdateTable(flash, packets);            
         }
 
         async void UpdateTable(byte[] flash, List<Packet> packets)
         {
             await Task.Run(() =>
             {
-                DataTable = LoadDataTable(packets, flash);
+                DataTable = LoadDataTable(packets, flash);                
+                IsLasFile = true;
+                StatusMainWindow += "Загрузка завершена!";
             });           
         }
         string CalculateValueByType(string typeCalc, string value, double[] data) // по типу вычисления выдаем результат

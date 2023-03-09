@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -22,12 +24,27 @@ namespace FlashView2
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         public byte[]? FlashFile { get; set; }
         public ApplicationViewModel AppViewModel { get; set; }
         LasMenuForm _lasMenuForm;
-        
+
+        private string statusMainWindow;
+
+        public string StatusMainWindow2
+        {
+            get
+            {
+                return statusMainWindow;
+            }
+            set
+            {
+                statusMainWindow = value;
+                OnPropertyChanged("StatusMainWindow2");
+            }
+        }
+
         public MainWindow()
         {
             InitializeComponent();            
@@ -39,9 +56,11 @@ namespace FlashView2
             openFileDialog.Filter = "Flash Files|*.fl";
             openFileDialog.Title = "Выберите flash-файл с данными";
             List<List<string>> dataConfig = new List<List<string>>();
+            string nameFile;
             if (openFileDialog.ShowDialog() == true)
             {
                 string pathFlash = openFileDialog.FileName;
+                nameFile = openFileDialog.SafeFileName;
                 try
                 {
                     // считываем данные флеш-файла
@@ -62,7 +81,7 @@ namespace FlashView2
                                 dataConfig.Add(new List<string>(line));
                             }
                         }
-                    }
+                    }                    
                 }
                 catch (Exception ex)
                 {
@@ -76,13 +95,15 @@ namespace FlashView2
             }
 
             List<Packet> packets = HandleConfigData(dataConfig);
-            AppViewModel = new ApplicationViewModel(FlashFile, packets);            
+            AppViewModel = new ApplicationViewModel(FlashFile, packets, nameFile);            
             DataContext = AppViewModel;
+            //AppViewModel.StatusMainWindow += $"Начинается загрузка файла {openFileDialog.FileName}\n";
             // делаем привязку кнопки формирования las-файла к переменной IsLasFile
             Binding binding = new Binding();
             binding.ElementName = "IsLasFile";
             binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
             menuButtonFormLas.SetBinding(MenuItem.IsEnabledProperty, binding);
+            //lblStatusMainWindow.Text += "Загрузка файла завершена\n";
         }
 
         List<Packet> HandleConfigData(List<List<string>> dataConfig)
@@ -252,8 +273,7 @@ namespace FlashView2
         }
 
         private void menuButtonFormLas_Click(object sender, RoutedEventArgs e)
-        {
-            int s = 0;
+        {            
             List<string> abc = new List<string>();
             var dataRows = AppViewModel.DataTable.Rows;
             _lasMenuForm = new LasMenuForm(dataRows);
@@ -261,6 +281,12 @@ namespace FlashView2
             _lasMenuForm.Show();
         }
 
+        public event PropertyChangedEventHandler? PropertyChanged;
+        public void OnPropertyChanged([CallerMemberName] string prop = "")
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(prop));
+        }
         //private void TestBut_Click(object sender, RoutedEventArgs e)
         //{
         //    int s= 0;

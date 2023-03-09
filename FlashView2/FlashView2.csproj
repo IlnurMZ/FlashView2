@@ -8,8 +8,47 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Exit.png" />
+    <None Remove="File Excel.png" />
+    <None Remove="File txt.png" />
+    <None Remove="File.png" />
+    <None Remove="Form LAS.png" />
+    <None Remove="Open File.png" />
+    <None Remove="Save As.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Extended.Wpf.Toolkit" Version="4.5.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Exit.png" />
+    <Resource Include="File Excel.png" />
+    <Resource Include="File txt.png" />
+    <Resource Include="File.png" />
+    <Resource Include="Form LAS.png" />
+    <Resource Include="Open File.png" />
+    <Resource Include="Save As.png" />
   </ItemGroup>
 
 </Project>
