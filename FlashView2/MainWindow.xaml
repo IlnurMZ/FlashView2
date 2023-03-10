@@ -21,28 +21,28 @@
         <Menu Margin="5,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" Width="auto">
             <MenuItem Header="Файл" BorderBrush="Black" Height="25" Width="100" Padding="15,5,0,0" HorizontalContentAlignment="Center" FontFamily="Times New Roman" VerticalAlignment="Bottom" HorizontalAlignment="Center" VerticalContentAlignment="Bottom" >                
                 <MenuItem.Icon>
-                    <Image Source="/File.png" />
+                    <Image Source="/Icons/File.png" />
                 </MenuItem.Icon>
                 <MenuItem Click="MenuItemOpenFile_Click">
                     <MenuItem.Header>                      
                         <TextBlock Text="Открыть файл" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" />
                     </MenuItem.Header>
                     <MenuItem.Icon>
-                        <Image Source="/Open File.png" Height="20"/>
+                        <Image Source="/Icons/Open File.png" Height="20"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Header="Сохранить как">                   
                     <MenuItem.Icon>
                         <Image Source="/Save As.png" Height="20"/>
                     </MenuItem.Icon>
-                    <MenuItem Header="Сохранить в Excel">
+                    <MenuItem Header="Сохранить в Excel" Name="btnSaveExcel" Click="btnSaveExcel_Click">
                         <MenuItem.Icon>
-                            <Image Source="/File Excel.png" Height="25"/>
+                            <Image Source="/Icons/File Excel.png" Height="25"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem Header="Сохранить в txt">
                         <MenuItem.Icon>
-                            <Image Source="/File txt.png" Height="25"/>
+                            <Image Source="/Icons/File txt.png" Height="25"/>
                         </MenuItem.Icon>
                     </MenuItem>
                 </MenuItem>
@@ -51,14 +51,16 @@
                         <TextBlock Text="Выход" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" />
                     </MenuItem.Header>
                     <MenuItem.Icon>
-                        <Image Source="/Exit.png" Height="20"/>
+                        <Image Source="/Icons/Exit.png" Height="20"/>
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
-            <MenuItem Header="Сформировать LAS" Name="menuButtonFormLas" BorderBrush="Black" IsEnabled="False" Click="menuButtonFormLas_Click" VerticalAlignment="Center" Width="150" Height="25" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Padding="10,5,0,0" VerticalContentAlignment="Center" FontFamily="Times New Roman">                
-                
+            <MenuItem Header="Сформировать LAS" Name="menuButtonFormLas" BorderBrush="Black" Click="menuButtonFormLas_Click" 
+                      VerticalAlignment="Center" Width="150" Height="25" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Padding="10,5,0,0" 
+                      VerticalContentAlignment="Center" FontFamily="Times New Roman"
+                      IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">
                 <MenuItem.Icon>
-                    <Image Source="/Form LAS.png" Height="20"/>
+                    <Image Source="/Icons/Form LAS.png" Height="20"/>
                 </MenuItem.Icon>
             </MenuItem>
             <!--<MenuItem x:Name="TestBut" Header="Кнопка" BorderBrush="Black" Click="TestBut_Click"/>-->
