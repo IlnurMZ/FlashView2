@@ -151,6 +151,7 @@ namespace FlashView2
 
             List<Packet> packets = HandleConfigData(dataConfig);
             StatusMainWindow += $"{DateTime.Now}: Загрузка файла началась: {nameFile} \n";
+            txtBoxStatus.ScrollToEnd();
             Percent = 0;
             Packets = packets;
             ID_Device = FlashFile[1];
@@ -355,7 +356,8 @@ namespace FlashView2
                 DataTable = LoadDataTable(packets, flash);
                 IsLasFile = true;
                 StatusMainWindow += $"{DateTime.Now}: Загрузка завершена!\n";                
-            });            
+            });
+            txtBoxStatus.ScrollToEnd();
         }
         string CalculateValueByType(string typeCalc, string value, double[] data) // по типу вычисления выдаем результат
         {
@@ -520,17 +522,38 @@ namespace FlashView2
 
         public void btnSaveExcel_Click(object sender, RoutedEventArgs e)
         {
-            StatusMainWindow += $"{DateTime.Now}: Выполняется экспорт файла в Excel\n";
-            FastExportAsync();                     
+            string path;
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "excel files|*.xlsx";
+            saveFileDialog.Title = "Сохранение";
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                path = saveFileDialog.FileName;
+                StatusMainWindow += $"{DateTime.Now}: Выполняется экспорт данных в формат .xlsx\n";
+                txtBoxStatus.ScrollToEnd();
+                FastExportToExcelAsync(path);
+                txtBoxStatus.ScrollToEnd();
+            }                                    
         }
 
-        async void FastExportAsync()
+        async void FastExportToExcelAsync(string path)
         {
             await Task.Run(() =>
             {
-                FastDtToExcel();
-                StatusMainWindow += $"{DateTime.Now}: Экспорт завершен, не забудьте сохранить файл!\n";
+                FastDtToExcel(path);
+                StatusMainWindow += $"{DateTime.Now}: Экспорт данных в формат .xlsx завершен!\n";
             });
+            txtBoxStatus.ScrollToEnd();
+        }
+
+        async void FastExportToTxtAsync(string path)
+        {
+            await Task.Run(() =>
+            {
+                FastExportToTxt(path);
+                StatusMainWindow += $"{DateTime.Now}: Экспорт данных в формат .txt завершен!\n";
+            });
+            txtBoxStatus.ScrollToEnd();
         }
 
         // работает быстрее чем ExportToExcel, но жрет много памяти
@@ -599,7 +622,7 @@ namespace FlashView2
             }
         }
         // работает быстро и оптимально (пока)
-        public void FastDtToExcel(string excelFilePath = null)
+        public void FastDtToExcel(string excelFilePath)
         {            
             int firstRow = 1;
             int firstCol = 1;
@@ -623,7 +646,7 @@ namespace FlashView2
             }
             byte loadStatus = 0;
             byte tempVal;
-            int countRows = DataTable.Columns.Count;
+            int countRows = DataTable.Rows.Count;
             //loop rows and columns
             for (int i = 1; i < DataTable.Rows.Count; i++)
             {
@@ -638,13 +661,11 @@ namespace FlashView2
                     loadStatus = (byte)(tempVal + 10);
                     Percent = loadStatus;
                 }
-            }
-                
-            Percent = 0;            
+            }                    
 
             //insert value in worksheet
             all.Value2 = arrayDT;
-
+            Percent = 0;
             // check file path
             if (!string.IsNullOrEmpty(excelFilePath))
             {
@@ -652,12 +673,13 @@ namespace FlashView2
                 {
                     workSheet.SaveAs(excelFilePath);
                     excelApp.Quit();
-                    MessageBox.Show("Excel file saved!");
+                    //MessageBox.Show("Excel file saved!");
                 }
                 catch (Exception ex)
                 {
-                    throw new Exception("ExportToExcel: Excel file could not be saved! Check filepath.\n"
-                                        + ex.Message);
+                    //throw new Exception("ExportToExcel: Excel file could not be saved! Check filepath.\n"
+                    //                    + ex.Message);
+                    StatusMainWindow += $"{DateTime.Now}: {ex.Message} \n";
                 }
             }
             else
@@ -666,6 +688,63 @@ namespace FlashView2
             }
 
         }
+        public void FastExportToTxt(string txtFilePath)
+        {            
+            byte loadStatus = 0;
+            byte tempVal;
+            int countRows = DataTable.Rows.Count;
+            
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < DataTable.Columns.Count; i++)
+            {
+                sb.Append(DataTable.Columns[0].ColumnName + "   ");
+            }
 
+            for (int i = 0; i < DataTable.Rows.Count; i++)
+            {                
+                for (int j = 0; j < DataTable.Columns.Count; j++)
+                {
+                    sb.Append(DataTable.Rows[i][j].ToString() + "   ");
+                }
+                sb.AppendLine();
+
+                tempVal = (byte)(i * 1.0 / countRows * 100);
+                if (tempVal >= loadStatus)
+                {
+                    loadStatus = (byte)(tempVal + 10);
+                    Percent = loadStatus;
+                }
+            }
+
+            try
+            {
+                using (var writer = new StreamWriter(txtFilePath, true))
+                {
+                    writer.WriteLine(sb.ToString());
+                }
+            }
+            catch (Exception exception)
+            {
+                StatusMainWindow += $"{DateTime.Now}: {exception.Message} \n";
+            }
+            Percent = 0;
+        }
+        private void btnSaveTxT_Click(object sender, RoutedEventArgs e)
+        {
+            string path;
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "txt files|*.txt";
+            saveFileDialog.Title = "Сохранение";
+
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                path = saveFileDialog.FileName;
+                StatusMainWindow += $"{DateTime.Now}: Выполняется экспорт данных в формат .txt\n";
+                txtBoxStatus.ScrollToEnd();
+                FastExportToTxtAsync(path);
+                txtBoxStatus.ScrollToEnd();
+            }            
+        }
+       
     }
 }
