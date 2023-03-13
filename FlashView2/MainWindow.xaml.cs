@@ -23,6 +23,9 @@ using System.Runtime.InteropServices;
 using Microsoft.Office.Interop.Excel;
 using DataTable = System.Data.DataTable;
 using Window = System.Windows.Window;
+using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace FlashView2
 {
@@ -435,7 +438,7 @@ namespace FlashView2
             return date;
         }
 
-        System.Data.DataTable LoadDataTable(List<Packet> packets, byte[] flash)
+        DataTable LoadDataTable(List<Packet> packets, byte[] flash)
         {
             DataTable myTable = new DataTable();
 
@@ -515,15 +518,32 @@ namespace FlashView2
             return myTable;
         }
 
-        private void btnSaveExcel_Click(object sender, RoutedEventArgs e)
+        public void btnSaveExcel_Click(object sender, RoutedEventArgs e)
         {
-           
-            ToA();
+            StatusMainWindow += $"{DateTime.Now}: Выполняется экспорт файла в Excel\n";
+            FastExportAsync();                     
         }
 
+        async void FastExportAsync()
+        {
+            await Task.Run(() =>
+            {
+                FastDtToExcel();
+                StatusMainWindow += $"{DateTime.Now}: Экспорт завершен, не забудьте сохранить файл!\n";
+            });
+        }
 
-
-        public void ToA(string excelFilePath = null)
+        // работает быстрее чем ExportToExcel, но жрет много памяти
+        public void ExportToExcel2()
+        {
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add(DataTable,"Sample Sheet");                
+                workbook.SaveAs("HelloWorld.xlsx");
+            }                       
+        }
+        // очень долгий метод сохранения данных в Excel
+        public void ExportToExcel(string excelFilePath = null)
         {
             try
             {
@@ -577,6 +597,74 @@ namespace FlashView2
             {
                 throw new Exception("ExportToExcel: \n" + ex.Message);
             }
+        }
+        // работает быстро и оптимально (пока)
+        public void FastDtToExcel(string excelFilePath = null)
+        {            
+            int firstRow = 1;
+            int firstCol = 1;
+            int lastRow = DataTable.Rows.Count;
+            int lastCol = DataTable.Columns.Count;
+
+            var excelApp = new Microsoft.Office.Interop.Excel.Application();
+            excelApp.Workbooks.Add();
+
+            // single worksheet
+            _Worksheet workSheet = (_Worksheet)excelApp.ActiveSheet;
+
+            Microsoft.Office.Interop.Excel.Range top = workSheet.Cells[firstRow, firstCol];
+            Microsoft.Office.Interop.Excel.Range bottom = workSheet.Cells[lastRow, lastCol];
+            Microsoft.Office.Interop.Excel.Range all = workSheet.get_Range(top, bottom);
+            string[,] arrayDT = new string[DataTable.Rows.Count + 1, DataTable.Columns.Count]; // данные плюс заголовки данных
+
+            for (var i = 0; i < DataTable.Columns.Count; i++)
+            {
+                arrayDT[0, i] = DataTable.Columns[i].ColumnName;                
+            }
+            byte loadStatus = 0;
+            byte tempVal;
+            int countRows = DataTable.Columns.Count;
+            //loop rows and columns
+            for (int i = 1; i < DataTable.Rows.Count; i++)
+            {
+                for (int j = 0; j < DataTable.Columns.Count; j++)
+                {
+                    arrayDT[i, j] = DataTable.Rows[i][j].ToString();
+                }
+
+                tempVal = (byte)(i * 1.0 / countRows * 100);
+                if (tempVal >= loadStatus)
+                {
+                    loadStatus = (byte)(tempVal + 10);
+                    Percent = loadStatus;
+                }
+            }
+                
+            Percent = 0;            
+
+            //insert value in worksheet
+            all.Value2 = arrayDT;
+
+            // check file path
+            if (!string.IsNullOrEmpty(excelFilePath))
+            {
+                try
+                {
+                    workSheet.SaveAs(excelFilePath);
+                    excelApp.Quit();
+                    MessageBox.Show("Excel file saved!");
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("ExportToExcel: Excel file could not be saved! Check filepath.\n"
+                                        + ex.Message);
+                }
+            }
+            else
+            { // no file path is given
+                excelApp.Visible = true;
+            }
+
         }
 
     }
