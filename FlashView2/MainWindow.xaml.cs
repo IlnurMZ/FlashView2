@@ -112,6 +112,7 @@ namespace FlashView2
             openFileDialog.Title = "Выберите flash-файл с данными";
             List<List<string>> dataConfig = new List<List<string>>();
             string nameFile;
+            string pathConfig;
             if (openFileDialog.ShowDialog() == true)
             {           
                 string pathFlash = openFileDialog.FileName;
@@ -121,8 +122,11 @@ namespace FlashView2
                     // считываем данные флеш-файла
                     FlashFile = File.ReadAllBytes(pathFlash);
                     FlashFile = FlashFile.Skip(384).ToArray();
+                    ID_Device = FlashFile[1];
+                    ID_Packet = FlashFile[0];
                     // считываем данные конфиг-файла
-                    string pathConfig = "Configurations\\flashRead_NNGK_v1_07-12-2022.cfg";
+                    //string pathConfig = "Configurations\\flashRead_NNGK_v1_07-12-2022.cfg";
+                    pathConfig = GetPathConfigByParams(ID_Device, ID_Packet);
                     char[] separators = { ' ', '\t' };
                     using (var reader = new StreamReader(pathConfig))
                     {
@@ -154,9 +158,10 @@ namespace FlashView2
             txtBoxStatus.ScrollToEnd();
             Percent = 0;
             Packets = packets;
-            ID_Device = FlashFile[1];
-            ID_Packet = FlashFile[0];            
-            UpdateTable(FlashFile, packets);          
+            //ID_Device = FlashFile[1];
+            //ID_Packet = FlashFile[0];            
+            UpdateTable(FlashFile, packets);
+            txtBoxStatus.ScrollToEnd();
             //AppViewModel = new ApplicationViewModel(FlashFile, packets, nameFile);            
             //DataContext = AppViewModel;
             //AppViewModel.StatusMainWindow += $"Начинается загрузка файла {openFileDialog.FileName}\n";
@@ -165,6 +170,17 @@ namespace FlashView2
             //binding.ElementName = "IsLasFile";
             //binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
             //menuButtonFormLas.SetBinding(MenuItem.IsEnabledProperty, binding);
+        }
+
+        private string GetPathConfigByParams(byte iD_Device, byte iD_Packet)
+        {            
+            string result = "";
+            result = (iD_Device, ID_Packet) switch
+            {
+                (6,1) => "Configurations\\flashRead_NNGK_v1_07-12-2022.cfg",
+                _=> throw new Exception("Конфиг.файл не найден")
+            };
+            return result;            
         }
 
         List<Packet> HandleConfigData(List<List<string>> dataConfig)
@@ -357,9 +373,9 @@ namespace FlashView2
                 IsLasFile = true;
                 StatusMainWindow += $"{DateTime.Now}: Загрузка завершена!\n";                
             });
-            txtBoxStatus.ScrollToEnd();
+            //txtBoxStatus.ScrollToEnd();
         }
-        string CalculateValueByType(string typeCalc, string value, double[] data) // по типу вычисления выдаем результат
+        string CalculateValueByType(string typeCalc, string value, double[] data, byte countSign) // по типу вычисления выдаем результат
         {
             string result = "";
             switch (typeCalc) // смотрим тип вычисления
@@ -371,7 +387,14 @@ namespace FlashView2
                 case "лин":
                     if (double.TryParse(value, out double doubleValue))
                     {
-                        result = (data[0] * doubleValue + data[1]).ToString();
+                        if (countSign > 0)
+                        {
+                            result = Math.Round((data[0] * doubleValue + data[1]), countSign).ToString();
+                        }
+                        else
+                        {
+                            result = (data[0] * doubleValue + data[1]).ToString();
+                        }
                     }
                     else
                     {
@@ -444,11 +467,20 @@ namespace FlashView2
         {
             DataTable myTable = new DataTable();
 
+            myTable.Columns.Add("N");            
             foreach (var item in packets[0].HeaderColumns)
             {
-                myTable.Columns.Add(item);
+                string[] splitHeader = item.Split('/');
+                if (splitHeader.Length == 2)
+                {
+                    myTable.Columns.Add(splitHeader[0] + "\\" + "\n" + splitHeader[1]);
+                }
+                else
+                {
+                    myTable.Columns.Add(item);
+                }                
             }
-
+            
             int countColumn = packets[0].HeaderColumns.Count;
 
             // вычисляем изначальные id пакета и устройства
@@ -458,49 +490,83 @@ namespace FlashView2
             var myPacket = packets[0];
             byte[] endLinePacket = myPacket.endLine;
             int countByteRow = myPacket.LengthLine; // количество байт на строку
-            byte countParams = (byte)myPacket.TypeParams.Count; // количество столбцов
-            int countBadByte = 0;
+            byte countParams = (byte)myPacket.TypeParams.Count; // количество столбцов            
             DataRow row;
             byte loadStatus = 0;
             byte tempVal;
+            //int countRows = 0;
+            int countBadBites = 0;
+            int countBadTimes = 0;
+            bool isBadLine = false;
+            bool isBadTime = false;
 
-            for (int i = 0; i < flash.Length; i++) // FlashFile.Length; i++)
+            for (int i = 0; i < flash.Length; i++) 
             {
                 // условие захода в начало строки
                 bool isGoodStartLine = flash[i] == idPacketArray && flash[i + 1] == idDeviceArray;
 
                 if (i + countByteRow > flash.Length) // проверка завершенности строки, чтобы исключить выход за пределы массива байт
                 {
+                    if (isBadTime)
+                    {
+                        StatusMainWindow += $"{DateTime.Now}: Ошибка данных (не удалось определить время), после строки {myTable.Rows.Count}, количество строк: {countBadTimes}\n";
+                        isBadTime = false;
+                        countBadTimes = 0;
+                    }
+                    countBadBites += flash.Length - i;
+                    StatusMainWindow += $"{DateTime.Now}: Ошибка конца файла, после строки {myTable.Rows.Count}, количество ошибочных байт: {countBadBites}\n";
                     break;
                 }
                 // проверка двух байт на конец строки
                 bool isGoodEndLine = flash[i + countByteRow - 2] == endLinePacket[0] && flash[i + countByteRow - 1] == endLinePacket[1];
                 try
                 {
-                    if (isGoodStartLine && isGoodEndLine) // проверка совпадения на начало строки
+                    if (isGoodStartLine && isGoodEndLine) // проверка совпадения на начало и конец строки
                     {
-                        row = myTable.NewRow(); // создаем строку для таблицы
-                        for (int j = 0; j < countParams; j++)
+                        if (isBadLine)
                         {
-                            byte countByte = myPacket.LengthParams[j]; // определяем количество байт на параметр
+                            StatusMainWindow += $"{DateTime.Now}: Ошибка после {myTable.Rows.Count} строки, количество ошибочных байт: {countBadBites}\n";
+                            countBadBites = 0;
+                            isBadLine = false;
+                        } 
+
+                        row = myTable.NewRow(); // создаем строку для таблицы
+                        for (int j = 0; j < countParams + 1; j++) // добавил счетчик строк
+                        {
+                            if (j == 0)
+                            {
+                                row[j] = " " + (myTable.Rows.Count + 1).ToString() + " ";                                
+                                continue;
+                            }
+                            byte countByte = myPacket.LengthParams[j-1]; // определяем количество байт на параметр
                             byte[] values = new byte[countByte]; // берем необходимое количество байт                   
                             Array.Copy(flash, i, values, 0, countByte); // копируем наш кусок
 
-                            string valueA = GetValueByType(myPacket.TypeParams[j], values); // вычисляем значение по типу данных
-                            string valueB = CalculateValueByType(myPacket.TypeCalculate[j], valueA, myPacket.DataCalculation[j]); // вычисляем пересчет данного по типу
-                            row[j] = valueB;
-                            i += countByte; // смещаем курсор по общему массиву байт
+                            string valueA = GetValueByType(myPacket.TypeParams[j-1], values); // вычисляем значение по типу данных
+                            string valueB = CalculateValueByType(myPacket.TypeCalculate[j - 1], valueA, myPacket.DataCalculation[j - 1], myPacket.CountSign[j-1]); // вычисляем пересчет данного по типу
+                            row[j] = " " + valueB + " ";                            
+                            i += countByte; // смещаем курсор по общему массиву байт                            
+                        }
+
+                        if (isBadTime)
+                        {
+                            StatusMainWindow += $"{DateTime.Now}: Ошибка данных (не удалось определить время), после строки {myTable.Rows.Count}, количество строк: {countBadTimes}\n";
+                            isBadTime = false;
+                            countBadTimes = 0;
                         }
                         i--;
-                        myTable.Rows.Add(row);
+                        myTable.Rows.Add(row);                     
                     }
                     else
                     {
-                        countBadByte++;
+                        isBadLine = true;
+                        countBadBites++;
                     }
                 }
                 catch (FormatException)
                 {
+                    isBadTime = true;
+                    countBadTimes++;
                     i += 29;
                     continue;
                 }

@@ -81,9 +81,9 @@
                     </ItemsPanelTemplate>
                 </StatusBar.ItemsPanel>
                 <StatusBarItem VerticalAlignment="Top" Margin="0,10,0,0">
-                    <TextBox Text="{Binding StatusMainWindow, UpdateSourceTrigger=PropertyChanged}" Name="txtBoxStatus" Width="1520" Height="32"
+                    <TextBox Text="{Binding StatusMainWindow, UpdateSourceTrigger=PropertyChanged}" Name="txtBoxStatus" Width="1520" Height="33"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" 
-                             TextWrapping="Wrap" AcceptsReturn="True"/>
+                             TextWrapping="Wrap" />
                     <!--Text="{Binding StatusMainWindow, UpdateSourceTrigger=PropertyChanged}"-->
                 </StatusBarItem>
                 <Separator Grid.Column="1" />
