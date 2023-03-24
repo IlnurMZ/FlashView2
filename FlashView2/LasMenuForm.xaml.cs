@@ -38,17 +38,17 @@ namespace FlashView2
         DataRowCollection DataRowAVM { get; set; }
         Dictionary<double, List<string>> DepthTimeDetail;
 
-        string fileName;
-        public string FileName 
+        string statusLasMenu;
+        public string StatusLasMenu 
         { 
             get
             {
-                return fileName;
+                return statusLasMenu;
             }
             set
             {
-                fileName = value;
-                OnPropertyChanged("FileName");
+                statusLasMenu = value;
+                OnPropertyChanged("StatusLasMenu");
             } 
         }
         DataTable dataTable;
@@ -67,8 +67,7 @@ namespace FlashView2
 
         public LasMenuForm(DataRowCollection dataRows)
         {
-            DataRowAVM = dataRows;
-            FileName = "File name";
+            DataRowAVM = dataRows;            
             isLineCalc = true;
             StartTimeRead = DateTime.Now.ToString();
             EndTimeRead = DateTime.Now.AddHours(2).ToString();
@@ -82,10 +81,18 @@ namespace FlashView2
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(prop));
         }
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {           
+        private void Button_FormLasClick(object sender, RoutedEventArgs e)
+        {
+            ChoiseCalibrData();
+            UpdateDepthDate();
+            FindNearestTimeValue();
+            MessageBox.Show("Las file сформирован!");
+        }
+
+        private void ChoiseCalibrData()
+        {
             string typeOfCalc;
-            string diamTruba = "труба " + lb1_truba.Text;            
+            string diamTruba = "труба " + lb1_truba.Text;
 
             if (isLineCalc)
             {
@@ -127,9 +134,6 @@ namespace FlashView2
                     break;
                 }
             }
-            UpdateDepthDate();           
-            FindNearestTimeValue();
-            MessageBox.Show("Las file сформирован!");
         }
 
         // метод деления глубины по 10 см и перераспределения времени
@@ -358,8 +362,7 @@ namespace FlashView2
                         timeEndMetr = new DateTime();
                     }
                     else
-                    {
-                        //int counterFlash = startPosFlashTime;
+                    {                        
                         for (int k1 = startPosDepTime; k1 <= endPosDepTime; k1++)
                         {
                             DateTime a = new DateTime();
@@ -485,7 +488,9 @@ namespace FlashView2
             {
                 FileDepthAndTime = new List<string[]>();
                 path = openFileDialog.FileName;
-                FileName = openFileDialog.SafeFileName;
+                // FileName = openFileDialog.SafeFileName;
+                StatusLasMenu += $"{DateTime.Now}: Загрузка файла началась: {openFileDialog.SafeFileName} \n"; ;
+
                 try
                 {
                     Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);                   
@@ -584,32 +589,42 @@ namespace FlashView2
 
                 DataTable = dt;
                 dtg_DepthAndTime.HorizontalAlignment = HorizontalAlignment.Center;                            
-            }
+            }            
+        }
+
+        void OpenCalibrFile()
+        {
+            OpenFileDialog openCalibrFile = new OpenFileDialog();
+            openCalibrFile.Filter = "Калибровочный файл|*.nk";
             // считываем данные из калибровочного файла
-            try
+            if (openCalibrFile.ShowDialog() == true)
             {
-                FileColibr = new List<string[]>();
-                using (var reader = new StreamReader(@"Calibrations\NNK_10_25.08.2022.nk", Encoding.GetEncoding(1251)))
+                try
                 {
-                    while (!reader.EndOfStream)
+                    // надо переделать выбор калибровочного файла
+                    FileColibr = new List<string[]>();
+                    using (var reader = new StreamReader(openCalibrFile.FileName, Encoding.GetEncoding(1251)))
                     {
-                        string line = reader.ReadLine();
-                        if (!string.IsNullOrEmpty(line))
+                        while (!reader.EndOfStream)
                         {
-                            var splitLine = line.Split(':');
-                            if (splitLine.Length > 1)
+                            string line = reader.ReadLine();
+                            if (!string.IsNullOrEmpty(line))
                             {
-                                FileColibr.Add(splitLine);
+                                var splitLine = line.Split(':');
+                                if (splitLine.Length > 1)
+                                {
+                                    FileColibr.Add(splitLine);
+                                }
                             }
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-            btn_FormLas.IsEnabled = true;
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                btn_FormLas.IsEnabled = true;
+            }            
         }
 
         void r2_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)

@@ -26,6 +26,7 @@ using Window = System.Windows.Window;
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Wordprocessing;
+using DocumentFormat.OpenXml.Drawing;
 
 namespace FlashView2
 {
@@ -63,7 +64,6 @@ namespace FlashView2
                 OnPropertyChanged("IsLasFile");
             }
         }
-
               
         private int percent; // проценты загрузки для прогресбара
         public int Percent
@@ -78,7 +78,6 @@ namespace FlashView2
                 OnPropertyChanged("Percent");
             }
         }
-
         private DataTable dataTable; // таблица для datagrid1  
         public DataTable DataTable
         {
@@ -91,22 +90,29 @@ namespace FlashView2
                 dataTable = value;
                 OnPropertyChanged("DataTable");
             }
-        }
-        public byte ID_Device { get; set; }
-        public byte ID_Packet { get; set; }
-        public List<Packet> Packets { get; set; }
-        //public ApplicationViewModel AppViewModel { get; set; }
-        LasMenuForm _lasMenuForm;   
-
+        }        
+        LasMenuForm _lasMenuForm;        
+        List<ConfFileInfo> confFilesInfo;
+        Packet mainPacket;
         public MainWindow()
         {
             InitializeComponent();           
             DataContext = this;
-            IsLasFile = false;
+            IsLasFile = false;            
+            confFilesInfo = new List<ConfFileInfo>();            
+            try
+            {
+                LoadSeachInfo();
+            }
+            catch
+            {
+                System.Windows.Application.Current.Shutdown();
+            }
         }
 
         public void MenuItemOpenFile_Click(object sender, RoutedEventArgs e)
         {
+            mainPacket = new Packet();
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Flash Files|*.fl";
             openFileDialog.Title = "Выберите flash-файл с данными";
@@ -122,25 +128,80 @@ namespace FlashView2
                     // считываем данные флеш-файла
                     FlashFile = File.ReadAllBytes(pathFlash);
                     FlashFile = FlashFile.Skip(384).ToArray();
-                    ID_Device = FlashFile[1];
-                    ID_Packet = FlashFile[0];
-                    // считываем данные конфиг-файла
-                    //string pathConfig = "Configurations\\flashRead_NNGK_v1_07-12-2022.cfg";
-                    pathConfig = GetPathConfigByParams(ID_Device, ID_Packet);
-                    char[] separators = { ' ', '\t' };
-                    using (var reader = new StreamReader(pathConfig))
+                    string secachPathCong = "";
+                    for (int i = 0; i < FlashFile.Length; i++)
                     {
-                        while (!reader.EndOfStream)
+                        foreach (var cf in confFilesInfo)
                         {
-                            var row = reader.ReadLine();
-
-                            if (!string.IsNullOrWhiteSpace(row))
+                            if (i + cf.LengthLine + 1< FlashFile.Length)
                             {
-                                string[] line = row.Split(separators, StringSplitOptions.RemoveEmptyEntries);
-                                dataConfig.Add(new List<string>(line));
+                                bool isStart = cf.StartBytes[0] == FlashFile[i] && cf.StartBytes[1] == FlashFile[i + 1];
+                                bool isEnd = false;
+                                // если нет конца строки
+                                if (cf.EndBytes[0] == 0 && cf.EndBytes[1] == 0)
+                                {
+                                    isEnd = cf.StartBytes[0] == FlashFile[i + cf.LengthLine] && cf.StartBytes[1] == FlashFile[i + cf.LengthLine + 1];
+                                }
+                                else
+                                {
+                                    isEnd = cf.EndBytes[0] == FlashFile[i + cf.LengthLine - 2] && cf.EndBytes[1] == FlashFile[i + cf.LengthLine - 1];
+                                }                                
+                                
+                                if (isStart && isEnd)
+                                {
+                                    secachPathCong = cf.PathFile;                                    
+                                    mainPacket.ID_Packet = cf.StartBytes[0];
+                                    mainPacket.ID_Device = cf.StartBytes[1];
+                                    mainPacket.endLine[0] = cf.EndBytes[0];
+                                    mainPacket.endLine[1] = cf.EndBytes[1];
+                                    break;
+                                }
+                            }
+                        }
+                        if (mainPacket.ID_Device != 0)
+                        {
+                            break;
+                        }
+                    }
+
+                    if (mainPacket.ID_Device == 0)
+                    {
+                        StatusMainWindow+= $"{DateTime.Now}: Возникла ошибка: подходящий конфигурационный файл не найден\n";
+                        return;
+                    }
+
+                    if (!string.IsNullOrEmpty(secachPathCong))
+                    {
+                        //считываем данные конфиг - файла
+                        
+                        char[] separators = { ' ', '\t' };
+                        using (var reader = new StreamReader(secachPathCong))
+                        {
+                            bool isStartData = false;
+                            while (!reader.EndOfStream)
+                            {
+                                var row = reader.ReadLine();
+
+                                if (!string.IsNullOrWhiteSpace(row))
+                                {
+                                    if (!isStartData && row.Contains($"~{mainPacket.ID_Packet}"))
+                                    {
+                                        isStartData = true;
+                                    }
+                                    else if (isStartData)
+                                    {
+                                        if (row.StartsWith('#'))
+                                        {
+                                            break;
+                                        }
+                                        string[] line = row.TrimStart('*').Split(separators, StringSplitOptions.RemoveEmptyEntries);
+                                        dataConfig.Add(new List<string>(line));
+                                    }                                   
+                                }
                             }
                         }
                     }                    
+
                 }
                 catch (Exception ex)
                 {
@@ -152,187 +213,72 @@ namespace FlashView2
             {
                 return;
             }
-
-            List<Packet> packets = HandleConfigData(dataConfig);
+            
+            HandleConfigData(dataConfig);
             StatusMainWindow += $"{DateTime.Now}: Загрузка файла началась: {nameFile} \n";
             txtBoxStatus.ScrollToEnd();
-            Percent = 0;
-            Packets = packets;
-            //ID_Device = FlashFile[1];
-            //ID_Packet = FlashFile[0];            
-            UpdateTable(FlashFile, packets);
-            txtBoxStatus.ScrollToEnd();
-            //AppViewModel = new ApplicationViewModel(FlashFile, packets, nameFile);            
-            //DataContext = AppViewModel;
-            //AppViewModel.StatusMainWindow += $"Начинается загрузка файла {openFileDialog.FileName}\n";
-            // делаем привязку кнопки формирования las-файла к переменной IsLasFile
-            //Binding binding = new Binding();
-            //binding.ElementName = "IsLasFile";
-            //binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
-            //menuButtonFormLas.SetBinding(MenuItem.IsEnabledProperty, binding);
+            Percent = 0;                     
+            UpdateTable(FlashFile, mainPacket);
+            txtBoxStatus.ScrollToEnd();           
         }
+  
 
-        private string GetPathConfigByParams(byte iD_Device, byte iD_Packet)
-        {            
-            string result = "";
-            result = (iD_Device, ID_Packet) switch
-            {
-                (6,1) => "Configurations\\flashRead_NNGK_v1_07-12-2022.cfg",
-                _=> throw new Exception("Конфиг.файл не найден")
-            };
-            return result;            
-        }
-
-        List<Packet> HandleConfigData(List<List<string>> dataConfig)
+        void HandleConfigData(List<List<string>> dataConfig)
         {
-            // расфасовываем данные нужным образом          
-            string idDevice = "";
-            string idPacket = "";
-            string version = dataConfig[0][0];
-            List<List<string>> DeviceParam = new(); // переработанный массив для выгрузки данных
-
-            for (int i = 1; i < dataConfig.Count; i++)
-            {
-                for (int j = 0; j < dataConfig[i].Count; j++)
+            for (int i = 0; i < dataConfig.Count; i++)
+            {                
+                var list = dataConfig[i];
+                byte length = list[0] switch
                 {
-
-                    if (dataConfig[i][0][0] == '@' && dataConfig[i + 2][0][0] == '@') // вычисляем id устройства, обрамленное @
-                    {
-                        idDevice = dataConfig[i + 1][0];
-                        i = i + 2;
-                        break;
-                    }
-
-                    if (dataConfig[i][j][0] == '~' && idDevice != "") // вычисляем id пакета
-                    {
-                        idPacket = dataConfig[i][j].Trim('~');
-                        do
-                        {
-                            i++;
-                            List<string> data = new();
-                            data.Add(idPacket);
-                            data.Add(idDevice);
-                            if (dataConfig[i][0][0] == '*')
-                            {
-                                dataConfig[i].RemoveAt(0);
-                            }
-                            else
-                            {
-                                throw new Exception("Ошибка описания строки данных flash");                                
-                            }
-                            data.AddRange(dataConfig[i]);
-                            DeviceParam.Add(new List<string>(data));
-                            if (dataConfig[i + 1][0][0] == '#') // записываем конец строки, удаляем лишние символы
-                            {
-                                dataConfig[i + 1].RemoveAll(x => x == "#" || x == "H" || x == "h"); // удаляем лишние элементы из Листа
-                                List<string> str = dataConfig[i + 1];
-                                DeviceParam.Add(new List<string>(str));
-                                break;
-                            }
-                        } while (true);
-                        i++;
-                    }
+                    "byteUs" => 1,
+                    "byteS" => 1,
+                    "shortUs" => 2,
+                    "shortS" => 2,
+                    "intS" => 4,
+                    "intUs" => 4,
+                    "bdTime" => 6,
+                    _ => 0
+                };
+                if (length == 0)
+                {
+                    throw new Exception("Неопознанное обозначение типа данных в конф.файле");
                 }
-            }
-
-            // далее идет переработка фассованных данных и создание пакетов
-            List<Packet> PacketsSettings = new();
-
-            for (int i = 0; i < DeviceParam.Count; i++)
-            {
-                var packet = new Packet();
-
-                try
+                mainPacket.LengthLine += length;
+                mainPacket.LengthParams.Add(length);
+                mainPacket.TypeParams.Add(list[0]);
+                if (list[3] == "[]")
                 {
-                    packet.ID_Packet = byte.Parse(DeviceParam[i][0]);
-                    packet.ID_Device = byte.Parse(DeviceParam[i][1]);
+                    mainPacket.HeaderColumns.Add(list[2]); //.Trim('[', ']')
                 }
-                catch (Exception ex)
+                else
                 {
-                    //MessageBox.Show(ex.Message);
-                    throw new Exception(ex.Message);
+                    mainPacket.HeaderColumns.Add($"{list[2]} {list[3]}"); // .Trim('[', ']')
                 }
 
-                do
-                {
-                    var list = DeviceParam[i];
-                    byte length = list[2] switch
-                    {
-                        "byteUs" => 1,
-                        "byteS" => 1,
-                        "shortUs" => 2,
-                        "shortS" => 2,
-                        "intS" => 4,
-                        "intUs" => 4,
-                        "bdTime" => 6,
-                        _ => 0
-                    };
-                    if (length == 0)
-                    {                        
-                        throw new Exception("Неопознанное обозначение типа данных в конф.файле");
-                    }
-                    packet.LengthLine += length;
-                    packet.LengthParams.Add(length);
-                    packet.TypeParams.Add(list[2]);
-                    if (list[5] == "[]")
-                    {
-                        packet.HeaderColumns.Add(list[4]);
-                    }
-                    else
-                    {
-                        packet.HeaderColumns.Add($"{list[4]} {list[5]}");
-                    }
+                // пропускаем значение неопределенности
+                mainPacket.TypeCalculate.Add(list[5]);
+                double[] data = new double[4];
 
-                    // пропускаем значение неопределенности
-                    packet.TypeCalculate.Add(list[7]);
-                    double[] data = new double[4];
-
-                    for (int j = 8; j <= 11; j++)
+                for (int j = 6; j <= 9; j++)
                     {
                         bool isParseDouble = double.TryParse(list[j], NumberStyles.Any, CultureInfo.InvariantCulture, out double value);
                         if (!isParseDouble)
                         {                            
                             MessageBox.Show("Ошибка парсинга чисел для пересчета данного");                            
                         }
-                        data[j - 8] = value;
+                        data[j - 6] = value;
                     }
-                    packet.DataCalculation.Add(data); // загоняем коэффициенты для пересчета
-                    bool isCountWidth = byte.TryParse(list[12], out byte resultCount);
-                    bool isParseWidth = byte.TryParse(list[13], out byte resultWindth);
+                mainPacket.DataCalculation.Add(data); // загоняем коэффициенты для пересчета
+                    bool isCountWidth = byte.TryParse(list[10], out byte resultCount);
+                    bool isParseWidth = byte.TryParse(list[11], out byte resultWindth);
 
                     if (!isParseWidth && !isCountWidth)
                     {                        
                         throw new Exception("Ошибка парсинга чисел для пересчета данного");
                     }
-                    packet.CountSign.Add(resultCount);
-                    packet.WidthColumn.Add(resultWindth);
-                    i++;
-                } while (DeviceParam[i].Count != 2 && DeviceParam[i].Count != 0);
-
-                if (DeviceParam[i].Count == 2)
-                {
-                    try
-                    {
-                        byte one = byte.Parse(DeviceParam[i][0]);
-                        byte two = byte.Parse(DeviceParam[i][1]);
-                        packet.endLine[0] = one;
-                        packet.endLine[1] = two;
-                    }
-                    catch (Exception ex)
-                    {                        
-                        throw new Exception("Не удалось сконвертировать конец строки в байты.\n" + ex.Message);
-                    }
-
-                }
-                else if (DeviceParam[i].Count == 0)
-                {
-                    packet.endLine[0] = 0;
-                    packet.endLine[0] = 0;
-                }               
-                PacketsSettings.Add(packet);
-            }
-            
-            return PacketsSettings;
+                mainPacket.CountSign.Add(resultCount);
+                mainPacket.WidthColumn.Add(resultWindth);                   
+            }           
         }
 
         void MenuItemCloseProgram_Click(object sender, RoutedEventArgs e)
@@ -365,145 +311,54 @@ namespace FlashView2
                 PropertyChanged(this, new PropertyChangedEventArgs(prop));
         }
 
-        async void UpdateTable(byte[] flash, List<Packet> packets)
+        async void UpdateTable(byte[] flash, Packet packet)
         {
             await Task.Run(() =>
             {
-                DataTable = LoadDataTable(packets, flash);
+                DataTable = LoadDataTable(packet, flash);
                 IsLasFile = true;
                 StatusMainWindow += $"{DateTime.Now}: Загрузка завершена!\n";                
             });
             //txtBoxStatus.ScrollToEnd();
-        }
-        string CalculateValueByType(string typeCalc, string value, double[] data, byte countSign) // по типу вычисления выдаем результат
-        {
-            string result = "";
-            switch (typeCalc) // смотрим тип вычисления
-            {
-                case "нет":
-                case "вр":
-                    result = value;
-                    break;
-                case "лин":
-                    if (double.TryParse(value, out double doubleValue))
-                    {
-                        if (countSign > 0)
-                        {
-                            result = Math.Round((data[0] * doubleValue + data[1]), countSign).ToString();
-                        }
-                        else
-                        {
-                            result = (data[0] * doubleValue + data[1]).ToString();
-                        }
-                    }
-                    else
-                    {
-                        throw new Exception("не удалось преобразовать данное при лин.вычислении");
-                    }
-                    break;
-                default:
-                    break;
-            }
-            return result;
-        }
-
-        string GetValueByType(string typeValue, byte[] value)
-        {
-            string result = "";
-            switch (typeValue)
-            {
-                case "byteS":
-                    result = ((sbyte)(value[0])).ToString();
-                    break;
-                case "byteUs":
-                    result = ((byte)(value[0])).ToString();
-                    break;
-                case "shortS":
-                    result = ((short)(value[0] | (value[1] << 8))).ToString();
-                    break;
-                case "shortUs":
-                    result = ((ushort)(value[0] | (value[1] << 8))).ToString();
-                    break;
-                //case "intS":
-                //    break;
-                //case "intUs":
-                //    break;
-                case "bdTime":
-                    result = GetbdTime(value);
-                    break;
-                default:
-                    throw new FormatException("неизвестный тип данных");
-            }
-            return result;
-        }
-
-        string GetbdTime(Byte[] array)
-        {
-            string dateTime = Convert.ToHexString(array);
-            string second = "";
-            string minute = "";
-            string hour = "";
-            string day = "";
-            string month = "";
-            string year = "";
-            string date;
-
-            second = dateTime[0].ToString() + dateTime[1].ToString();
-            minute = dateTime[2].ToString() + dateTime[3].ToString();
-            hour = dateTime[4].ToString() + dateTime[5].ToString();
-            day = dateTime[6].ToString() + dateTime[7].ToString();
-            month = dateTime[8].ToString() + dateTime[9].ToString();
-            year = dateTime[10].ToString() + dateTime[11].ToString();
-            //date = new DateTime(year, month, day, hour, minute, second);
-            date = $"{hour}:{minute}:{second} {day}.{month}.{year}";
-            if (!DateTime.TryParse(date, out DateTime timeTest))
-            {
-                throw new FormatException("Ошибка формата времени");
-            }
-            return date;
-        }
-
-        DataTable LoadDataTable(List<Packet> packets, byte[] flash)
+        }        
+        DataTable LoadDataTable(Packet packetData, byte[] flash)
         {
             DataTable myTable = new DataTable();
 
             myTable.Columns.Add("N");            
-            foreach (var item in packets[0].HeaderColumns)
+            foreach (var item in packetData.HeaderColumns)
             {
-                string[] splitHeader = item.Split('/');
+                string[] splitHeader = item.Split('_');
                 if (splitHeader.Length == 2)
                 {
-                    myTable.Columns.Add(splitHeader[0] + "\\" + "\n" + splitHeader[1]);
+                    myTable.Columns.Add(splitHeader[0]  + "\n" + splitHeader[1]);
                 }
                 else
                 {
                     myTable.Columns.Add(item);
-                }                
-            }
-            
-            int countColumn = packets[0].HeaderColumns.Count;
-
-            // вычисляем изначальные id пакета и устройства
-            byte idPacketArray = flash[0];
-            byte idDeviceArray = flash[1];
-            // выбираем нужный пакет исходя из id-шников 
-            var myPacket = packets[0];
-            byte[] endLinePacket = myPacket.endLine;
-            int countByteRow = myPacket.LengthLine; // количество байт на строку
-            byte countParams = (byte)myPacket.TypeParams.Count; // количество столбцов            
+                }
+            }            
+           
+            int countByteRow = packetData.LengthLine; // количество байт на строку
+            byte countParams = (byte)packetData.TypeParams.Count; // количество столбцов            
             DataRow row;
             byte loadStatus = 0;
-            byte tempVal;
-            //int countRows = 0;
+            byte tempVal;            
             int countBadBites = 0;
             int countBadTimes = 0;
             bool isBadLine = false;
             bool isBadTime = false;
+            bool isZeroEndLine = false;
+
+            if (mainPacket.endLine[0] == 0 && mainPacket.endLine[1] == 0)
+            {
+                isZeroEndLine = true;
+            }
 
             for (int i = 0; i < flash.Length; i++) 
             {
                 // условие захода в начало строки
-                bool isGoodStartLine = flash[i] == idPacketArray && flash[i + 1] == idDeviceArray;
+                bool isGoodStartLine = flash[i] == mainPacket.ID_Packet && flash[i + 1] == mainPacket.ID_Device;
 
                 if (i + countByteRow > flash.Length) // проверка завершенности строки, чтобы исключить выход за пределы массива байт
                 {
@@ -517,8 +372,18 @@ namespace FlashView2
                     StatusMainWindow += $"{DateTime.Now}: Ошибка конца файла, после строки {myTable.Rows.Count}, количество ошибочных байт: {countBadBites}\n";
                     break;
                 }
+                bool isGoodEndLine = false;
                 // проверка двух байт на конец строки
-                bool isGoodEndLine = flash[i + countByteRow - 2] == endLinePacket[0] && flash[i + countByteRow - 1] == endLinePacket[1];
+                if (isZeroEndLine)// && i + countByteRow + 1 < flash.Length
+                {
+                    isGoodEndLine = true;
+                    //isGoodEndLine = flash[i + countByteRow] == mainPacket.ID_Packet && flash[i + countByteRow + 1] == mainPacket.ID_Device;
+                }
+                else if (!isZeroEndLine)
+                {
+                    isGoodEndLine = flash[i + countByteRow - 2] == packetData.endLine[0] && flash[i + countByteRow - 1] == packetData.endLine[1];
+                }
+                
                 try
                 {
                     if (isGoodStartLine && isGoodEndLine) // проверка совпадения на начало и конец строки
@@ -538,12 +403,12 @@ namespace FlashView2
                                 row[j] = " " + (myTable.Rows.Count + 1).ToString() + " ";                                
                                 continue;
                             }
-                            byte countByte = myPacket.LengthParams[j-1]; // определяем количество байт на параметр
+                            byte countByte = packetData.LengthParams[j-1]; // определяем количество байт на параметр
                             byte[] values = new byte[countByte]; // берем необходимое количество байт                   
                             Array.Copy(flash, i, values, 0, countByte); // копируем наш кусок
 
-                            string valueA = GetValueByType(myPacket.TypeParams[j-1], values); // вычисляем значение по типу данных
-                            string valueB = CalculateValueByType(myPacket.TypeCalculate[j - 1], valueA, myPacket.DataCalculation[j - 1], myPacket.CountSign[j-1]); // вычисляем пересчет данного по типу
+                            string valueA = packetData.GetValueByType(packetData.TypeParams[j-1], values); // вычисляем значение по типу данных
+                            string valueB = packetData.CalculateValueByType(packetData.TypeCalculate[j - 1], valueA, packetData.DataCalculation[j - 1], packetData.CountSign[j-1]); // вычисляем пересчет данного по типу
                             row[j] = " " + valueB + " ";                            
                             i += countByte; // смещаем курсор по общему массиву байт                            
                         }
@@ -585,7 +450,7 @@ namespace FlashView2
             Percent = 0;
             return myTable;
         }
-
+        // нажатие кнопки сохранить файл
         public void btnSaveExcel_Click(object sender, RoutedEventArgs e)
         {
             string path;
@@ -600,8 +465,7 @@ namespace FlashView2
                 FastExportToExcelAsync(path);
                 txtBoxStatus.ScrollToEnd();
             }                                    
-        }
-
+        }        
         async void FastExportToExcelAsync(string path)
         {
             await Task.Run(() =>
@@ -811,6 +675,59 @@ namespace FlashView2
                 txtBoxStatus.ScrollToEnd();
             }            
         }
-       
+        void LoadSeachInfo()
+        {
+            string pathConfig = "Configurations";            
+
+            if (Directory.Exists(pathConfig))
+            {
+                var catalogConfigs = Directory.GetFiles("Configurations", "*.cfg");                
+                foreach (var path in catalogConfigs)
+                {
+                    List<byte[][]> data = new List<byte[][]>();
+                    try
+                    {
+                        using (var reader = new StreamReader(path))
+                        {
+                            while (!reader.EndOfStream)
+                            {
+                                var row = reader.ReadLine();
+                                if (!string.IsNullOrWhiteSpace(row))
+                                {
+                                    if (row.Contains('@'))
+                                    {
+                                        var arrayParams = row.Trim('@').Split('|', StringSplitOptions.RemoveEmptyEntries);
+                                        var array = arrayParams.Select(x => x.Split(" ", StringSplitOptions.RemoveEmptyEntries)).ToArray();
+                                        byte[][] bytes = Array.ConvertAll(array, x => x.Select(y => byte.Parse(y)).ToArray());                                    
+                                        ConfFileInfo cf = new ConfFileInfo(path, bytes[0], bytes[1], bytes[2][0]);
+                                        confFilesInfo.Add(cf);                                       
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
+                                }
+                            }                        
+                        }
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Возникла ошибка в ходе поиска и обработки конфиг. файлов");
+                        throw new Exception();
+                    }
+                }
+                if (confFilesInfo.Count == 0)
+                { 
+                    MessageBox.Show("В папке Configurations отсутствуют подходящие файлы конфигурации");
+                    throw new Exception();
+                }
+            }
+            else
+            {
+               MessageBox.Show("Остуствует папка Configurations с файлами конфигурации.\n" +
+                   "Необходимо скопировать папку и перезапустить программу!");
+                throw new Exception();
+            }
+        }
     }
 }

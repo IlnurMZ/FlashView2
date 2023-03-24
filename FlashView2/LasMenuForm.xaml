@@ -55,7 +55,7 @@
                     <RadioButton Name="rb2_Kvad" Margin="5">По квадратичной зависимости</RadioButton>
                 </StackPanel>
             </GroupBox>
-            <Button Name="btn_FormLas" Click="Button_Click" Content="Сформировать LAS" Margin="15" Width="200" Height="40" HorizontalAlignment="Left" IsEnabled="False"/>
+            <Button Name="btn_FormLas" Click="Button_FormLasClick" Content="Сформировать LAS" Margin="15" Width="200" Height="40" HorizontalAlignment="Left" IsEnabled="False"/>
         </StackPanel>
         <GroupBox Grid.Column="0" Grid.Row="1" Height="140" Width="200" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
             <GroupBox.Header>
@@ -88,7 +88,8 @@
                     </ItemsPanelTemplate>
                 </StatusBar.ItemsPanel>
                 <StatusBarItem Margin="5">
-                    <TextBlock Name="lblStatus" Text="{Binding FileName, UpdateSourceTrigger=PropertyChanged}" Margin="10"/>
+                    <TextBox Name="txtBoxStatusLas" Text="{Binding StatusLasMenu, UpdateSourceTrigger=PropertyChanged}" Width="738" Height="33"
+                               TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" />
                 </StatusBarItem>
                 <Separator Grid.Column="1" />
                 <StatusBarItem Grid.Column="2">
