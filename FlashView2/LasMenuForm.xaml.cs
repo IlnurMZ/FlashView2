@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.Common;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -27,17 +28,81 @@ namespace FlashView2
     /// Interaction logic for LasMenuForm.xaml
     /// </summary>
     public partial class LasMenuForm : Window, INotifyPropertyChanged
-    {
-        public string StartTimeRead { get; set; } // Стартовое время считывания
-        public string EndTimeRead { get; set; } // Конечное время считывания
-        public string DiamOfTrub { get; set; } // диаметр трубы
-        public bool isLineCalc { get; set; } // тип расчета Кп (линейный или квардратичный)
+    {       
+        public bool isLineCalc { get; set; } // тип расчета Кп (линейный или квардратичный)                               
+        public bool IsSetInterval { get; set; } // проверка включения радиобатона "В задаваемом интервале"        
+        DateTime startDateTime;
+        public DateTime StartTimeRead
+        {
+            get
+            {
+                return startDateTime;
+            }
+            set
+            {
+                startDateTime = value;
+                OnPropertyChanged("StartTimeRead");
+            }
+        } // Стартовое времея считывания
+        DateTime endTimeRead;
+        public DateTime EndTimeRead
+        {
+            get
+            {
+                return endTimeRead;
+            }
+            set
+            {
+                endTimeRead = value;
+                OnPropertyChanged("EndTimeRead");
+            }
+        } // Конечное время считывания
+
+        bool isMoveTime;
+        public bool IsMoveTime
+        {
+            get
+            {
+                return isMoveTime;
+            }
+            set
+            {
+                isMoveTime = value;
+                OnPropertyChanged("IsMoveTime");
+            }
+        } // доступ к кнопке включения "Применить" в группе "Сдвигать время"
+        bool isMoveTimeUp; 
+        public bool IsMoveTimeUp
+        {
+            get
+            {
+                return isMoveTimeUp;
+            }
+            set
+            {
+                isMoveTimeUp = value;
+                OnPropertyChanged("IsMoveTimeUp");
+            }
+        }// проверка включения радиобатона "Вперед" в группе "Сдвигать время"
+
+        string shiftTime;
+        public string ShiftTime
+        {
+            get 
+            {
+                return shiftTime; 
+            }
+            set 
+            {
+                shiftTime = value; 
+                OnPropertyChanged("ShiftTime"); 
+            }
+        }// 00:00:00
+
         public List<string[]> FileDepthAndTime { get; set; } // файл с данными по глубине и времени
         public List<string[]> FileColibr { get; set; } // файл с колибровочными данными        
         double[] Coef { get; set; } // коэффициенты для расчета Кп
-        DataRowCollection DataRowAVM { get; set; }
-        Dictionary<double, List<string>> DepthTimeDetail;
-
+        DataRowCollection DataRowAVM { get; set; }        
         string statusLasMenu;
         public string StatusLasMenu 
         { 
@@ -64,32 +129,37 @@ namespace FlashView2
                 OnPropertyChanged("DataTable");
             }
         }
-
         public LasMenuForm(DataRowCollection dataRows)
         {
             DataRowAVM = dataRows;            
-            isLineCalc = true;
-            StartTimeRead = DateTime.Now.ToString();
-            EndTimeRead = DateTime.Now.AddHours(2).ToString();
+            isLineCalc = true;           
             InitializeComponent();
             DataContext = this;
+            IsMoveTimeUp = true;
+            IsMoveTime = false;
+            ShiftTime = "00:00:00";
         }
-
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")
         {
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(prop));
         }
-        private void Button_FormLasClick(object sender, RoutedEventArgs e)
-        {
-            ChoiseCalibrData();
-            UpdateDepthDate();
-            FindNearestTimeValue();
-            MessageBox.Show("Las file сформирован!");
+        void Button_FormLasClick(object sender, RoutedEventArgs e)
+        {            
+            try
+            {
+                ChoiseCalibrData();
+                var timeDepth = UpdateDepthDate();
+                FindNearestTimeValue(timeDepth);
+            }
+            catch (Exception ex)
+            {
+                StatusLasMenu += $"{DateTime.Now}: {ex.Message}";
+            }                              
         }
-
-        private void ChoiseCalibrData()
+        // Проверка выбора калибровочных настроек;
+        void ChoiseCalibrData()
         {
             string typeOfCalc;
             string diamTruba = "труба " + lb1_truba.Text;
@@ -121,8 +191,9 @@ namespace FlashView2
                             }
                             catch
                             {
-                                MessageBox.Show("Неудалось привести данные коэффициентов к нужному типу");
-                                break;
+                                throw;
+                                //StatusLasMenu+=$"{DateTime.Now}: Неудалось привести данные коэффициентов к нужному типу";
+                                //break;
                             }
                         }
                     }
@@ -134,15 +205,16 @@ namespace FlashView2
                     break;
                 }
             }
-        }
+        }        
 
-        // метод деления глубины по 10 см и перераспределения времени
-        void UpdateDepthDate()
+
+        // метод дробления данных глубины забоя (метра) и времени
+        SortedDictionary<DateTime, double> UpdateDepthDate()
         {
-            DepthTimeDetail = new Dictionary<double, List<string>>();
+            SortedDictionary<DateTime,double> DepthTimeDetail = new SortedDictionary<DateTime, double>();
             int posTime = -1;
             int posDepth = -1;
-            
+
             for (int i = 0; i < FileDepthAndTime[0].Length; i++)
             {
                 if (FileDepthAndTime[0][i].Trim() == "Забой")
@@ -153,45 +225,86 @@ namespace FlashView2
 
             if (posTime != -1 && posDepth != -1)
             {
-                var depthStart = double.Parse(FileDepthAndTime[1][posDepth]);
-                var timeStart = FileDepthAndTime[1][posTime];
-                DepthTimeDetail.Add(depthStart, new List<string>() {timeStart});
-                for (int i = 2; i < FileDepthAndTime.Count; i++)
-                {                    
-                    for (int j = i; j < FileDepthAndTime.Count; j++)
+                int shift = 0;
+                int lastCount = 0;
+                double depthStart = 0;
+                DateTime timeStart = new DateTime();
+                if (IsSetInterval)
+                {
+                    if (EndTimeRead <= StartTimeRead)
                     {
-                        var depthStop = int.Parse(FileDepthAndTime[j][posDepth]);                       
-                        var timeStop = FileDepthAndTime[j][posTime];
+                        throw new Exception("Считать данные => Стартовое время диапазона должно быть меньше конечного времени");
+                    }
+                    for (int i = 1; i < FileDepthAndTime.Count; i++)
+                    {
+                        if (DateTime.Parse(FileDepthAndTime[i][posTime]) >= StartTimeRead)
+                        {
+                            depthStart = double.Parse(FileDepthAndTime[i][posDepth]);
+                            timeStart = DateTime.Parse(FileDepthAndTime[i][posTime]);
+                            shift = i - 1;
+                            break;
+                        }                       
+                    }
+
+                    for (int i = shift + 1; i < FileDepthAndTime.Count; i++)
+                    {
+                        if (DateTime.Parse(FileDepthAndTime[i][posTime]) > EndTimeRead)
+                        {
+                            lastCount = i - 1;
+                            break;
+                        }
+                    }
+
+                    if (depthStart == 0)
+                    {
+                        StatusLasMenu += $"{DateTime.Now}: Стартовое значение времени не указано не верно";
+                    }
+                    if (lastCount == 0)
+                    {
+                        StatusLasMenu += $"{DateTime.Now}: Конечное значение времени не указано не верно";
+                        lastCount = FileDepthAndTime.Count;
+                    }
+                }
+                else
+                {
+                    depthStart = double.Parse(FileDepthAndTime[1][posDepth]);
+                    timeStart = DateTime.Parse(FileDepthAndTime[1][posTime]);
+                }
+                
+                DepthTimeDetail.Add(timeStart, depthStart);
+                for (int i = 2 + shift; i < lastCount; i++)
+                {
+                    for (int j = i; j < lastCount; j++)
+                    {
+                        int depthStop = int.Parse(FileDepthAndTime[j][posDepth]);
+                        DateTime timeStop = DateTime.Parse(FileDepthAndTime[j][posTime]);
 
                         if (depthStop > depthStart && depthStop - depthStart <= 10)
                         {
-                            double deltaDepth = depthStop - depthStart;                            
-                            DateTime time2 = DateTime.Parse(timeStop);
-                            DateTime time1 = DateTime.Parse(timeStart);
+                            double deltaDepth = depthStop - depthStart;
+                            DateTime time2 = timeStop;
+                            DateTime time1 = timeStart;
                             TimeSpan deltaTime = time2 - time1;
                             double timeStep = 1.0 / (deltaDepth * 10);
                             double time3 = timeStep;
-                            int stepFinish = (int)(deltaDepth / 0.1);                            
+                            int stepFinish = (int)(deltaDepth / 0.1);
                             double depthStep = 0.1;
                             for (int k = 1; k <= stepFinish; k++) // округление, проблема
-                            {                                
+                            {
                                 double newDepth = depthStart + depthStep;
-                                depthStep = Math.Round(depthStep += 0.1, 1);                            
-                                string newTime = (time1 + (deltaTime * time3)).ToString();
-                                time3 += timeStep;
-                                if (!DepthTimeDetail.TryAdd(newDepth, new List<string>() {newTime})) 
-                                {
-                                    DepthTimeDetail[newDepth].Add(newTime);
-                                }                                
-                            }                            
+                                depthStep = Math.Round(depthStep += 0.1, 1);
+                                DateTime newTime = time1 + (deltaTime * time3);
+                                time3 += timeStep;                                
+                                DepthTimeDetail.Add(newTime, newDepth);                                
+                            }
                             depthStart = depthStop;
-                            timeStart = timeStop;                            
-                        } 
+                            timeStart = timeStop;
+                        }
                         else if (depthStop < depthStart && depthStart - depthStop <= 10)
-                        {                         
-                            double deltaDepth = depthStart - depthStop;                            
-                            DateTime time2 = DateTime.Parse(timeStop);
-                            DateTime time1 = DateTime.Parse(timeStart);
+                        {
+                            double deltaDepth = depthStart - depthStop;
+                            DateTime time2 = timeStop;
+                            DateTime time1 = timeStart;
                             TimeSpan deltaTime = time2 - time1;
                             if (deltaDepth / 0.1 > 60 && deltaTime <= TimeSpan.FromMinutes(1))
                             {
@@ -201,62 +314,38 @@ namespace FlashView2
                             double depthStep = 0.1;
                             int stepFinish = (int)(deltaDepth / 0.1);
                             double time3 = timeStep;
-                            for (int k = 1; k <= stepFinish; k ++)
+                            for (int k = 1; k <= stepFinish; k++)
                             {
                                 double newDepth = depthStart - depthStep;
                                 depthStep = Math.Round(depthStep += 0.1, 1);
-                                string newTime = (time1 + (deltaTime * time3)).ToString();
+                                DateTime newTime = time1 + (deltaTime * time3);
                                 time3 += timeStep;
-                                if (!DepthTimeDetail.TryAdd(newDepth, new List<string>() { newTime }))
-                                {
-                                    DepthTimeDetail[newDepth].Add(newTime);
-                                }
+                                DepthTimeDetail.Add(newTime, newDepth);                                
                             }
                             depthStart = depthStop;
                             timeStart = timeStop;
                         }
                         else if (depthStart != depthStop)
                         {
-                            if (!DepthTimeDetail.TryAdd(depthStop, new List<string>() { timeStop }))
-                            {
-                                DepthTimeDetail[depthStop].Add(timeStop);
-                            }
+                            DepthTimeDetail.Add(timeStop, depthStop);
                             depthStart = depthStop;
                             timeStart = timeStop;
-                        }                        
+                        }
                         i++;
                     }
-                }                
-            }         
+                }
+            }
+            return DepthTimeDetail;
         }
 
-        private void FindNearestTimeValue()
+
+        // метод поиска соответствия данных с флеш с данными из файла глубина время
+        void FindNearestTimeValue(SortedDictionary<DateTime, double> dictTimeDepth)
         {
             SortedDictionary<double, List<double>> fileDepthAndKP = new SortedDictionary<double, List<double>>();
-            // Надо переделать изначальное хранилище данных с глубиной по ключу. Сделать ключом время
-            SortedDictionary<DateTime, double> dicr = new SortedDictionary<DateTime, double>();            
-            var list = DepthTimeDetail.ToList();
-            for (int i1 = 0; i1 < list.Count; i1++)
-            {
-                for (int j1 = 0; j1 < list[i1].Value.Count; j1++)
-                {
-                    try
-                    {
-                        if (DateTime.Parse(list[i1].Value[j1]) == new DateTime(2022, 9, 15, 21, 51, 54))
-                        {
-                            var c = list[i1].Key;
-                        }
-                        dicr.Add(DateTime.Parse(list[i1].Value[j1]), list[i1].Key);
-                    }
-                    catch
-                    {
-                        var b = list[i1].Value[j1];
-                        var a = list[i1].Key;
-                    }
-                }
-            }            
-            var listTimeAndDepth = dicr.ToList();
-            dicr.Clear();
+            
+            var listTimeAndDepth = dictTimeDepth.ToList();
+            dictTimeDepth.Clear();
 
             DateTime timeStartMetr = listTimeAndDepth[0].Key;
             double depthStartMetr = listTimeAndDepth[0].Value;            
@@ -399,8 +488,8 @@ namespace FlashView2
 
                                 if (timeFl >= a && timeFl < b)
                                 {
-                                    double mz = double.Parse(rowFl["[ННК1/ННК1(вода)]"].ToString());
-                                    double bz = double.Parse(rowFl["[ННК2/ННК2(вода)]"].ToString());
+                                    double mz = double.Parse(rowFl["[ННК1/\nННК1(вода)]"].ToString());
+                                    double bz = double.Parse(rowFl["[ННК2/\nННК2(вода)]"].ToString());
                                     double x;
                                     double KP = 0;
                                     if (mz != 0)
@@ -445,35 +534,43 @@ namespace FlashView2
 
             var list2 = fileDepthAndKP.ToList();
             fileDepthAndKP.Clear();
-
-            string name = "ResultFileLas.txt";
-            string directory = "LAS_Files";
-
-            DirectoryInfo directoryInfo = new DirectoryInfo(directory);
-            directoryInfo.Create();
-            string path = Combine(directory, name);           
-
-            for (int i = 0; i < list2.Count; i++)
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "txt files|*.txt";
+            saveFileDialog.Title = "Сохранение";           
+            
+            if (saveFileDialog.ShowDialog() == true)
             {
-                if (list2[i].Value.Count == 0)
+                string path = saveFileDialog.FileName;
+                for (int i = 0; i < list2.Count; i++)
                 {
-                    list2[i].Value.Add(-999.9);
-                }
-                try
-                {
-                    using (var writer = new StreamWriter(path, true))
+                    if (list2[i].Value.Count == 0)
                     {
-                        writer.WriteLine($"{list2[i].Key.ToString("0.00", CultureInfo.GetCultureInfo("en-US"))}     {Math.Round(list2[i].Value.Average(), 2).ToString("0.00", CultureInfo.GetCultureInfo("en-US"))}");
+                        list2[i].Value.Add(-999.9);
+                    }
+                    try
+                    {
+                        using (var writer = new StreamWriter(path, true))
+                        {
+                            writer.WriteLine($"{list2[i].Key.ToString("0.00", CultureInfo.GetCultureInfo("en-US"))}     {Math.Round(list2[i].Value.Average(), 2).ToString("0.00", CultureInfo.GetCultureInfo("en-US"))}");
+                        }
+                    }
+                    catch (Exception exception)
+                    {
+                        StatusLasMenu+= $"{DateTime.Now}: Ошибка. {exception.Message}\n"; 
                     }
                 }
-                catch (Exception exception)
-                {
-                    Console.WriteLine(exception.Message);
-                }
-            }
+                StatusLasMenu += $"{DateTime.Now}: Файл сохранен {saveFileDialog.FileName}\n";
 
+            }
+            else
+            {
+                StatusLasMenu += $"{DateTime.Now}: Файл не сохранен\n";
+            }            
         }
-        private void btn_LoadDepthAndTime_Click(object sender, RoutedEventArgs e)
+
+
+        // кнопка загрузки файла глубина-время
+        void btn_LoadDepthAndTime_Click(object sender, RoutedEventArgs e)
         {           
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Файл глубина-время|*.txt";
@@ -487,9 +584,8 @@ namespace FlashView2
             if (openFileDialog.ShowDialog()==true)
             {
                 FileDepthAndTime = new List<string[]>();
-                path = openFileDialog.FileName;
-                // FileName = openFileDialog.SafeFileName;
-                StatusLasMenu += $"{DateTime.Now}: Загрузка файла началась: {openFileDialog.SafeFileName} \n"; ;
+                path = openFileDialog.FileName;                
+                StatusLasMenu += $"{DateTime.Now}: Загрузка файла началась: {openFileDialog.SafeFileName} \n";
 
                 try
                 {
@@ -584,14 +680,21 @@ namespace FlashView2
                 }
                 else
                 {
-                    MessageBox.Show("Файл не содержит достаточное количество данных");
+                    StatusLasMenu += $"{DateTime.Now}: Файл не содержит достаточное количество данных \n";                    
                 }
 
+                OpenCalibrFile();
                 DataTable = dt;
-                dtg_DepthAndTime.HorizontalAlignment = HorizontalAlignment.Center;                            
+                dtg_DepthAndTime.HorizontalAlignment = HorizontalAlignment.Center;
+                StatusLasMenu += $"{DateTime.Now}: Загрузка завершена \n";
+                StartTimeRead = DateTime.Parse(dt.Rows[0]["Дата"].ToString());
+                EndTimeRead = DateTime.Parse(dt.Rows[dt.Rows.Count-1]["Дата"].ToString());
+                IsMoveTime = true;
             }            
         }
 
+
+        // открытие калибровочного файла
         void OpenCalibrFile()
         {
             OpenFileDialog openCalibrFile = new OpenFileDialog();
@@ -621,12 +724,20 @@ namespace FlashView2
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message);
+                    StatusLasMenu += $"{DateTime.Now}: {ex.Message}\n";                    
+                    return;
                 }
                 btn_FormLas.IsEnabled = true;
-            }            
+                StatusLasMenu += $"{DateTime.Now}: Калибровочный файл {openCalibrFile.SafeFileName} успешно считан \n";
+            }
+            else
+            {
+                StatusLasMenu += $"{DateTime.Now}: Необходимо выбрать калибровочный файл\n";
+            }
         }
 
+
+        // обработчик заголовков таблицы
         void r2_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
         {
             if (e.PropertyName.Contains('[') || e.PropertyName.Contains(' ') && e.Column is DataGridBoundColumn)
@@ -634,6 +745,57 @@ namespace FlashView2
                 DataGridBoundColumn dataGridBoundColumn = e.Column as DataGridBoundColumn;
                 dataGridBoundColumn.Binding = new Binding("[" + e.PropertyName + "]");
             }
-        }        
+        }
+
+
+        // кнопка для сдвига времени
+        private void btnUseShiftTime_Click(object sender, RoutedEventArgs e)
+        {
+            int posTime = -1;
+
+            for (int i = 0; i < FileDepthAndTime[0].Length; i++)
+            {
+                if (FileDepthAndTime[0][i].Trim() == "Дата")
+                    posTime = i;
+            }
+
+            if (TimeSpan.TryParse(ShiftTime,out TimeSpan ts))
+            {
+                if (posTime >= 0 && posTime < FileDepthAndTime[0].Length)
+                {
+                    if (IsMoveTimeUp)
+                    {
+                        for (int i = 0; i < dataTable.Rows.Count; i++)
+                        {
+                            dataTable.Rows[i]["Дата"] = " " + (DateTime.Parse(dataTable.Rows[i]["Дата"].ToString()) + ts).ToString("HH:mm:ss dd.MM.yy") + " ";
+                        }
+                        for (int i = 1; i < FileDepthAndTime.Count; i++)
+                        {
+                            FileDepthAndTime[i][posTime] = (DateTime.Parse(FileDepthAndTime[i][posTime]) + ts).ToString("HH:mm:ss dd.MM.yy");
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < dataTable.Rows.Count; i++)
+                        {
+                            dataTable.Rows[i]["Дата"] = " " + (DateTime.Parse(dataTable.Rows[i]["Дата"].ToString()) - ts).ToString("HH:mm:ss dd.MM.yy") + " ";
+                        }
+                        for (int i = 1; i < FileDepthAndTime.Count; i++)
+                        {
+                            FileDepthAndTime[i][posTime] = (DateTime.Parse(FileDepthAndTime[i][posTime]) - ts).ToString("HH:mm:ss dd.MM.yy");
+                        }
+                    }
+                }
+                else
+                {
+                    StatusLasMenu += $"{DateTime.Now}: Отсутствует столбец с датой";
+                }               
+            }
+            else
+            {
+                StatusLasMenu += $"{DateTime.Now}: Не могу преобразовать значение указанное в поле для сдвига времени";
+            }           
+           
+        }
     }
 }
