@@ -8,13 +8,24 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Data.jpg" />
+    <None Remove="Depth.jpg" />
+    <None Remove="Depth2.png" />
     <None Remove="Exit.png" />
+    <None Remove="File Depth.png" />
     <None Remove="File Excel.png" />
     <None Remove="File txt.png" />
     <None Remove="File.png" />
     <None Remove="Form LAS.png" />
+    <None Remove="free-icon-depth-8902165.png" />
+    <None Remove="kisspng-scalable-vector-graphics-computer-icons-clip-art-p-special-steel-svg-png-icon-free-download-125-6-5c56086bc7b3c1.732504751549142123818.jpg" />
     <None Remove="Open File.png" />
+    <None Remove="png-clipart-trustlogics-computer-icons-database-date-text-data.png" />
     <None Remove="Save As.png" />
+    <None Remove="Seach Data.png" />
+    <None Remove="Seach Data2.png" />
+    <None Remove="Shift Time.png" />
+    <None Remove="Truba.jpg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -55,6 +66,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Data.jpg" />
+    <Resource Include="Depth.jpg" />
+    <Resource Include="Depth2.png" />
+    <Resource Include="File Depth.png" />
+    <Resource Include="free-icon-depth-8902165.png" />
     <Resource Include="Icons\Exit.png" />
     <Resource Include="Icons\File Excel.png" />
     <Resource Include="Icons\File txt.png" />
@@ -62,6 +78,13 @@
     <Resource Include="Icons\Form LAS.png" />
     <Resource Include="Icons\Open File.png" />
     <Resource Include="Icons\Save As.png" />
+    <Resource Include="kisspng-scalable-vector-graphics-computer-icons-clip-art-p-special-steel-svg-png-icon-free-download-125-6-5c56086bc7b3c1.732504751549142123818.jpg" />
+    <Resource Include="Open File.png" />
+    <Resource Include="png-clipart-trustlogics-computer-icons-database-date-text-data.png" />
+    <Resource Include="Seach Data.png" />
+    <Resource Include="Seach Data2.png" />
+    <Resource Include="Shift Time.png" />
+    <Resource Include="Truba.jpg" />
   </ItemGroup>
 
 </Project>

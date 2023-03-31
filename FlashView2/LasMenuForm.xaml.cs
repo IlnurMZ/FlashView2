@@ -152,6 +152,7 @@ namespace FlashView2
                 ChoiseCalibrData();
                 var timeDepth = UpdateDepthDate();
                 FindNearestTimeValue(timeDepth);
+                MessageBox.Show("Las файл успешно сформирован!");
             }
             catch (Exception ex)
             {
@@ -191,9 +192,7 @@ namespace FlashView2
                             }
                             catch
                             {
-                                throw;
-                                //StatusLasMenu+=$"{DateTime.Now}: Неудалось привести данные коэффициентов к нужному типу";
-                                //break;
+                                throw;                                
                             }
                         }
                     }
@@ -269,6 +268,7 @@ namespace FlashView2
                 {
                     depthStart = double.Parse(FileDepthAndTime[1][posDepth]);
                     timeStart = DateTime.Parse(FileDepthAndTime[1][posTime]);
+                    lastCount = FileDepthAndTime.Count;
                 }
                 
                 DepthTimeDetail.Add(timeStart, depthStart);
@@ -342,32 +342,37 @@ namespace FlashView2
         // метод поиска соответствия данных с флеш с данными из файла глубина время
         void FindNearestTimeValue(SortedDictionary<DateTime, double> dictTimeDepth)
         {
+            if (!double.TryParse(txtBoxNULL.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double nullValue))
+            {
+                nullValue = -999.5;
+                StatusLasMenu += $"{DateTime.Now}: Ошибка конвертации Null value \n";
+            }
             SortedDictionary<double, List<double>> fileDepthAndKP = new SortedDictionary<double, List<double>>();
-            
+
             var listTimeAndDepth = dictTimeDepth.ToList();
             dictTimeDepth.Clear();
 
             DateTime timeStartMetr = listTimeAndDepth[0].Key;
-            double depthStartMetr = listTimeAndDepth[0].Value;            
+            double depthStartMetr = listTimeAndDepth[0].Value;
             DateTime timeEndMetr = new DateTime();
             TimeSpan deltaTime = new TimeSpan();
             int startPosDepTime = 0; // позиция начала метра в файле глубина и время
-            int endPosDepTime = 0; 
+            int endPosDepTime = 0;
             int posLastValue = 0;
             int dopusk = 0;
 
             for (int i = 1; i < listTimeAndDepth.Count; i++)
-            {                               
-                double depthEndMetr = listTimeAndDepth[i].Value;              
+            {
+                double depthEndMetr = listTimeAndDepth[i].Value;
 
                 if (Math.Abs(depthEndMetr - depthStartMetr) == 1)
-                {                    
-                    timeEndMetr = listTimeAndDepth[i-1].Key;
-                    endPosDepTime = i-1;
-                }               
-                else if (Math.Abs(depthStartMetr - depthEndMetr) > 1) 
                 {
-                    depthStartMetr = depthEndMetr;                   
+                    timeEndMetr = listTimeAndDepth[i - 1].Key;
+                    endPosDepTime = i - 1;
+                }
+                else if (Math.Abs(depthStartMetr - depthEndMetr) > 1)
+                {
+                    depthStartMetr = depthEndMetr;
                     startPosDepTime = i;
                     timeStartMetr = listTimeAndDepth[startPosDepTime].Key;
                     timeEndMetr = new DateTime();
@@ -388,7 +393,7 @@ namespace FlashView2
                             if (!DateTime.TryParse(timeValue, out timeValueRow))
                             {
                                 continue;
-                            }                           
+                            }
                             // ищем позицию по времени начала метра в файле флеш
                             if (startPosFlashTime == -1 && timeValueRow >= timeStartMetr - deltaTime && timeValueRow - timeStartMetr <= TimeSpan.FromSeconds(60))
                             {
@@ -399,16 +404,16 @@ namespace FlashView2
                             else if (endPosFlashTime == -1 && timeValueRow > timeEndMetr && timeValueRow - timeEndMetr <= TimeSpan.FromSeconds(60))
                             {
                                 DateTime timePrevious = new DateTime();
-                                DataRow rowPrev = DataRowAVM[j-1];
+                                DataRow rowPrev = DataRowAVM[j - 1];
                                 timePrevious = DateTime.Parse(rowPrev["[Время/Дата]"].ToString());
-                                if (timeValueRow-timePrevious <= TimeSpan.FromSeconds(60))
-                                {                                   
-                                    endPosFlashTime = j-1;
+                                if (timeValueRow - timePrevious <= TimeSpan.FromSeconds(60))
+                                {
+                                    endPosFlashTime = j - 1;
                                 }
                                 else
                                 {
                                     endPosFlashTime = j;
-                                }                                
+                                }
                                 depthStartMetr = depthEndMetr;
                                 dopusk = 0;
                                 break;
@@ -417,33 +422,33 @@ namespace FlashView2
                             // и не нашли стартовое временное значение
                             else if (startPosFlashTime == -1 && timeValueRow - timeStartMetr > TimeSpan.FromSeconds(60))
                             {
-                                dopusk++;                                
+                                dopusk++;
 
                                 if (startPosDepTime + dopusk == endPosDepTime)
-                                {                                   
+                                {
                                     break;
                                 }
-                                timeStartMetr = listTimeAndDepth[startPosDepTime+dopusk].Key;
+                                timeStartMetr = listTimeAndDepth[startPosDepTime + dopusk].Key;
                                 j--;
                             }
                             // если вышли за пределы конца метра более чем на минуту
                             // но нашли стартовое временное значение
                             else if (startPosFlashTime != -1 && endPosFlashTime == -1 && timeValueRow - timeEndMetr > TimeSpan.FromSeconds(60))
-                            {                                                      
+                            {
                                 endPosFlashTime = j - 1;
                                 j--;
                                 break;
-                            }                       
-                        }                 
+                            }
+                        }
                         posLastValue++;
                     }
                     // добавляем метры без данных в файле флеш
-                    if ( startPosFlashTime == -1 && endPosFlashTime == -1)
+                    if (startPosFlashTime == -1 && endPosFlashTime == -1)
                     {
                         for (int k3 = startPosDepTime; k3 <= endPosDepTime; k3++)
                         {
                             List<double> emptyList = new List<double>();
-                            fileDepthAndKP.TryAdd(listTimeAndDepth[k3].Value, emptyList);                            
+                            fileDepthAndKP.TryAdd(listTimeAndDepth[k3].Value, emptyList);
                         }
                         startPosDepTime = endPosDepTime;
                         timeStartMetr = listTimeAndDepth[endPosDepTime + 1].Key;
@@ -451,7 +456,7 @@ namespace FlashView2
                         timeEndMetr = new DateTime();
                     }
                     else
-                    {                        
+                    {
                         for (int k1 = startPosDepTime; k1 <= endPosDepTime; k1++)
                         {
                             DateTime a = new DateTime();
@@ -516,7 +521,7 @@ namespace FlashView2
                                 {
                                     break;
                                 }
-                            }                         
+                            }
 
                             if (!fileDepthAndKP.TryAdd(listTimeAndDepth[k1].Value, KPs))
                             {
@@ -528,24 +533,46 @@ namespace FlashView2
                         timeStartMetr = listTimeAndDepth[startPosDepTime].Key;
                         timeEndMetr = new DateTime();
                         dopusk = 0;
-                    }                    
-                }                
+                    }
+                }
             }
 
             var list2 = fileDepthAndKP.ToList();
+            if (list2.Count == 0)
+            {
+                throw new Exception("Отсутствуют данные для записи");
+            }
             fileDepthAndKP.Clear();
+
+            StringBuilder headLasFile = FormHeadLasFile(list2[0].Key, list2[list2.Count-1].Key);
+
             SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "txt files|*.txt";
-            saveFileDialog.Title = "Сохранение";           
-            
+            saveFileDialog.Filter = "LAS files|*.las";
+            saveFileDialog.Title = "Сохранение";
+
             if (saveFileDialog.ShowDialog() == true)
             {
                 string path = saveFileDialog.FileName;
+
+                // записываем инф. шапку
+                try
+                {
+                    using (var writer = new StreamWriter(path, true))
+                    {
+                        writer.WriteLine($"{headLasFile.ToString()}");
+                    }
+                }
+                catch (Exception exception)
+                {
+                    StatusLasMenu += $"{DateTime.Now}: Ошибка. {exception.Message}\n";
+                }
+
+                // записываем данные
                 for (int i = 0; i < list2.Count; i++)
                 {
                     if (list2[i].Value.Count == 0)
                     {
-                        list2[i].Value.Add(-999.9);
+                        list2[i].Value.Add(nullValue);
                     }
                     try
                     {
@@ -556,7 +583,7 @@ namespace FlashView2
                     }
                     catch (Exception exception)
                     {
-                        StatusLasMenu+= $"{DateTime.Now}: Ошибка. {exception.Message}\n"; 
+                        StatusLasMenu += $"{DateTime.Now}: Ошибка. {exception.Message}\n";
                     }
                 }
                 StatusLasMenu += $"{DateTime.Now}: Файл сохранен {saveFileDialog.FileName}\n";
@@ -565,7 +592,45 @@ namespace FlashView2
             else
             {
                 StatusLasMenu += $"{DateTime.Now}: Файл не сохранен\n";
-            }            
+            }
+        }
+
+        // Формирование информационной шапки для Las файла
+        StringBuilder FormHeadLasFile(double startM, double stopM)
+        {
+            double stepM = 0.10;
+            StringBuilder result = new StringBuilder();
+            // Первый раздел
+            int countSigns = 8;
+            result.AppendLine("~VERSION INFORMATION SECTION");            
+            result.AppendLine($"VERS.{new string(' ', 11)}{txtBoxVers.Text}" +
+                $"{new string(' ', countSigns - txtBoxVers.Text.Length)}:" + $"{new string(' ', 3)}CWLS log ASCII Standard -VERSION 2.0");
+            result.AppendLine($"WRAP.{new string(' ', 11)}{txtBoxWrap.Text}" +
+                $"{new string(' ', (countSigns - txtBoxWrap.Text.Length))}:" + $"{new string(' ', 3)}One line per depth step");
+            result.AppendLine($"#{new string('-', 50)}");
+
+            // Второй раздел
+            countSigns = 25;
+            result.AppendLine("~WELL INFORMATION SECTION");
+            result.AppendLine("#MNEM                    .UNIT   VALUE/NAME               : DESCRIPTION");
+            result.AppendLine("#----                     ----   -----------------        -----------------");
+            result.AppendLine($"STRT                     .M      {startM}{new string(' ', countSigns - startM.ToString().Length)}: START DEPTH");
+            result.AppendLine($"STOP                     .M      {stopM}{new string(' ', countSigns - stopM.ToString().Length)}: STOP DEPTH");
+            result.AppendLine($"STEP                     .M      {stepM}{new string(' ', countSigns - stepM.ToString().Length)}: STEP");
+            result.AppendLine($"NULL                     .M      {txtBoxNULL.Text}{new string(' ', countSigns - txtBoxNULL.Text.Length)}: NULL VALUE");            
+            result.AppendLine($"DATE                     .M      {DateTime.Parse(dtp1.Text).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}{new string(' ', countSigns - 10)}: DATE");
+            result.AppendLine($"API                      .       {txtBoxAPI}{new string(' ', countSigns - txtBoxAPI.Text.Length)}: API NUMBER");
+            result.AppendLine($"WELL                     .       {txtBoxWell}{new string(' ', countSigns - txtBoxWell.Text.Length)}: WELL");
+            result.AppendLine($"FLD                      .       {txtBoxFLD}{new string(' ', countSigns - txtBoxFLD.Text.Length)}: FIELD");
+            result.AppendLine($"CTRY                     .       {txtBoxCNTY}{new string(' ', countSigns - txtBoxCNTY.Text.Length)}: COUNTRY");
+            result.AppendLine($"STAT                     .       {txtBoxSTATE}{new string(' ', countSigns - txtBoxSTATE.Text.Length)}: STATE");
+            result.AppendLine($"SRVC                     .       {txtBoxSRVC}{new string(' ', countSigns - txtBoxSRVC.Text.Length)}: SERVICE COMPANY");
+            result.AppendLine($"FILECREATED              .       {DateTime.Now.ToString("yyyy-dd-MM hh:mm:ss")}{new string(' ', countSigns - txtBoxSRVC.Text.Length)}: SERVICE COMPANY");
+            result.AppendLine("-----------------------------------------------------------------------------");
+
+            // Третий раздел            
+            result.AppendLine("~CURVE INFORMATION SECTION");
+            return result;
         }
 
 
@@ -574,6 +639,7 @@ namespace FlashView2
         {           
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Файл глубина-время|*.txt";
+            openFileDialog.Title = "Выберите файл с глубиной и временем";
             string path;
             bool isTable = false;
             int countHeaders = 0;
@@ -699,6 +765,7 @@ namespace FlashView2
         {
             OpenFileDialog openCalibrFile = new OpenFileDialog();
             openCalibrFile.Filter = "Калибровочный файл|*.nk";
+            openCalibrFile.Title = "Выберите подходящий калибровочный файл";
             // считываем данные из калибровочного файла
             if (openCalibrFile.ShowDialog() == true)
             {
