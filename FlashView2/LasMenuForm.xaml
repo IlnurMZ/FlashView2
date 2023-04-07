@@ -7,7 +7,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
         Title="Задание временного интервала, сдвига и корректировки" 
-        Height="820" Width="870" 
+        Height="830" Width="870" 
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
     <Window.Resources>
         <Style x:Key="CenterGridHeaderStyle" TargetType="DataGridColumnHeader">
@@ -26,7 +26,7 @@
                         <RowDefinition Height="305"/>
                         <RowDefinition Height="178"/>
                         <RowDefinition Height="220"/>
-                        <RowDefinition Height="50"/>
+                        <RowDefinition Height="60"/>
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0" Grid.Column="0">
                         <Button x:Name="btn_LoadDepthAndTime" Click="btn_LoadDepthAndTime_Click" Height="30" Margin="10,15,10,10">
@@ -85,7 +85,7 @@
                                 </GroupBox>
                             </StackPanel>
                         </GroupBox>
-                        <Button Name="btn_FormLas" Click="Button_FormLasClick" Content="Сформировать LAS" Margin="15" Height="30" IsEnabled="False"/>
+                        <!--<Button Name="btn_FormLas" Click="btnLasStart_Click" Content="Следующий шаг" Margin="15" Height="30" IsEnabled="False"/>-->
                     </StackPanel>
                     <GroupBox Grid.Column="0" Grid.Row="1" Height="142" Width="230" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
                         <GroupBox.Header>
@@ -107,7 +107,7 @@
                     <StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="3">
                         <DataGrid x:Name="dtg_DepthAndTime" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" 
                       HorizontalContentAlignment="Center" Margin="10,15,10,10" ItemsSource="{Binding DataTable, UpdateSourceTrigger=PropertyChanged}" 
-                      AutoGeneratingColumn="r2_AutoGeneratingColumn" Height="640" >
+                      AutoGeneratingColumn="r2_AutoGeneratingColumn" Height="630" >
                         </DataGrid>
                     </StackPanel>
                     <DockPanel Grid.Row="3" Grid.ColumnSpan="3">
@@ -123,9 +123,9 @@
                                     </Grid>
                                 </ItemsPanelTemplate>
                             </StatusBar.ItemsPanel>
-                            <StatusBarItem Margin="5">
-                                <TextBox Name="txtBoxStatusLas" Text="{Binding StatusLasMenu, UpdateSourceTrigger=PropertyChanged}" Width="738" Height="33"
-                               TextWrapping="Wrap" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" />
+                            <StatusBarItem Margin="0,5,0,0">
+                                <TextBox Name="txtBoxStatusLas" Text="{Binding StatusLasMenu, UpdateSourceTrigger=PropertyChanged}" Width="700" Height="33"
+                               TextWrapping="Wrap" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Margin="2"/>
                             </StatusBarItem>
                             <Separator Grid.Column="1" />
                             <StatusBarItem Grid.Column="2">
@@ -136,11 +136,11 @@
                 </Grid>
             </TabItem.Content>
         </TabItem>
-        <TabItem Name="dataTab" Header="Вводные данные для Las">
+        <TabItem Name="dataTab" Header="Вводные данные для Las" IsEnabled="False">
             <TabItem.Content>
                 <Grid Name="dataLasGrid" Background="Gray">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="150"/>
                         <ColumnDefinition Width="150"/>
                         <ColumnDefinition Width="150"/>
                         <ColumnDefinition Width="*"/>
@@ -160,66 +160,64 @@
                         <RowDefinition Height="30"/>
                         <RowDefinition Height="30"/>
                         <RowDefinition Height="30"/>
-                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="60"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
                     <Label Content="Version Informatim" Grid.ColumnSpan="3" Grid.Row="0" HorizontalContentAlignment="Center"/>
-                    <Label Content="VERS." Grid.Column="0" Grid.Row="1"/>
+                    <Label Content="Версия формата LAS" Grid.Column="0" Grid.Row="1"/>
                     <TextBox Name="txtBoxVers" Text="2.0" Width="100" Height="20" HorizontalContentAlignment="Right" IsEnabled="False"
                                              Grid.Column="1" Grid.Row="1"/>
-                    <Label Content="(Версия)" Grid.Column="2" Grid.Row="1"/>
+                    <Label Content="(VERS.)" Grid.Column="2" Grid.Row="1"/>
 
-                    <Label Content="Wrap" Grid.Column="0" Grid.Row="2"/>
+                    <Label Content="Перенос строки" Grid.Column="0" Grid.Row="2"/>
                     <TextBox Name="txtBoxWrap" Text="NO" Width="100" Height="20" HorizontalContentAlignment="Right" IsEnabled="False"
                              Grid.Column="1" Grid.Row="2"/>
-                    <Label Content="(Перенос строки)" Grid.Column="2" Grid.Row="2"/>
+                    <Label Content="(Wrap)" Grid.Column="2" Grid.Row="2"/>
 
-                    <Label Content="Well Information Section" Grid.ColumnSpan="3" Grid.Row="3" HorizontalContentAlignment="Center" />
+                    <Separator Grid.ColumnSpan="3" Grid.Row="3"/>
+                    <Label Content="Well Information Section" Grid.ColumnSpan="3" Grid.Row="4" HorizontalContentAlignment="Center" />
 
-                    <Label Content="COMP." Grid.Column="0" Grid.Row="4" />
+                    <Label Content="Название компании" Grid.Column="0" Grid.Row="5" />
                     <TextBox Name="txtBoxStartM" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right"
-                                             Grid.Column="1" Grid.Row="4"/>
-                    <Label Content="(Компания)" Grid.Column="2" Grid.Row="4"/>
-
-                    <Label Content="Well" Grid.Column="0" Grid.Row="5" />
-                    <TextBox Name="txtBoxWell" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
                                              Grid.Column="1" Grid.Row="5"/>
-                    <Label Content="(Имя скважины)" Grid.Column="2" Grid.Row="5" />
+                    <Label Content="(COMP.)" Grid.Column="2" Grid.Row="5"/>
 
-                    <Label Content="FLD." Grid.Column="0" Grid.Row="6"/>
+                    <Label Content="Имя(номер) скважины" Grid.Column="0" Grid.Row="6" />
+                    <TextBox Name="txtBoxWell" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
+                                             Grid.Column="1" Grid.Row="6"/>
+                    <Label Content="(Well)" Grid.Column="2" Grid.Row="6" />
+
+                    <Label Content="Имя площади" Grid.Column="0" Grid.Row="7"/>
                     <TextBox Name="txtBoxFLD" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
-                             Grid.Column="1" Grid.Row="6"/>
-                    <Label Content="(Имя площади)" Grid.Column="2" Grid.Row="6"/>
-
-                    <Label Content="LOC." Grid.Column="0" Grid.Row="7"/>
-                    <TextBox Name="txtBoxLOC" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
                              Grid.Column="1" Grid.Row="7"/>
-                    <Label Content="(Коорд. скважины)" Grid.Column="2" Grid.Row="7"/>
+                    <Label Content="(FLD.)" Grid.Column="2" Grid.Row="7"/>
 
-                    <Label Content="CNTY." Grid.Column="0" Grid.Row="8"/>
-                    <TextBox Name="txtBoxCNTY" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
+                    <Label Content="Координаты скважины" Grid.Column="0" Grid.Row="8"/>
+                    <TextBox Name="txtBoxLOC" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
                              Grid.Column="1" Grid.Row="8"/>
-                    <Label Content="(Страна)" Grid.Column="2" Grid.Row="8"/>
+                    <Label Content="(LOC.)" Grid.Column="2" Grid.Row="8"/>
 
-                    <Label Content="STATE." Grid.Column="0" Grid.Row="9"/>
-                    <TextBox Name="txtBoxSTATE" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
+                    <Label Content="Страна" Grid.Column="0" Grid.Row="9"/>
+                    <TextBox Name="txtBoxCNTY" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
                              Grid.Column="1" Grid.Row="9"/>
-                    <Label Content="(Район)" Grid.Column="2" Grid.Row="9"/>
+                    <Label Content="(CNTY.)" Grid.Column="2" Grid.Row="9"/>
 
-                    <Label Content="SRVC." Grid.Column="0" Grid.Row="10"/>
-                    <TextBox Name="txtBoxSRVC" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
+                    <Label Content="Район" Grid.Column="0" Grid.Row="10"/>
+                    <TextBox Name="txtBoxSTATE" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
                              Grid.Column="1" Grid.Row="10"/>
-                    <Label Content="(Геофиз.компания)" Grid.Column="2" Grid.Row="10"/>                    
+                    <Label Content="(STATE.)" Grid.Column="2" Grid.Row="10"/>
 
-                    <Label Content="API." Grid.Column="0" Grid.Row="11"/>
-                    <TextBox Name="txtBoxAPI" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
+                    <Label Content="Геофизическая компания" Grid.Column="0" Grid.Row="11"/>
+                    <TextBox Name="txtBoxSRVC" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
                              Grid.Column="1" Grid.Row="11"/>
-                    <Label Content="(Идентификатор)" Grid.Column="2" Grid.Row="11"/>
+                    <Label Content="(SRVC.)" Grid.Column="2" Grid.Row="11"/>                    
 
-                    <!--</StackPanel>-->
-                    <!--</GroupBox>-->
-                    <!--</StackPanel>-->
+                    <Label Content="Идентификатор" Grid.Column="0" Grid.Row="12"/>
+                    <TextBox Name="txtBoxAPI" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
+                             Grid.Column="1" Grid.Row="12"/>
+                    <Label Content="(API)" Grid.Column="2" Grid.Row="12"/>
+                    <Button Name="btnLasStart" Grid.Row="13" Content="Сформировать LAS" Grid.ColumnSpan="3" Width="150" Margin="10" Click="Button_FormLasClick"/>                    
                 </Grid>
             </TabItem.Content>
         </TabItem>

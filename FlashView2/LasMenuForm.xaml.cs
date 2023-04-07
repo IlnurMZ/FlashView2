@@ -145,6 +145,7 @@ namespace FlashView2
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(prop));
         }
+        // кнопка формирования LAS
         void Button_FormLasClick(object sender, RoutedEventArgs e)
         {            
             try
@@ -156,9 +157,11 @@ namespace FlashView2
             }
             catch (Exception ex)
             {
-                StatusLasMenu += $"{DateTime.Now}: {ex.Message}";
+                ScrollStatusLasTextBox(ex.Message);
+                //StatusLasMenu += $"{DateTime.Now}: {ex.Message}\n";                
             }                              
         }
+
         // Проверка выбора калибровочных настроек;
         void ChoiseCalibrData()
         {
@@ -247,20 +250,27 @@ namespace FlashView2
 
                     for (int i = shift + 1; i < FileDepthAndTime.Count; i++)
                     {
-                        if (DateTime.Parse(FileDepthAndTime[i][posTime]) > EndTimeRead)
+                        DateTime timeFinish = DateTime.Parse(FileDepthAndTime[i][posTime]);
+                        if (timeFinish > EndTimeRead)
                         {
                             lastCount = i - 1;
                             break;
+                        }
+                        else if (timeFinish == EndTimeRead)
+                        {
+                            lastCount = i;
                         }
                     }
 
                     if (depthStart == 0)
                     {
-                        StatusLasMenu += $"{DateTime.Now}: Стартовое значение времени не указано не верно";
+                        ScrollStatusLasTextBox("Стартовое значение времени указано не верно");
+                        //StatusLasMenu += $"{DateTime.Now}: Стартовое значение времени указано не верно\n";
                     }
                     if (lastCount == 0)
                     {
-                        StatusLasMenu += $"{DateTime.Now}: Конечное значение времени не указано не верно";
+                        ScrollStatusLasTextBox("Конечное значение времени указано не верно");
+                        //StatusLasMenu += $"{DateTime.Now}: Конечное значение времени указано не верно\n";
                         lastCount = FileDepthAndTime.Count;
                     }
                 }
@@ -338,14 +348,14 @@ namespace FlashView2
             return DepthTimeDetail;
         }
 
-
         // метод поиска соответствия данных с флеш с данными из файла глубина время
         void FindNearestTimeValue(SortedDictionary<DateTime, double> dictTimeDepth)
         {
             if (!double.TryParse(txtBoxNULL.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double nullValue))
             {
                 nullValue = -999.5;
-                StatusLasMenu += $"{DateTime.Now}: Ошибка конвертации Null value \n";
+                ScrollStatusLasTextBox("Ошибка конвертации Null value");
+                //StatusLasMenu += $"{DateTime.Now}: Ошибка конвертации Null value \n";
             }
             SortedDictionary<double, List<double>> fileDepthAndKP = new SortedDictionary<double, List<double>>();
 
@@ -360,6 +370,8 @@ namespace FlashView2
             int endPosDepTime = 0;
             int posLastValue = 0;
             int dopusk = 0;
+
+            StartTimeRead = new DateTime();
 
             for (int i = 1; i < listTimeAndDepth.Count; i++)
             {
@@ -459,6 +471,11 @@ namespace FlashView2
                     {
                         for (int k1 = startPosDepTime; k1 <= endPosDepTime; k1++)
                         {
+                            if (StartTimeRead == new DateTime())
+                            {
+                                StartTimeRead = listTimeAndDepth[k1].Key;
+                            }
+
                             DateTime a = new DateTime();
                             DateTime b = new DateTime();
 
@@ -526,10 +543,11 @@ namespace FlashView2
                             if (!fileDepthAndKP.TryAdd(listTimeAndDepth[k1].Value, KPs))
                             {
                                 fileDepthAndKP[listTimeAndDepth[k1].Value].AddRange(KPs);
-                            }
+                            }                          
                         }
                         depthStartMetr = depthEndMetr;
-                        startPosDepTime = i;
+                        startPosDepTime = i;                        
+
                         timeStartMetr = listTimeAndDepth[startPosDepTime].Key;
                         timeEndMetr = new DateTime();
                         dopusk = 0;
@@ -564,7 +582,8 @@ namespace FlashView2
                 }
                 catch (Exception exception)
                 {
-                    StatusLasMenu += $"{DateTime.Now}: Ошибка. {exception.Message}\n";
+                    ScrollStatusLasTextBox(exception.Message);
+                    //StatusLasMenu += $"{DateTime.Now}: Ошибка. {exception.Message}\n";
                 }
 
                 // записываем данные
@@ -583,15 +602,18 @@ namespace FlashView2
                     }
                     catch (Exception exception)
                     {
-                        StatusLasMenu += $"{DateTime.Now}: Ошибка. {exception.Message}\n";
+                        ScrollStatusLasTextBox(exception.Message);
+                        //StatusLasMenu += $"{DateTime.Now}: Ошибка. {exception.Message}\n";
                     }
                 }
-                StatusLasMenu += $"{DateTime.Now}: Файл сохранен {saveFileDialog.FileName}\n";
+                ScrollStatusLasTextBox($"Файл сохранен {saveFileDialog.FileName}");
+                //StatusLasMenu += $"{DateTime.Now}: Файл сохранен {saveFileDialog.FileName}\n";
 
             }
             else
             {
-                StatusLasMenu += $"{DateTime.Now}: Файл не сохранен\n";
+                ScrollStatusLasTextBox("Файл не сохранен");
+                //StatusLasMenu += $"{DateTime.Now}: Файл не сохранен\n";
             }
         }
 
@@ -607,7 +629,7 @@ namespace FlashView2
                 $"{new string(' ', countSigns - txtBoxVers.Text.Length)}:" + $"{new string(' ', 3)}CWLS log ASCII Standard -VERSION 2.0");
             result.AppendLine($"WRAP.{new string(' ', 11)}{txtBoxWrap.Text}" +
                 $"{new string(' ', (countSigns - txtBoxWrap.Text.Length))}:" + $"{new string(' ', 3)}One line per depth step");
-            result.AppendLine($"#{new string('-', 50)}");
+            result.AppendLine("-----------------------------------------------------------------------------");
 
             // Второй раздел
             countSigns = 25;
@@ -616,23 +638,35 @@ namespace FlashView2
             result.AppendLine("#----                     ----   -----------------        -----------------");
             result.AppendLine($"STRT                     .M      {startM}{new string(' ', countSigns - startM.ToString().Length)}: START DEPTH");
             result.AppendLine($"STOP                     .M      {stopM}{new string(' ', countSigns - stopM.ToString().Length)}: STOP DEPTH");
-            result.AppendLine($"STEP                     .M      {stepM}{new string(' ', countSigns - stepM.ToString().Length)}: STEP");
+            result.AppendLine($"STEP                     .M      {stepM.ToString("0.00")}{new string(' ', countSigns - stepM.ToString("0.00").Length)}: STEP");
             result.AppendLine($"NULL                     .M      {txtBoxNULL.Text}{new string(' ', countSigns - txtBoxNULL.Text.Length)}: NULL VALUE");            
-            result.AppendLine($"DATE                     .M      {DateTime.Parse(dtp1.Text).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}{new string(' ', countSigns - 10)}: DATE");
-            result.AppendLine($"API                      .       {txtBoxAPI}{new string(' ', countSigns - txtBoxAPI.Text.Length)}: API NUMBER");
-            result.AppendLine($"WELL                     .       {txtBoxWell}{new string(' ', countSigns - txtBoxWell.Text.Length)}: WELL");
-            result.AppendLine($"FLD                      .       {txtBoxFLD}{new string(' ', countSigns - txtBoxFLD.Text.Length)}: FIELD");
-            result.AppendLine($"CTRY                     .       {txtBoxCNTY}{new string(' ', countSigns - txtBoxCNTY.Text.Length)}: COUNTRY");
-            result.AppendLine($"STAT                     .       {txtBoxSTATE}{new string(' ', countSigns - txtBoxSTATE.Text.Length)}: STATE");
-            result.AppendLine($"SRVC                     .       {txtBoxSRVC}{new string(' ', countSigns - txtBoxSRVC.Text.Length)}: SERVICE COMPANY");
-            result.AppendLine($"FILECREATED              .       {DateTime.Now.ToString("yyyy-dd-MM hh:mm:ss")}{new string(' ', countSigns - txtBoxSRVC.Text.Length)}: SERVICE COMPANY");
+            result.AppendLine($"DATE                     .M      {StartTimeRead.ToString("yyyy-MM-dd HH:mm:ss")}{new string(' ', countSigns - 19)}: DATE");
+            result.AppendLine($"API                      .       {txtBoxAPI.Text}{new string(' ', countSigns - txtBoxAPI.Text.Length)}: API NUMBER");
+            result.AppendLine($"WELL                     .       {txtBoxWell.Text}{new string(' ', countSigns - txtBoxWell.Text.Length)}: WELL");
+            result.AppendLine($"FLD                      .       {txtBoxFLD.Text}{new string(' ', countSigns - txtBoxFLD.Text.Length)}: FIELD");
+            result.AppendLine($"CTRY                     .       {txtBoxCNTY.Text}{new string(' ', countSigns - txtBoxCNTY.Text.Length)}: COUNTRY");
+            result.AppendLine($"STAT                     .       {txtBoxSTATE.Text}{new string(' ', countSigns - txtBoxSTATE.Text.Length)}: STATE");
+            result.AppendLine($"SRVC                     .       {txtBoxSRVC.Text}{new string(' ', countSigns - txtBoxSRVC.Text.Length)}: SERVICE COMPANY");
+            string fileCreadted = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            result.AppendLine($"FILECREATED              .       {fileCreadted}{new string(' ', countSigns - fileCreadted.Length)}: SERVICE COMPANY");
             result.AppendLine("-----------------------------------------------------------------------------");
 
             // Третий раздел            
             result.AppendLine("~CURVE INFORMATION SECTION");
+            result.AppendLine("MD                        .M     :DEPTH");
+            result.AppendLine("KP                               :CoefPoristosti");
+            result.AppendLine("-----------------------------------------------------------------------------");
+            // Четвертый раздел    
+            result.AppendLine("#  MD         KP ");
+            result.Append("~ASCII Log Data");
             return result;
         }
 
+        void ScrollStatusLasTextBox(string message)
+        {
+            StatusLasMenu += $"{DateTime.Now}: {message} \n";
+            txtBoxStatusLas.ScrollToEnd();
+        }
 
         // кнопка загрузки файла глубина-время
         void btn_LoadDepthAndTime_Click(object sender, RoutedEventArgs e)
@@ -650,8 +684,9 @@ namespace FlashView2
             if (openFileDialog.ShowDialog()==true)
             {
                 FileDepthAndTime = new List<string[]>();
-                path = openFileDialog.FileName;                
-                StatusLasMenu += $"{DateTime.Now}: Загрузка файла началась: {openFileDialog.SafeFileName} \n";
+                path = openFileDialog.FileName;
+                ScrollStatusLasTextBox($"Загрузка файла началась: {openFileDialog.SafeFileName}");
+                //StatusLasMenu += $"{DateTime.Now}: Загрузка файла началась: {openFileDialog.SafeFileName} \n";
 
                 try
                 {
@@ -746,13 +781,15 @@ namespace FlashView2
                 }
                 else
                 {
-                    StatusLasMenu += $"{DateTime.Now}: Файл не содержит достаточное количество данных \n";                    
+                    ScrollStatusLasTextBox("Файл не содержит достаточное количество данных");
+                    //StatusLasMenu += $"{DateTime.Now}: Файл не содержит достаточное количество данных \n";                    
                 }
 
                 OpenCalibrFile();
                 DataTable = dt;
                 dtg_DepthAndTime.HorizontalAlignment = HorizontalAlignment.Center;
-                StatusLasMenu += $"{DateTime.Now}: Загрузка завершена \n";
+                ScrollStatusLasTextBox("Загрузка завершена");
+                //StatusLasMenu += $"{DateTime.Now}: Загрузка завершена \n";
                 StartTimeRead = DateTime.Parse(dt.Rows[0]["Дата"].ToString());
                 EndTimeRead = DateTime.Parse(dt.Rows[dt.Rows.Count-1]["Дата"].ToString());
                 IsMoveTime = true;
@@ -794,12 +831,15 @@ namespace FlashView2
                     StatusLasMenu += $"{DateTime.Now}: {ex.Message}\n";                    
                     return;
                 }
-                btn_FormLas.IsEnabled = true;
-                StatusLasMenu += $"{DateTime.Now}: Калибровочный файл {openCalibrFile.SafeFileName} успешно считан \n";
+                //btn_FormLas.IsEnabled = true;
+                dataTab.IsEnabled = true;
+                ScrollStatusLasTextBox($"Калибровочный файл {openCalibrFile.SafeFileName} успешно считан");
+                //StatusLasMenu += $"{DateTime.Now}: Калибровочный файл {openCalibrFile.SafeFileName} успешно считан \n";
             }
             else
             {
-                StatusLasMenu += $"{DateTime.Now}: Необходимо выбрать калибровочный файл\n";
+                ScrollStatusLasTextBox("Необходимо выбрать калибровочный файл");
+                //StatusLasMenu += $"{DateTime.Now}: Необходимо выбрать калибровочный файл\n";
             }
         }
 
@@ -855,14 +895,21 @@ namespace FlashView2
                 }
                 else
                 {
-                    StatusLasMenu += $"{DateTime.Now}: Отсутствует столбец с датой";
+                    //StatusLasMenu += $"{DateTime.Now}: Отсутствует столбец с датой";
+                    ScrollStatusLasTextBox("Отсутствует столбец с датой");
                 }               
             }
             else
             {
-                StatusLasMenu += $"{DateTime.Now}: Не могу преобразовать значение указанное в поле для сдвига времени";
+                ScrollStatusLasTextBox("Не могу преобразовать значение указанное в поле для сдвига времени");
+                //StatusLasMenu += $"{DateTime.Now}: Не могу преобразовать значение указанное в поле для сдвига времени";
             }           
            
+        }
+
+        private void btnLasStart_Click(object sender, RoutedEventArgs e)
+        {            
+
         }
     }
 }
