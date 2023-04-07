@@ -5,33 +5,33 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlashView2"
         mc:Ignorable="d"        
-        Title="FlashViewer v.2" Height="530" Width="1700" ResizeMode="NoResize">
+        Title="FlashViewer v.2" Height="600" Width="1700" ResizeMode="CanResize"  Background="#FFA2A1A1">
     <Grid x:Name="mainGrid" Margin="10,5,10,5" >
         <Grid.RowDefinitions>
-            <RowDefinition Height="52*"/>
-            <RowDefinition Height="392*"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="400*"/>
             <RowDefinition Height="70"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition/>
+            <ColumnDefinition/>            
         </Grid.ColumnDefinitions>
 
-        <DataGrid Name="datagrid1" Grid.Row ="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,5,5,5" ItemsSource="{Binding DataTable}" AutoGeneratingColumn ="r2_AutoGeneratingColumn" Background="#FFD2D2D2"/>
-        <Menu Margin="5,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" Width="auto">
-            <MenuItem Header="Файл" BorderBrush="Black" Height="25" Width="100" Padding="15,5,0,0" HorizontalContentAlignment="Center" FontFamily="Times New Roman" VerticalAlignment="Bottom" HorizontalAlignment="Center" VerticalContentAlignment="Bottom" >                
-                <MenuItem.Icon>
-                    <Image Source="/Icons/File.png" />
-                </MenuItem.Icon>
+        <DataGrid Name="datagrid1" Grid.Row ="2" Margin="5,5,5,5" ItemsSource="{Binding DataTable}" AutoGeneratingColumn ="r2_AutoGeneratingColumn" Background="White"/>
+        <Menu Margin="5,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" Height="24" Width="166">
+            <!--<Separator Width="2" Background="Black" BorderBrush="Black" Foreground="Black" />-->
+            <MenuItem Header="Файл" Height="25" FontFamily="Times New Roman" 
+                      HorizontalAlignment="Center" VerticalContentAlignment="Bottom" FontWeight="Bold"  Foreground="Black"
+                      Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
                 <MenuItem Click="MenuItemOpenFile_Click">
-                    <MenuItem.Header>                      
+                    <MenuItem.Header>
                         <TextBlock Text="Открыть файл" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" />
                     </MenuItem.Header>
                     <MenuItem.Icon>
                         <Image Source="/Icons/Open File.png" Height="20"/>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="Сохранить как" Name="menuSaveAs" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">                   
+                <MenuItem Header="Сохранить как" Name="menuSaveAs" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">
                     <MenuItem.Icon>
                         <Image Source="/Icons/Save As.png" Height="20"/>
                     </MenuItem.Icon>
@@ -55,20 +55,64 @@
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
-            <MenuItem Header="Сформировать LAS" Name="menuButtonFormLas" BorderBrush="Black" Click="menuButtonFormLas_Click" 
-                      VerticalAlignment="Center" Width="150" Height="25" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Padding="10,5,0,0" 
+            
+            <MenuItem Header="Сформировать LAS" Name="menuButtonFormLas" Click="menuButtonFormLas_Click" 
+                      VerticalAlignment="Center" Height="25"
                       VerticalContentAlignment="Center" FontFamily="Times New Roman"
-                      IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">
-                <MenuItem.Icon>
-                    <Image Source="/Icons/Form LAS.png" Height="20"/>
-                </MenuItem.Icon>
+                      Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+                      IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}" FontWeight="Bold">
             </MenuItem>
-            <!--<MenuItem x:Name="TestBut" Header="Кнопка" BorderBrush="Black" Click="TestBut_Click"/>-->
         </Menu>
-        <!--<ProgressBar x:Name ="progBar" HorizontalAlignment="Right" Height="30" Margin="0,0,20,0" Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" Width="300" Value="{Binding Percent, UpdateSourceTrigger=PropertyChanged}"/>-->
 
-        <DockPanel Grid.Row="2" Grid.ColumnSpan="2">
-            <StatusBar DockPanel.Dock="Bottom" Margin="5">
+        <StackPanel Orientation="Horizontal" Grid.Row="1">
+            <Button Name="btnOpenFile" Width="40" Height="30" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+                    Click="MenuItemOpenFile_Click">
+                <Button.Content>
+                    <Image Source="/Icons/File.png" />
+                </Button.Content>
+                <Button.ToolTip>
+                    <ToolTip>
+                        Открыть файл
+                    </ToolTip>
+                </Button.ToolTip>
+            </Button>
+            <Button Name="btnSaveFileExcel" Width="40" Height="30" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+                    Click="btnSaveExcel_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">
+                <Button.Content>
+                    <Image Source="/File Excel.png" />
+                </Button.Content>
+                <Button.ToolTip>
+                    <ToolTip>
+                        Сохранить файл в Excel
+                    </ToolTip>
+                </Button.ToolTip>
+            </Button>
+            <Button Name="btnSaveFileTxT" Width="40" Height="30" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+                    Click="btnSaveTxT_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">
+                <Button.Content>
+                    <Image Source="/File txt.png" />
+                </Button.Content>
+                <Button.ToolTip>
+                    <ToolTip>
+                        Сохранить файл в txt
+                    </ToolTip>
+                </Button.ToolTip>
+            </Button>
+            <Button Name="btnFormLas" Width="40" Height="30" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+                    Click="menuButtonFormLas_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">
+                <Button.Content>
+                    <Image Source="/Form LAS.png" />
+                </Button.Content>
+                <Button.ToolTip>
+                    <ToolTip>
+                        Сформировать LAS
+                    </ToolTip>
+                </Button.ToolTip>
+            </Button>
+        </StackPanel>
+
+        <DockPanel Grid.Row="3" Grid.ColumnSpan="2">
+            <StatusBar DockPanel.Dock="Bottom" Margin="5" Background="#FFA2A1A1">
                 <StatusBar.ItemsPanel>
                     <ItemsPanelTemplate>
                         <Grid>
@@ -80,11 +124,10 @@
                         </Grid>
                     </ItemsPanelTemplate>
                 </StatusBar.ItemsPanel>
-                <StatusBarItem VerticalAlignment="Top" Margin="0,10,0,0">
-                    <TextBox Text="{Binding StatusMainWindow, UpdateSourceTrigger=PropertyChanged}" Name="txtBoxStatus" Width="1520" Height="33"
+                <StatusBarItem VerticalAlignment="Top" Margin="0,5,5,0">
+                    <TextBox Text="{Binding StatusMainWindow, UpdateSourceTrigger=PropertyChanged}" Name="txtBoxStatus" Width="1520" Height="50"
                              HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible" 
-                             TextWrapping="Wrap" />
-                    <!--Text="{Binding StatusMainWindow, UpdateSourceTrigger=PropertyChanged}"-->
+                             TextWrapping="Wrap" />                    
                 </StatusBarItem>
                 <Separator Grid.Column="1" />
                 <StatusBarItem Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,10,0,0">

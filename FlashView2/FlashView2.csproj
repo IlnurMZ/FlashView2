@@ -70,6 +70,9 @@
     <Resource Include="Depth.jpg" />
     <Resource Include="Depth2.png" />
     <Resource Include="File Depth.png" />
+    <Resource Include="File Excel.png" />
+    <Resource Include="File txt.png" />
+    <Resource Include="Form LAS.png" />
     <Resource Include="free-icon-depth-8902165.png" />
     <Resource Include="Icons\Exit.png" />
     <Resource Include="Icons\File Excel.png" />

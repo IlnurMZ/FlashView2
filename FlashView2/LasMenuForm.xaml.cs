@@ -626,9 +626,9 @@ namespace FlashView2
             int countSigns = 8;
             result.AppendLine("~VERSION INFORMATION SECTION");            
             result.AppendLine($"VERS.{new string(' ', 11)}{txtBoxVers.Text}" +
-                $"{new string(' ', countSigns - txtBoxVers.Text.Length)}:" + $"{new string(' ', 3)}CWLS log ASCII Standard -VERSION 2.0");
+                $"{new string(' ', countSigns - txtBoxVers.Text.Length)} :" + $"{new string(' ', 3)}CWLS log ASCII Standard -VERSION 2.0");
             result.AppendLine($"WRAP.{new string(' ', 11)}{txtBoxWrap.Text}" +
-                $"{new string(' ', (countSigns - txtBoxWrap.Text.Length))}:" + $"{new string(' ', 3)}One line per depth step");
+                $"{new string(' ', (countSigns - txtBoxWrap.Text.Length))} :" + $"{new string(' ', 3)}One line per depth step");
             result.AppendLine("-----------------------------------------------------------------------------");
 
             // Второй раздел
@@ -653,7 +653,7 @@ namespace FlashView2
 
             // Третий раздел            
             result.AppendLine("~CURVE INFORMATION SECTION");
-            result.AppendLine("MD                        .M     :DEPTH");
+            result.AppendLine("MD                       .M     :DEPTH");
             result.AppendLine("KP                               :CoefPoristosti");
             result.AppendLine("-----------------------------------------------------------------------------");
             // Четвертый раздел    
@@ -787,7 +787,7 @@ namespace FlashView2
 
                 OpenCalibrFile();
                 DataTable = dt;
-                dtg_DepthAndTime.HorizontalAlignment = HorizontalAlignment.Center;
+                //dtg_DepthAndTime.HorizontalAlignment = HorizontalAlignment.Center;
                 ScrollStatusLasTextBox("Загрузка завершена");
                 //StatusLasMenu += $"{DateTime.Now}: Загрузка завершена \n";
                 StartTimeRead = DateTime.Parse(dt.Rows[0]["Дата"].ToString());
