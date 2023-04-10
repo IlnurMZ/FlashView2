@@ -116,6 +116,35 @@ namespace FlashView2
                 OnPropertyChanged("StatusLasMenu");
             } 
         }
+
+        private int percentLas; // проценты загрузки для прогресбара
+        public int PercentLas
+        {
+            get
+            {
+                return percentLas;
+            }
+            set
+            {
+                percentLas = value;
+                OnPropertyChanged("PercentLas");
+            }
+        }
+
+        private bool isOpenFile;
+        public bool IsOpenFile
+        {
+            get
+            {
+                return isOpenFile;
+            }
+            set
+            {
+                isOpenFile = value;
+                OnPropertyChanged("IsOpenFile");
+            }
+        }
+
         DataTable dataTable;
         public DataTable DataTable 
         { 
@@ -759,6 +788,7 @@ namespace FlashView2
                     MessageBox.Show(ex.Message);
                 }
 
+                PercentLas = 60;
                 DataTable dt = new DataTable();
                 for (int i = 0; i < FileDepthAndTime[0].Length; i++)
                 {
@@ -785,17 +815,19 @@ namespace FlashView2
                     //StatusLasMenu += $"{DateTime.Now}: Файл не содержит достаточное количество данных \n";                    
                 }
 
-                OpenCalibrFile();
+                OpenCalibrFile();                
                 DataTable = dt;
-                //dtg_DepthAndTime.HorizontalAlignment = HorizontalAlignment.Center;
-                ScrollStatusLasTextBox("Загрузка завершена");
-                //StatusLasMenu += $"{DateTime.Now}: Загрузка завершена \n";
+
+                PercentLas = 100;
+
+                ScrollStatusLasTextBox("Загрузка завершена");               
                 StartTimeRead = DateTime.Parse(dt.Rows[0]["Дата"].ToString());
                 EndTimeRead = DateTime.Parse(dt.Rows[dt.Rows.Count-1]["Дата"].ToString());
                 IsMoveTime = true;
-            }            
+                PercentLas = 0;
+            }
+            IsOpenFile = true;
         }
-
 
         // открытие калибровочного файла
         void OpenCalibrFile()
@@ -843,7 +875,6 @@ namespace FlashView2
             }
         }
 
-
         // обработчик заголовков таблицы
         void r2_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
         {
@@ -854,16 +885,19 @@ namespace FlashView2
             }
         }
 
-
-        // кнопка для сдвига времени
-        private void btnUseShiftTime_Click(object sender, RoutedEventArgs e)
+        // метод сдвига колонки "временя"
+        void UseShiftTime_Click()
         {
             int posTime = -1;
 
             for (int i = 0; i < FileDepthAndTime[0].Length; i++)
             {
                 if (FileDepthAndTime[0][i].Trim() == "Дата")
+                {
                     posTime = i;
+                    break;
+                }    
+                    
             }
 
             if (TimeSpan.TryParse(ShiftTime,out TimeSpan ts))
@@ -907,9 +941,49 @@ namespace FlashView2
            
         }
 
+        // метод сдвига колонки "замер"
+        void UseShiftDepth()
+        {
+            int posZaboi = -1;
+            int posZamer = -1;
+            double shiftValue = -9999.9;
+            double.TryParse(txtBoxShift.Text, out shiftValue);
+
+            for (int i = 0; i < FileDepthAndTime[0].Length; i++)
+            {
+                if (FileDepthAndTime[0][i].Trim() == "Забой")
+                {
+                    posZaboi = i;                    
+                }
+                if (FileDepthAndTime[0][i].Trim() == "Замер")
+                {
+                    posZamer = i;
+                }
+            }
+
+            if (posZaboi != -1 && posZamer != -1 && shiftValue != -9999.9)
+            {
+                for (int i = 0; i < dataTable.Rows.Count; i++)
+                {
+                    dataTable.Rows[i]["Замер"] = " " + (double.Parse(dataTable.Rows[i]["Забой"].ToString()) - shiftValue).ToString() + " ";
+                }
+
+                for (int i = 1; i < FileDepthAndTime.Count; i++)
+                {
+                    FileDepthAndTime[i][posZamer] = (double.Parse(FileDepthAndTime[i][posZaboi]) - shiftValue).ToString();
+                }
+            }            
+        }
+
         private void btnLasStart_Click(object sender, RoutedEventArgs e)
         {            
 
+        } 
+
+        private void btn_UpdateCurrentData_Click(object sender, RoutedEventArgs e)
+        {
+            UseShiftTime_Click();
+            UseShiftDepth();
         }
     }
 }

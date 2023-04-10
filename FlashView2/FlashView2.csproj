@@ -5,12 +5,14 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <PackageIcon>FlashView.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Data.jpg" />
     <None Remove="Depth.jpg" />
     <None Remove="Depth2.png" />
+    <None Remove="Diametr.png" />
     <None Remove="Exit.png" />
     <None Remove="File Depth.png" />
     <None Remove="File Excel.png" />
@@ -26,6 +28,7 @@
     <None Remove="Seach Data2.png" />
     <None Remove="Shift Time.png" />
     <None Remove="Truba.jpg" />
+    <None Remove="UpdateData.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -69,9 +72,12 @@
     <Resource Include="Data.jpg" />
     <Resource Include="Depth.jpg" />
     <Resource Include="Depth2.png" />
+    <Resource Include="Diametr.png" />
+    <Resource Include="Exit.png" />
     <Resource Include="File Depth.png" />
     <Resource Include="File Excel.png" />
     <Resource Include="File txt.png" />
+    <Resource Include="File.png" />
     <Resource Include="Form LAS.png" />
     <Resource Include="free-icon-depth-8902165.png" />
     <Resource Include="Icons\Exit.png" />
@@ -88,6 +94,14 @@
     <Resource Include="Seach Data2.png" />
     <Resource Include="Shift Time.png" />
     <Resource Include="Truba.jpg" />
+    <Resource Include="UpdateData.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Icons\FlashView.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

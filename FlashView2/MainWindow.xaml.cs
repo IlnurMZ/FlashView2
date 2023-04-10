@@ -166,7 +166,8 @@ namespace FlashView2
 
                     if (mainPacket.ID_Device == 0)
                     {
-                        StatusMainWindow+= $"{DateTime.Now}: Возникла ошибка: подходящий конфигурационный файл не найден\n";
+                        ScrollStatusLasTextBox("Возникла ошибка: подходящий конфигурационный файл не найден");
+                        //StatusMainWindow+= $"{DateTime.Now}: Возникла ошибка: подходящий конфигурационный файл не найден\n";
                         return;
                     }
 
@@ -205,7 +206,8 @@ namespace FlashView2
                 }
                 catch (Exception ex)
                 {
-                    StatusMainWindow += $"{DateTime.Now}: Возникла ошибка: {ex.Message}\n";
+                    ScrollStatusLasTextBox($"Возникла ошибка: {ex.Message}");
+                    //StatusMainWindow += $"{DateTime.Now}: Возникла ошибка: {ex.Message}\n";
                     return;
                 }
             }
@@ -215,7 +217,8 @@ namespace FlashView2
             }
             
             HandleConfigData(dataConfig);
-            StatusMainWindow += $"{DateTime.Now}: Загрузка файла началась: {nameFile} \n";
+            ScrollStatusLasTextBox($"Загрузка файла началась: {nameFile}");
+            //StatusMainWindow += $"{DateTime.Now}: Загрузка файла началась: {nameFile} \n";
             txtBoxStatus.ScrollToEnd();
             Percent = 0;                     
             UpdateTable(FlashFile, mainPacket);
@@ -319,7 +322,7 @@ namespace FlashView2
                 IsLasFile = true;
                 StatusMainWindow += $"{DateTime.Now}: Загрузка завершена!\n";                
             });
-            //txtBoxStatus.ScrollToEnd();
+            txtBoxStatus.ScrollToEnd();
         }        
         DataTable LoadDataTable(Packet packetData, byte[] flash)
         {
@@ -364,11 +367,13 @@ namespace FlashView2
                 {
                     if (isBadTime)
                     {
+                        //ScrollStatusLasTextBox($"Ошибка данных (не удалось определить время), после строки {myTable.Rows.Count}, количество строк: {countBadTimes}");
                         StatusMainWindow += $"{DateTime.Now}: Ошибка данных (не удалось определить время), после строки {myTable.Rows.Count}, количество строк: {countBadTimes}\n";
                         isBadTime = false;
                         countBadTimes = 0;
                     }
                     countBadBites += flash.Length - i;
+                    //ScrollStatusLasTextBox($"Ошибка конца файла, после строки {myTable.Rows.Count}, количество ошибочных байт: {countBadBites}");
                     StatusMainWindow += $"{DateTime.Now}: Ошибка конца файла, после строки {myTable.Rows.Count}, количество ошибочных байт: {countBadBites}\n";
                     break;
                 }
@@ -390,6 +395,7 @@ namespace FlashView2
                     {
                         if (isBadLine)
                         {
+                            //ScrollStatusLasTextBox($"Ошибка после {myTable.Rows.Count} строки, количество ошибочных байт: {countBadBites}");
                             StatusMainWindow += $"{DateTime.Now}: Ошибка после {myTable.Rows.Count} строки, количество ошибочных байт: {countBadBites}\n";
                             countBadBites = 0;
                             isBadLine = false;
@@ -415,6 +421,7 @@ namespace FlashView2
 
                         if (isBadTime)
                         {
+                            //ScrollStatusLasTextBox($"Ошибка данных (не удалось определить время), после строки {myTable.Rows.Count}, количество строк: {countBadTimes}");
                             StatusMainWindow += $"{DateTime.Now}: Ошибка данных (не удалось определить время), после строки {myTable.Rows.Count}, количество строк: {countBadTimes}\n";
                             isBadTime = false;
                             countBadTimes = 0;
@@ -460,8 +467,9 @@ namespace FlashView2
             if (saveFileDialog.ShowDialog() == true)
             {
                 path = saveFileDialog.FileName;
-                StatusMainWindow += $"{DateTime.Now}: Выполняется экспорт данных в формат .xlsx\n";
-                txtBoxStatus.ScrollToEnd();
+                ScrollStatusLasTextBox($"Выполняется экспорт данных в формат .xlsx");
+                //StatusMainWindow += $"{DateTime.Now}: Выполняется экспорт данных в формат .xlsx\n";
+                //txtBoxStatus.ScrollToEnd();
                 FastExportToExcelAsync(path);
                 txtBoxStatus.ScrollToEnd();
             }                                    
@@ -728,6 +736,12 @@ namespace FlashView2
                    "Необходимо скопировать папку и перезапустить программу!");
                 throw new Exception();
             }
+        }
+
+        void ScrollStatusLasTextBox(string message)
+        {
+            StatusMainWindow += $"{DateTime.Now}: {message} \n";
+            txtBoxStatus.ScrollToEnd();
         }
     }
 }

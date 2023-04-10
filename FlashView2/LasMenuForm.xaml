@@ -6,8 +6,8 @@
         xmlns:local="clr-namespace:FlashView2"         
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
-        Title="Задание временного интервала, сдвига и корректировки" 
-        Height="830" Width="870" 
+        Title="FlashViewer v.2: LAS" 
+        Height="840" Width="870" 
         WindowStartupLocation="CenterScreen" Background="#FFA2A1A1">
     <Window.Resources>
         <Style x:Key="CenterGridHeaderStyle" TargetType="DataGridColumnHeader">
@@ -20,35 +20,60 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="250"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="345"/>
-                        <RowDefinition Height="178"/>
-                        <RowDefinition Height="180"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="60"/>
+                        <RowDefinition Height="141"/>
+                        <RowDefinition Height="217"/>
+                        <RowDefinition/>
+                        <RowDefinition Height="80"/>
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0" Grid.Column="0">
-                        <Button x:Name="btn_LoadDepthAndTime" Click="btn_LoadDepthAndTime_Click" Height="30" Margin="10,15,10,10">
-                            <Button.Content>
-                                <StackPanel Orientation="Horizontal">
-                                    <Image Source="/Open File.png" Height="20" Margin="5,0,5,0"/>
-                                    <TextBlock Text="Открыть файл с глубиной" />
-                                </StackPanel>
-                            </Button.Content>
-                        </Button>
-                        
-                        <StackPanel Orientation="Horizontal" Margin="5">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+
+                            <Button x:Name="btn_LoadDepthAndTime" Click="btn_LoadDepthAndTime_Click" 
+                                Height="60" Width="70" Margin="10,5,10,10" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
+                                <Button.Content>
+                                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                                        <Image Source="/File.png" Height="30"/>
+                                        <Label Content="Открыть" />
+                                    </StackPanel>
+                                </Button.Content>
+                                <Button.ToolTip>
+                                    <ToolTip>
+                                        Открыть файл с глубиной
+                                    </ToolTip>
+                                </Button.ToolTip>
+                            </Button>
+
+                            <Button x:Name="btn_UpdateCurrentData" Click="btn_UpdateCurrentData_Click" IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}"
+                                Height="60" Width="70" Margin="10,10,10,10" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
+                                <Button.Content>
+                                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                                        <Image Source="/UpdateData.png" Height="30"/>
+                                        <Label Content="Обновить" />
+                                    </StackPanel>
+                                </Button.Content>
+                                <Button.ToolTip>
+                                    <ToolTip>
+                                        Открыть файл с глубиной
+                                    </ToolTip>
+                                </Button.ToolTip>
+                            </Button>
+
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
                             <Label Content="NULL значение" Margin="10,0,5,5"/>
                             <TextBox Name="txtBoxNULL" Width="100" Text="-999,9" Margin="5" Height="20" HorizontalContentAlignment="Center"/>
                         </StackPanel>
-                        
-                        <StackPanel Orientation="Horizontal" Margin="5">
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                             <Label Content="Смещение, в м." Margin="10,0,5,5"/>
-                            <TextBox Name="txtBoxShift" Width="100" Text="5" Margin="5,5,0,0" Height="20" HorizontalContentAlignment="Center" />
+                            <TextBox Name="txtBoxShift" Width="100" Text="1" Margin="5,5,0,0" Height="20" HorizontalContentAlignment="Center" />
                         </StackPanel>
-                        
+
                         <GroupBox Padding="5" Width="230" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <GroupBox.Header>
                                 <StackPanel Orientation="Horizontal">
@@ -74,7 +99,7 @@
                         <GroupBox Name="gbxTruba">
                             <GroupBox.Header>
                                 <StackPanel Orientation="Horizontal" Margin="15,0,0,5">
-                                    <Image Source="/Truba.jpg" Height="25"/>
+                                    <Image Source="/Diam3.png" Height="25"/>
                                     <Label Margin="5,0,0,0"  HorizontalAlignment="Left">Труба для МНК</Label>
                                 </StackPanel>
                             </GroupBox.Header>
@@ -95,29 +120,29 @@
                         </GroupBox>
                         <!--<Button Name="btn_FormLas" Click="btnLasStart_Click" Content="Следующий шаг" Margin="15" Height="30" IsEnabled="False"/>-->
                     </StackPanel>
-                    <GroupBox Grid.Column="0" Grid.Row="1" Height="142" Width="230" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <GroupBox Grid.Row="1" Height="120" Width="230" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <GroupBox.Header>
                             <StackPanel Orientation="Horizontal">
                                 <Image Source="/Shift Time.png" Height="20" Margin="5,0,0,0"/>
                                 <TextBlock Text="Сдвинуть время" Margin="5,0,5,0"/>
                             </StackPanel>
                         </GroupBox.Header>
-                        
+
                         <StackPanel>
                             <RadioButton Name="rb1_Sdvig" Margin="5" Content="Вперед" IsChecked="{Binding IsMoveTimeUp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <RadioButton Name="rb2_Sdvig" Margin="5" Content="Назад"/>
                             <xctk:TimePicker Format="LongTime" Width="100" HorizontalAlignment="Left" Margin="5" Text="{Binding ShiftTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></xctk:TimePicker>
-                            <Button Name="btnUseShiftTime" Content="Применить" Margin="5" Height="30" Click="btnUseShiftTime_Click" IsEnabled="{Binding IsMoveTime, UpdateSourceTrigger=PropertyChanged}"/>
+                            <!--<Button Name="btnUseShiftTime" Content="Применить" Margin="5" Height="30" Click="btnUseShiftTime_Click" IsEnabled="{Binding IsMoveTime, UpdateSourceTrigger=PropertyChanged}"/>-->
                         </StackPanel>
                     </GroupBox>
-                    <!--<StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="3">-->
-                        <DataGrid x:Name="dtg_DepthAndTime" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" Grid.Column="1" Grid.RowSpan="4"
-                      Margin="10,5,10,10" ItemsSource="{Binding DataTable, UpdateSourceTrigger=PropertyChanged}" 
+
+                    <DataGrid x:Name="dtg_DepthAndTime" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" Grid.Column="1" Grid.Row="0" Grid.RowSpan="4"
+                      Margin="10,5,10,5" ItemsSource="{Binding DataTable, UpdateSourceTrigger=PropertyChanged}" 
                       AutoGeneratingColumn="r2_AutoGeneratingColumn" >
-                        </DataGrid>
-                    <!--</StackPanel>-->
-                    <DockPanel Grid.Row="4" Grid.ColumnSpan="3" >
-                        <StatusBar DockPanel.Dock="Bottom" Background="#FFA2A1A1">
+                    </DataGrid>
+
+                    <DockPanel Grid.Row="4" Grid.ColumnSpan="2" Margin="0,5,0,5">
+                        <StatusBar DockPanel.Dock="Bottom" Background="#FFA2A1A1" Margin="5">
                             <StatusBar.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <Grid>
@@ -129,13 +154,13 @@
                                     </Grid>
                                 </ItemsPanelTemplate>
                             </StatusBar.ItemsPanel>
-                            <StatusBarItem>
-                                <TextBox Name="txtBoxStatusLas" Text="{Binding StatusLasMenu, UpdateSourceTrigger=PropertyChanged}" Height="33"
-                               VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Margin="2,0,0,0" Width="730" TextWrapping="Wrap"/>
+                            <StatusBarItem VerticalAlignment="Top" Margin="0,0,0,0">
+                                <TextBox Name="txtBoxStatusLas" Text="{Binding StatusLasMenu, UpdateSourceTrigger=PropertyChanged}" Height="55"
+                               VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Width="720" TextWrapping="Wrap"/>
                             </StatusBarItem>
                             <Separator Grid.Column="1" />
-                            <StatusBarItem Grid.Column="2" VerticalAlignment="Top" Margin="0,10,0,0">
-                                <ProgressBar Value="0" Width="90" Height="20" />
+                            <StatusBarItem Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,10,0,0">
+                                <ProgressBar Name="progBarLas" Width="90" Height="20" Value="{Binding PercentLas, UpdateSourceTrigger=PropertyChanged}"/>
                             </StatusBarItem>
                         </StatusBar>
                     </DockPanel>
@@ -146,6 +171,7 @@
             <TabItem.Content>
                 <Grid Name="dataLasGrid" >
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="150"/>
                         <ColumnDefinition Width="150"/>
                         <ColumnDefinition Width="150"/>
@@ -170,60 +196,60 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Label Content="Version Informatim" Grid.ColumnSpan="3" Grid.Row="0" HorizontalContentAlignment="Center"/>
-                    <Label Content="Версия формата LAS" Grid.Column="0" Grid.Row="1"/>
+                    <Label Content="Version Informatim" Grid.ColumnSpan="3" Grid.Row="0" Grid.Column="1" HorizontalContentAlignment="Center"/>
+                    <Label Content="Версия формата LAS" Grid.Column="1" Grid.Row="1"/>
                     <TextBox Name="txtBoxVers" Text="2.0" Width="100" Height="20" HorizontalContentAlignment="Right" IsEnabled="False"
-                                             Grid.Column="1" Grid.Row="1"/>
-                    <Label Content="(VERS.)" Grid.Column="2" Grid.Row="1"/>
+                                             Grid.Column="2" Grid.Row="1"/>
+                    <Label Content="(VERS.)" Grid.Column="3" Grid.Row="1"/>
 
-                    <Label Content="Перенос строки" Grid.Column="0" Grid.Row="2"/>
+                    <Label Content="Перенос строки" Grid.Column="1" Grid.Row="2"/>
                     <TextBox Name="txtBoxWrap" Text="NO" Width="100" Height="20" HorizontalContentAlignment="Right" IsEnabled="False"
-                             Grid.Column="1" Grid.Row="2"/>
-                    <Label Content="(Wrap)" Grid.Column="2" Grid.Row="2"/>
+                             Grid.Column="2" Grid.Row="2"/>
+                    <Label Content="(Wrap)" Grid.Column="3" Grid.Row="2"/>
 
-                    <Separator Grid.ColumnSpan="3" Grid.Row="3"/>
-                    <Label Content="Well Information Section" Grid.ColumnSpan="3" Grid.Row="4" HorizontalContentAlignment="Center" />
+                    <Separator Grid.ColumnSpan="3" Grid.Row="3" />
+                    <Label Content="Well Information Section" Grid.ColumnSpan="3" Grid.Row="4" Grid.Column="1" HorizontalContentAlignment="Center" />
 
-                    <Label Content="Название компании" Grid.Column="0" Grid.Row="5" />
+                    <Label Content="Название компании" Grid.Column="1" Grid.Row="5" />
                     <TextBox Name="txtBoxStartM" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right"
-                                             Grid.Column="1" Grid.Row="5"/>
-                    <Label Content="(COMP.)" Grid.Column="2" Grid.Row="5"/>
+                                             Grid.Column="2" Grid.Row="5"/>
+                    <Label Content="(COMP.)" Grid.Column="3" Grid.Row="5"/>
 
-                    <Label Content="Имя(номер) скважины" Grid.Column="0" Grid.Row="6" />
+                    <Label Content="Имя(номер) скважины" Grid.Column="1" Grid.Row="6" />
                     <TextBox Name="txtBoxWell" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
-                                             Grid.Column="1" Grid.Row="6"/>
-                    <Label Content="(Well)" Grid.Column="2" Grid.Row="6" />
+                                             Grid.Column="2" Grid.Row="6"/>
+                    <Label Content="(Well)" Grid.Column="3" Grid.Row="6" />
 
-                    <Label Content="Имя площади" Grid.Column="0" Grid.Row="7"/>
+                    <Label Content="Имя площади" Grid.Column="1" Grid.Row="7"/>
                     <TextBox Name="txtBoxFLD" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
-                             Grid.Column="1" Grid.Row="7"/>
-                    <Label Content="(FLD.)" Grid.Column="2" Grid.Row="7"/>
+                             Grid.Column="2" Grid.Row="7"/>
+                    <Label Content="(FLD.)" Grid.Column="3" Grid.Row="7"/>
 
-                    <Label Content="Координаты скважины" Grid.Column="0" Grid.Row="8"/>
+                    <Label Content="Координаты скважины" Grid.Column="1" Grid.Row="8"/>
                     <TextBox Name="txtBoxLOC" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
-                             Grid.Column="1" Grid.Row="8"/>
-                    <Label Content="(LOC.)" Grid.Column="2" Grid.Row="8"/>
+                             Grid.Column="2" Grid.Row="8"/>
+                    <Label Content="(LOC.)" Grid.Column="3" Grid.Row="8"/>
 
-                    <Label Content="Страна" Grid.Column="0" Grid.Row="9"/>
+                    <Label Content="Страна" Grid.Column="1" Grid.Row="9"/>
                     <TextBox Name="txtBoxCNTY" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
-                             Grid.Column="1" Grid.Row="9"/>
-                    <Label Content="(CNTY.)" Grid.Column="2" Grid.Row="9"/>
+                             Grid.Column="2" Grid.Row="9"/>
+                    <Label Content="(CNTY.)" Grid.Column="3" Grid.Row="9"/>
 
-                    <Label Content="Район" Grid.Column="0" Grid.Row="10"/>
+                    <Label Content="Район" Grid.Column="1" Grid.Row="10"/>
                     <TextBox Name="txtBoxSTATE" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
-                             Grid.Column="1" Grid.Row="10"/>
-                    <Label Content="(STATE.)" Grid.Column="2" Grid.Row="10"/>
+                             Grid.Column="2" Grid.Row="10"/>
+                    <Label Content="(STATE.)" Grid.Column="3" Grid.Row="10"/>
 
-                    <Label Content="Геофизическая компания" Grid.Column="0" Grid.Row="11"/>
+                    <Label Content="Геофизическая компания" Grid.Column="1" Grid.Row="11"/>
                     <TextBox Name="txtBoxSRVC" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
-                             Grid.Column="1" Grid.Row="11"/>
-                    <Label Content="(SRVC.)" Grid.Column="2" Grid.Row="11"/>                    
+                             Grid.Column="2" Grid.Row="11"/>
+                    <Label Content="(SRVC.)" Grid.Column="3" Grid.Row="11"/>
 
-                    <Label Content="Идентификатор" Grid.Column="0" Grid.Row="12"/>
+                    <Label Content="Идентификатор" Grid.Column="1" Grid.Row="12"/>
                     <TextBox Name="txtBoxAPI" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
-                             Grid.Column="1" Grid.Row="12"/>
-                    <Label Content="(API)" Grid.Column="2" Grid.Row="12"/>
-                    <Button Name="btnLasStart" Grid.Row="13" Content="Сформировать LAS" Grid.ColumnSpan="3" Width="150" Margin="10" Click="Button_FormLasClick"/>                    
+                             Grid.Column="2" Grid.Row="12"/>
+                    <Label Content="(API)" Grid.Column="3" Grid.Row="12"/>
+                    <Button Name="btnLasStart" Grid.Row="13" Grid.Column="1" Content="Сформировать LAS" Grid.ColumnSpan="3" Margin="10" Click="Button_FormLasClick"/>
                 </Grid>
             </TabItem.Content>
         </TabItem>
