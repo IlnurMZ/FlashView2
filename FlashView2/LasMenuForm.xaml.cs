@@ -182,7 +182,7 @@ namespace FlashView2
                 ChoiseCalibrData();
                 var timeDepth = UpdateDepthDate();
                 FindNearestTimeValue(timeDepth);
-                MessageBox.Show("Las файл успешно сформирован!");
+                
             }
             catch (Exception ex)
             {
@@ -248,7 +248,7 @@ namespace FlashView2
 
             for (int i = 0; i < FileDepthAndTime[0].Length; i++)
             {
-                if (FileDepthAndTime[0][i].Trim() == "Забой")
+                if (FileDepthAndTime[0][i].Trim() == "Замер")
                     posDepth = i;
                 if (FileDepthAndTime[0][i].Trim() == "Дата")
                     posTime = i;
@@ -382,8 +382,8 @@ namespace FlashView2
         {
             if (!double.TryParse(txtBoxNULL.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double nullValue))
             {
-                nullValue = -999.5;
-                ScrollStatusLasTextBox("Ошибка конвертации Null value");
+                nullValue = -999.99;
+                ScrollStatusLasTextBox($"Ошибка конвертации Null value. Установлено дефолтное значение {nullValue}");
                 //StatusLasMenu += $"{DateTime.Now}: Ошибка конвертации Null value \n";
             }
             SortedDictionary<double, List<double>> fileDepthAndKP = new SortedDictionary<double, List<double>>();
@@ -637,7 +637,7 @@ namespace FlashView2
                 }
                 ScrollStatusLasTextBox($"Файл сохранен {saveFileDialog.FileName}");
                 //StatusLasMenu += $"{DateTime.Now}: Файл сохранен {saveFileDialog.FileName}\n";
-
+                MessageBox.Show("Las файл успешно сформирован!");
             }
             else
             {
@@ -678,13 +678,13 @@ namespace FlashView2
             result.AppendLine($"SRVC                     .       {txtBoxSRVC.Text}{new string(' ', countSigns - txtBoxSRVC.Text.Length)}: SERVICE COMPANY");
             string fileCreadted = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             result.AppendLine($"FILECREATED              .       {fileCreadted}{new string(' ', countSigns - fileCreadted.Length)}: SERVICE COMPANY");
-            result.AppendLine("-----------------------------------------------------------------------------");
+            result.AppendLine("#-----------------------------------------------------------------------------");
 
             // Третий раздел            
             result.AppendLine("~CURVE INFORMATION SECTION");
             result.AppendLine("MD                       .M     :DEPTH");
-            result.AppendLine("KP                               :CoefPoristosti");
-            result.AppendLine("-----------------------------------------------------------------------------");
+            result.AppendLine("KP                       .UE    :CoefPoristosti");
+            result.AppendLine("#-----------------------------------------------------------------------------");
             // Четвертый раздел    
             result.AppendLine("#  MD         KP ");
             result.Append("~ASCII Log Data");
@@ -864,7 +864,7 @@ namespace FlashView2
                     return;
                 }
                 //btn_FormLas.IsEnabled = true;
-                dataTab.IsEnabled = true;
+                //dataTab.IsEnabled = true;
                 ScrollStatusLasTextBox($"Калибровочный файл {openCalibrFile.SafeFileName} успешно считан");
                 //StatusLasMenu += $"{DateTime.Now}: Калибровочный файл {openCalibrFile.SafeFileName} успешно считан \n";
             }
@@ -945,9 +945,8 @@ namespace FlashView2
         void UseShiftDepth()
         {
             int posZaboi = -1;
-            int posZamer = -1;
-            double shiftValue = -9999.9;
-            double.TryParse(txtBoxShift.Text, out shiftValue);
+            int posZamer = -1;            
+            bool isGoodShift = double.TryParse(txtBoxShift.Text, out double shiftValue);
 
             for (int i = 0; i < FileDepthAndTime[0].Length; i++)
             {
@@ -961,18 +960,32 @@ namespace FlashView2
                 }
             }
 
-            if (posZaboi != -1 && posZamer != -1 && shiftValue != -9999.9)
+            if (!isGoodShift)
             {
-                for (int i = 0; i < dataTable.Rows.Count; i++)
-                {
-                    dataTable.Rows[i]["Замер"] = " " + (double.Parse(dataTable.Rows[i]["Забой"].ToString()) - shiftValue).ToString() + " ";
-                }
+                ScrollStatusLasTextBox("Значение смещения указано не верно. Пример: 3,5");
+                return;
+            }
+            else if(posZamer == -1)
+            {
+                ScrollStatusLasTextBox("В таблице отсутсвует колонка \"Замер\"");
+                return;
+            }
+            else if (posZaboi == -1)
+            {
+                ScrollStatusLasTextBox("В таблице отсутсвует колонка \"Забой\"");
+                return;
+            }
 
-                for (int i = 1; i < FileDepthAndTime.Count; i++)
-                {
-                    FileDepthAndTime[i][posZamer] = (double.Parse(FileDepthAndTime[i][posZaboi]) - shiftValue).ToString();
-                }
-            }            
+            for (int i = 0; i < dataTable.Rows.Count; i++)
+            {
+                dataTable.Rows[i]["Замер"] = " " + (double.Parse(dataTable.Rows[i]["Забой"].ToString()) - shiftValue).ToString() + " ";
+            }
+
+            for (int i = 1; i < FileDepthAndTime.Count; i++)
+            {
+                FileDepthAndTime[i][posZamer] = (double.Parse(FileDepthAndTime[i][posZaboi]) - shiftValue).ToString();
+            }
+
         }
 
         private void btnLasStart_Click(object sender, RoutedEventArgs e)

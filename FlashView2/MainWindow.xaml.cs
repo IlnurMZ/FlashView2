@@ -224,8 +224,8 @@ namespace FlashView2
             UpdateTable(FlashFile, mainPacket);
             txtBoxStatus.ScrollToEnd();           
         }
-  
 
+        // Обработка конф данных
         void HandleConfigData(List<List<string>> dataConfig)
         {
             for (int i = 0; i < dataConfig.Count; i++)
@@ -284,11 +284,13 @@ namespace FlashView2
             }           
         }
 
+        // Кнопка Выйти
         void MenuItemCloseProgram_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.Application.Current.Shutdown();
         }
 
+        // Обработка заголовков таблицы
         void r2_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
         {            
             if (e.PropertyName.Contains('[') || e.PropertyName.Contains(']') && e.Column is DataGridBoundColumn)
@@ -298,6 +300,7 @@ namespace FlashView2
             }
         }
 
+        // кнопка LAS
         private void menuButtonFormLas_Click(object sender, RoutedEventArgs e)
         {            
             List<string> abc = new List<string>();
@@ -470,7 +473,7 @@ namespace FlashView2
                 ScrollStatusLasTextBox($"Выполняется экспорт данных в формат .xlsx");
                 //StatusMainWindow += $"{DateTime.Now}: Выполняется экспорт данных в формат .xlsx\n";
                 //txtBoxStatus.ScrollToEnd();
-                FastExportToExcelAsync(path);
+                FastExportToExcelAsync(path);               
                 txtBoxStatus.ScrollToEnd();
             }                                    
         }        
@@ -480,7 +483,9 @@ namespace FlashView2
             {
                 FastDtToExcel(path);
                 StatusMainWindow += $"{DateTime.Now}: Экспорт данных в формат .xlsx завершен!\n";
+                MessageBox.Show("Excel file сохранен!");
             });
+
             txtBoxStatus.ScrollToEnd();
         }
 
@@ -586,11 +591,11 @@ namespace FlashView2
             byte tempVal;
             int countRows = DataTable.Rows.Count;
             //loop rows and columns
-            for (int i = 1; i < DataTable.Rows.Count; i++)
+            for (int i = 0; i < DataTable.Rows.Count; i++)
             {
                 for (int j = 0; j < DataTable.Columns.Count; j++)
                 {
-                    arrayDT[i, j] = DataTable.Rows[i][j].ToString();
+                    arrayDT[i+1, j] = DataTable.Rows[i][j].ToString();
                 }
 
                 tempVal = (byte)(i * 1.0 / countRows * 100);
@@ -610,8 +615,7 @@ namespace FlashView2
                 try
                 {
                     workSheet.SaveAs(excelFilePath);
-                    excelApp.Quit();
-                    //MessageBox.Show("Excel file saved!");
+                    excelApp.Quit();                   
                 }
                 catch (Exception ex)
                 {
@@ -635,8 +639,10 @@ namespace FlashView2
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < DataTable.Columns.Count; i++)
             {
-                sb.Append(DataTable.Columns[0].ColumnName + "   ");
+                sb.Append(DataTable.Columns[i].ColumnName.Replace("\n", "") + "   ");
             }
+
+            sb.AppendLine();
 
             for (int i = 0; i < DataTable.Rows.Count; i++)
             {                

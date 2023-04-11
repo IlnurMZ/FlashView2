@@ -36,7 +36,7 @@
                                 Height="60" Width="70" Margin="10,5,10,10" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
                                 <Button.Content>
                                     <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                                        <Image Source="/File.png" Height="30"/>
+                                        <Image Source="/Icons/File.png" Height="30"/>
                                         <Label Content="Открыть" />
                                     </StackPanel>
                                 </Button.Content>
@@ -51,7 +51,7 @@
                                 Height="60" Width="70" Margin="10,10,10,10" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
                                 <Button.Content>
                                     <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                                        <Image Source="/UpdateData.png" Height="30"/>
+                                        <Image Source="/Icons/UpdateData.png" Height="30"/>
                                         <Label Content="Обновить" />
                                     </StackPanel>
                                 </Button.Content>
@@ -66,18 +66,19 @@
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
                             <Label Content="NULL значение" Margin="10,0,5,5"/>
-                            <TextBox Name="txtBoxNULL" Width="100" Text="-999,9" Margin="5" Height="20" HorizontalContentAlignment="Center"/>
+                            <TextBox Name="txtBoxNULL" Width="100" Text="-999,99" Margin="5" Height="20" HorizontalContentAlignment="Center"/>
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                             <Label Content="Смещение, в м." Margin="10,0,5,5"/>
-                            <TextBox Name="txtBoxShift" Width="100" Text="1" Margin="5,5,0,0" Height="20" HorizontalContentAlignment="Center" />
+                            <TextBox Name="txtBoxShift" Width="100" Text="1" Margin="5,5,0,0" Height="20" HorizontalContentAlignment="Center" 
+                                     IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
                         <GroupBox Padding="5" Width="230" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <GroupBox.Header>
                                 <StackPanel Orientation="Horizontal">
-                                    <Image Source="/Seach Data2.png" Height="20" Margin="5,0,5,0" />
+                                    <Image Source="/Icons/SeachData2.png" Height="20" Margin="5,0,5,0" />
                                     <TextBlock Text="Считать данные"/>
                                 </StackPanel>
                             </GroupBox.Header>
@@ -99,7 +100,7 @@
                         <GroupBox Name="gbxTruba">
                             <GroupBox.Header>
                                 <StackPanel Orientation="Horizontal" Margin="15,0,0,5">
-                                    <Image Source="/Diam3.png" Height="25"/>
+                                    <Image Source="/Icons/Diam3.png" Height="25"/>
                                     <Label Margin="5,0,0,0"  HorizontalAlignment="Left">Труба для МНК</Label>
                                 </StackPanel>
                             </GroupBox.Header>
@@ -123,7 +124,7 @@
                     <GroupBox Grid.Row="1" Height="120" Width="230" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <GroupBox.Header>
                             <StackPanel Orientation="Horizontal">
-                                <Image Source="/Shift Time.png" Height="20" Margin="5,0,0,0"/>
+                                <Image Source="/Icons/Shift Time.png" Height="20" Margin="5,0,0,0"/>
                                 <TextBlock Text="Сдвинуть время" Margin="5,0,5,0"/>
                             </StackPanel>
                         </GroupBox.Header>
@@ -138,7 +139,7 @@
 
                     <DataGrid x:Name="dtg_DepthAndTime" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" Grid.Column="1" Grid.Row="0" Grid.RowSpan="4"
                       Margin="10,5,10,5" ItemsSource="{Binding DataTable, UpdateSourceTrigger=PropertyChanged}" 
-                      AutoGeneratingColumn="r2_AutoGeneratingColumn" >
+                      AutoGeneratingColumn="r2_AutoGeneratingColumn" IsReadOnly="True" >
                     </DataGrid>
 
                     <DockPanel Grid.Row="4" Grid.ColumnSpan="2" Margin="0,5,0,5">
@@ -154,9 +155,10 @@
                                     </Grid>
                                 </ItemsPanelTemplate>
                             </StatusBar.ItemsPanel>
-                            <StatusBarItem VerticalAlignment="Top" Margin="0,0,0,0">
+                            <StatusBarItem VerticalAlignment="Top" Margin="0,0,0,0" Grid.Column="0">
                                 <TextBox Name="txtBoxStatusLas" Text="{Binding StatusLasMenu, UpdateSourceTrigger=PropertyChanged}" Height="55"
-                               VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Width="720" TextWrapping="Wrap"/>
+                               VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" MinWidth="720" TextWrapping="Wrap" Background="#FFF0F0F0"
+                                         IsReadOnly="True"/>
                             </StatusBarItem>
                             <Separator Grid.Column="1" />
                             <StatusBarItem Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,10,0,0">
@@ -167,7 +169,7 @@
                 </Grid>
             </TabItem.Content>
         </TabItem>
-        <TabItem Name="dataTab" Header="Вводные данные для Las" IsEnabled="False">
+        <TabItem Name="dataTab" Header="Вводные данные для Las" IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}">
             <TabItem.Content>
                 <Grid Name="dataLasGrid" >
                     <Grid.ColumnDefinitions>

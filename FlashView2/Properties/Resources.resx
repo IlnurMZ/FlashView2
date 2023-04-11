@@ -118,6 +118,9 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="Diam3" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Icons\Diam3.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="Exit" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Icons\Exit.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -127,7 +130,19 @@
   <data name="File Excel" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Icons\File Excel.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="File txt" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Icons\File txt.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="Open File" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Icons\Open File.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="SeachData2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Icons\SeachData2.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Shift Time" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Icons\Shift Time.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="UpdateData" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Icons\UpdateData.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

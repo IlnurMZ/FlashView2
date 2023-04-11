@@ -63,6 +63,16 @@ namespace FlashView2.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        public static byte[] Diam3 {
+            get {
+                object obj = ResourceManager.GetObject("Diam3", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         public static byte[] Exit {
             get {
                 object obj = ResourceManager.GetObject("Exit", resourceCulture);
@@ -93,9 +103,49 @@ namespace FlashView2.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        public static byte[] File_txt {
+            get {
+                object obj = ResourceManager.GetObject("File txt", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         public static byte[] Open_File {
             get {
                 object obj = ResourceManager.GetObject("Open File", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] SeachData2 {
+            get {
+                object obj = ResourceManager.GetObject("SeachData2", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] Shift_Time {
+            get {
+                object obj = ResourceManager.GetObject("Shift Time", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] UpdateData {
+            get {
+                object obj = ResourceManager.GetObject("UpdateData", resourceCulture);
                 return ((byte[])(obj));
             }
         }

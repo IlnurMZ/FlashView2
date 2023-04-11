@@ -17,7 +17,7 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <DataGrid Name="datagrid1" Grid.Row ="1" Margin="5,5,5,5" ItemsSource="{Binding DataTable}" AutoGeneratingColumn ="r2_AutoGeneratingColumn" Background="White"/>
+        <DataGrid Name="datagrid1" Grid.Row ="1" Margin="5,5,5,5" ItemsSource="{Binding DataTable}" AutoGeneratingColumn ="r2_AutoGeneratingColumn" Background="White" IsReadOnly="True"/>
         <!--<Menu Margin="5,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" Height="24" Width="166">
             -->
         <!--<Separator Width="2" Background="Black" BorderBrush="Black" Foreground="Black" />-->
@@ -86,7 +86,7 @@
                     Click="btnSaveExcel_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
-                        <Image Source="/File Excel.png" Height="30" />
+                        <Image Source="/Icons/File Excel.png" Height="30" />
                         <Label Content="Сохранить &#x0a;  в Excel" />
                     </StackPanel>
                     
@@ -101,7 +101,7 @@
                     Click="btnSaveTxT_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
-                        <Image Source="/File txt.png" Height="30"/>
+                        <Image Source="/Icons/File txt.png" Height="30"/>
                         <Label Content="Сохранить&#x0a;     в txt" />
                     </StackPanel>
                     
@@ -116,7 +116,7 @@
                     Click="menuButtonFormLas_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
-                        <Image Source="/Form LAS.png" Height="30"/>
+                        <Image Source="/Icons/Form LAS.png" Height="30"/>
                         <Label Content=" LAS " />
                     </StackPanel>
                    
@@ -132,7 +132,7 @@
                     Click="MenuItemCloseProgram_Click" >
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
-                        <Image Source="/Exit.png" Height="30" />
+                        <Image Source="/Icons/Exit.png" Height="30" />
                         <Label Content="Выйти" />
                     </StackPanel>
 
@@ -161,7 +161,7 @@
                 <StatusBarItem VerticalAlignment="Top" Margin="0,5,5,0">
                     <TextBox Text="{Binding StatusMainWindow, UpdateSourceTrigger=PropertyChanged}" Name="txtBoxStatus" Width="1520" Height="55"
                              HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible" 
-                             TextWrapping="Wrap" />
+                             TextWrapping="Wrap" IsReadOnly="True"/>
                 </StatusBarItem>
                 <Separator Grid.Column="1" />
                 <StatusBarItem Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,10,0,0">
