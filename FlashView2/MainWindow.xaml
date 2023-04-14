@@ -6,9 +6,64 @@
         xmlns:local="clr-namespace:FlashView2"
         mc:Ignorable="d"        
         Title="FlashViewer v.2: Main" Height="610" Width="1700" ResizeMode="CanResize"  Background="#FFA2A1A1">
+    <Window.Resources>
+        <!--<Style TargetType="Button">
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Button.Background" Value="#FFB7A7A7"/>                    
+                </Trigger>
+
+                <Trigger Property="IsMouseOver" Value="True">  
+                    <Setter Property="Background" Value="#FFA2A1A1"/>
+                    <Setter Property="FontWeight" Value="Bold" />
+                </Trigger>
+
+            </Style.Triggers>
+        </Style>-->
+
+        <Style TargetType="Button" x:Key="MyButton2">
+            <!--<Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Background" Value="MediumAquamarine" />
+            <Setter Property="Foreground" Value="MediumBlue" />-->
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Grid Background="{TemplateBinding Background}">
+                            <ContentPresenter x:Name="MyContentPresenter" 
+                                          Content="{TemplateBinding Content}"
+                                          HorizontalAlignment="Center" 
+                                          VerticalAlignment="Center" />
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="Green"/>
+                                <Setter Property="Foreground" Value="DeepPink"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+
+            <!--<Style.Triggers>
+                --><!--<Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="Green"/>
+                    <Setter Property="Foreground" Value="DeepPink"/>
+                </Trigger>--><!--
+                
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FF5C7B8E"/>
+                    <Setter Property="FontWeight" Value="Bold" />
+                </Trigger>
+            </Style.Triggers>-->                    
+
+        </Style>
+
+    </Window.Resources>
     <Grid x:Name="mainGrid" Margin="10,5,10,5" >
-        <Grid.RowDefinitions>
-            <!--<RowDefinition Height="40"/>-->
+        <Grid.RowDefinitions>            
             <RowDefinition Height="80"/>
             <RowDefinition/>
             <RowDefinition Height="75"/>
@@ -18,56 +73,9 @@
         </Grid.ColumnDefinitions>
 
         <DataGrid Name="datagrid1" Grid.Row ="1" Margin="5,5,5,5" ItemsSource="{Binding DataTable}" AutoGeneratingColumn ="r2_AutoGeneratingColumn" Background="White" IsReadOnly="True"/>
-        <!--<Menu Margin="5,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" Height="24" Width="166">
-            -->
-        <!--<Separator Width="2" Background="Black" BorderBrush="Black" Foreground="Black" />-->
-        <!--
-            <MenuItem Header="Файл" Height="25" FontFamily="Times New Roman" 
-                      HorizontalAlignment="Center" VerticalContentAlignment="Bottom" FontWeight="Bold"  Foreground="Black"
-                      Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
-                <MenuItem Click="MenuItemOpenFile_Click">
-                    <MenuItem.Header>
-                        <TextBlock Text="Открыть файл" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" />
-                    </MenuItem.Header>
-                    <MenuItem.Icon>
-                        <Image Source="/Icons/Open File.png" Height="20"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Header="Сохранить как" Name="menuSaveAs" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">
-                    <MenuItem.Icon>
-                        <Image Source="/Icons/Save As.png" Height="20"/>
-                    </MenuItem.Icon>
-                    <MenuItem Header="Сохранить в Excel" Name="btnSaveExcel" Click="btnSaveExcel_Click">
-                        <MenuItem.Icon>
-                            <Image Source="/Icons/File Excel.png" Height="25"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="Сохранить в txt" Name="btnSaveTxT" Click="btnSaveTxT_Click">
-                        <MenuItem.Icon>
-                            <Image Source="/Icons/File txt.png" Height="25"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                </MenuItem>
-                <MenuItem Click="MenuItemCloseProgram_Click">
-                    <MenuItem.Header>
-                        <TextBlock Text="Выход" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" />
-                    </MenuItem.Header>
-                    <MenuItem.Icon>
-                        <Image Source="/Icons/Exit.png" Height="20"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-            </MenuItem>
-            
-            <MenuItem Header="Сформировать LAS" Name="menuButtonFormLas" Click="menuButtonFormLas_Click" 
-                      VerticalAlignment="Center" Height="25"
-                      VerticalContentAlignment="Center" FontFamily="Times New Roman"
-                      Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
-                      IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}" FontWeight="Bold">
-            </MenuItem>
-        </Menu>-->
-
+        
         <StackPanel Orientation="Horizontal" Grid.Row="0" VerticalAlignment="Top">
-            <Button Name="btnOpenFile" Width="60" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+            <Button Name="btnOpenFile" Width="80" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
                     Click="MenuItemOpenFile_Click">
                 <Button.Content>
                     <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
@@ -82,8 +90,9 @@
                     </ToolTip>
                 </Button.ToolTip>
             </Button>
-            <Button Name="btnSaveFileExcel" Width="75" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
-                    Click="btnSaveExcel_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">
+            <Button Name="btnSaveFileExcel" Width="80" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+                    Click="btnSaveExcel_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}"
+                    Style="{StaticResource MyButton2}">
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
                         <Image Source="/Icons/File Excel.png" Height="30" />
@@ -97,12 +106,12 @@
                     </ToolTip>
                 </Button.ToolTip>
             </Button>
-            <Button Name="btnSaveFileTxT" Width="75" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+            <Button Name="btnSaveFileTxT" Width="80" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
                     Click="btnSaveTxT_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
                         <Image Source="/Icons/File txt.png" Height="30"/>
-                        <Label Content="Сохранить&#x0a;     в txt" />
+                        <Label Content="Сохранить&#xA;     в txt" />
                     </StackPanel>
                     
                 </Button.Content>
@@ -112,7 +121,7 @@
                     </ToolTip>
                 </Button.ToolTip>
             </Button>
-            <Button Name="btnFormLas" Width="60" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+            <Button Name="btnFormLas" Width="80" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
                     Click="menuButtonFormLas_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}">
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
@@ -128,7 +137,7 @@
                 </Button.ToolTip>
             </Button>
 
-            <Button Name="btnExit" Width="75" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+            <Button Name="btnExit" Width="80" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
                     Click="MenuItemCloseProgram_Click" >
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
@@ -143,6 +152,23 @@
                     </ToolTip>
                 </Button.ToolTip>
             </Button>
+
+            <!--<Button Name="btnClearMemory" Width="75" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1" 
+                    Click="btnClearMemory_Click">
+                <Button.Content>
+                    <StackPanel Orientation="Vertical">
+                        <Image Source="/Icons/Exit.png" Height="30" />
+                        <Label Content="Clear" />
+                    </StackPanel>
+
+                </Button.Content>
+                <Button.ToolTip>
+                    <ToolTip>
+                        Сохранить файл в Excel
+                    </ToolTip>
+                </Button.ToolTip>
+            </Button>--> 
+
         </StackPanel>
 
         <DockPanel Grid.Row="2" Margin="0,3,0,0">

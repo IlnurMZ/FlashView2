@@ -35,7 +35,7 @@ namespace FlashView2
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        public byte[]? FlashFile { get; set; }
+        //public byte[]? FlashFile { get; set; }
         private string statusMainWindow;
 
         public string StatusMainWindow
@@ -112,6 +112,7 @@ namespace FlashView2
 
         public void MenuItemOpenFile_Click(object sender, RoutedEventArgs e)
         {
+            byte[]? FlashFile;
             mainPacket = new Packet();
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Flash Files|*.fl";
@@ -222,7 +223,7 @@ namespace FlashView2
             txtBoxStatus.ScrollToEnd();
             Percent = 0;                     
             UpdateTable(FlashFile, mainPacket);
-            txtBoxStatus.ScrollToEnd();           
+            txtBoxStatus.ScrollToEnd();
         }
 
         // Обработка конф данных
@@ -482,10 +483,9 @@ namespace FlashView2
             await Task.Run(() =>
             {
                 FastDtToExcel(path);
-                StatusMainWindow += $"{DateTime.Now}: Экспорт данных в формат .xlsx завершен!\n";
-                MessageBox.Show("Excel file сохранен!");
+                MessageBox.Show("Экспорт данных в формат .xlsx завершен");
+                StatusMainWindow += $"{DateTime.Now}: Экспорт данных в формат .xlsx завершен!\n";                
             });
-
             txtBoxStatus.ScrollToEnd();
         }
 
@@ -494,6 +494,7 @@ namespace FlashView2
             await Task.Run(() =>
             {
                 FastExportToTxt(path);
+                MessageBox.Show("Экспорт данных завершен");
                 StatusMainWindow += $"{DateTime.Now}: Экспорт данных в формат .txt завершен!\n";
             });
             txtBoxStatus.ScrollToEnd();
@@ -639,7 +640,7 @@ namespace FlashView2
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < DataTable.Columns.Count; i++)
             {
-                sb.Append(DataTable.Columns[i].ColumnName.Replace("\n", "") + "   ");
+                sb.Append(DataTable.Columns[i].ColumnName.Replace("\n", "") + "\t");
             }
 
             sb.AppendLine();
@@ -648,7 +649,7 @@ namespace FlashView2
             {                
                 for (int j = 0; j < DataTable.Columns.Count; j++)
                 {
-                    sb.Append(DataTable.Rows[i][j].ToString() + "   ");
+                    sb.Append(DataTable.Rows[i][j].ToString() + "\t");
                 }
                 sb.AppendLine();
 
@@ -685,7 +686,7 @@ namespace FlashView2
                 path = saveFileDialog.FileName;
                 StatusMainWindow += $"{DateTime.Now}: Выполняется экспорт данных в формат .txt\n";
                 txtBoxStatus.ScrollToEnd();
-                FastExportToTxtAsync(path);
+                FastExportToTxtAsync(path);                
                 txtBoxStatus.ScrollToEnd();
             }            
         }
@@ -749,5 +750,11 @@ namespace FlashView2
             StatusMainWindow += $"{DateTime.Now}: {message} \n";
             txtBoxStatus.ScrollToEnd();
         }
+
+        private void btnClearMemory_Click(object sender, RoutedEventArgs e)
+        {            
+            MessageBox.Show("Done!");
+        }
+        
     }
 }

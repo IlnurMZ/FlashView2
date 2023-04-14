@@ -238,7 +238,6 @@ namespace FlashView2
             }
         }        
 
-
         // метод дробления данных глубины забоя (метра) и времени
         SortedDictionary<DateTime, double> UpdateDepthDate()
         {
@@ -683,10 +682,11 @@ namespace FlashView2
             // Третий раздел            
             result.AppendLine("~CURVE INFORMATION SECTION");
             result.AppendLine("MD                       .M     :DEPTH");
-            result.AppendLine("KP                       .UE    :CoefPoristosti");
+            result.AppendLine("W                       .%    :CoefPoristosti");
             result.AppendLine("#-----------------------------------------------------------------------------");
+
             // Четвертый раздел    
-            result.AppendLine("#  MD         KP ");
+            result.AppendLine("#  MD         W ");
             result.Append("~ASCII Log Data");
             return result;
         }
@@ -714,8 +714,7 @@ namespace FlashView2
             {
                 FileDepthAndTime = new List<string[]>();
                 path = openFileDialog.FileName;
-                ScrollStatusLasTextBox($"Загрузка файла началась: {openFileDialog.SafeFileName}");
-                //StatusLasMenu += $"{DateTime.Now}: Загрузка файла началась: {openFileDialog.SafeFileName} \n";
+                ScrollStatusLasTextBox($"Загрузка файла началась: {openFileDialog.SafeFileName}");               
 
                 try
                 {
@@ -782,6 +781,7 @@ namespace FlashView2
                             }
                         }
                     }
+                    lblDepthFile.Content = openFileDialog.SafeFileName;
                 }
                 catch (Exception ex)
                 {
@@ -815,7 +815,7 @@ namespace FlashView2
                     //StatusLasMenu += $"{DateTime.Now}: Файл не содержит достаточное количество данных \n";                    
                 }
 
-                OpenCalibrFile();                
+                //OpenCalibrFile();                
                 DataTable = dt;
 
                 PercentLas = 100;
@@ -827,54 +827,8 @@ namespace FlashView2
                 PercentLas = 0;
             }
             IsOpenFile = true;
-        }
-
-        // открытие калибровочного файла
-        void OpenCalibrFile()
-        {
-            OpenFileDialog openCalibrFile = new OpenFileDialog();
-            openCalibrFile.Filter = "Калибровочный файл|*.nk";
-            openCalibrFile.Title = "Выберите подходящий калибровочный файл";
-            // считываем данные из калибровочного файла
-            if (openCalibrFile.ShowDialog() == true)
-            {
-                try
-                {
-                    // надо переделать выбор калибровочного файла
-                    FileColibr = new List<string[]>();
-                    using (var reader = new StreamReader(openCalibrFile.FileName, Encoding.GetEncoding(1251)))
-                    {
-                        while (!reader.EndOfStream)
-                        {
-                            string line = reader.ReadLine();
-                            if (!string.IsNullOrEmpty(line))
-                            {
-                                var splitLine = line.Split(':');
-                                if (splitLine.Length > 1)
-                                {
-                                    FileColibr.Add(splitLine);
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    StatusLasMenu += $"{DateTime.Now}: {ex.Message}\n";                    
-                    return;
-                }
-                //btn_FormLas.IsEnabled = true;
-                //dataTab.IsEnabled = true;
-                ScrollStatusLasTextBox($"Калибровочный файл {openCalibrFile.SafeFileName} успешно считан");
-                //StatusLasMenu += $"{DateTime.Now}: Калибровочный файл {openCalibrFile.SafeFileName} успешно считан \n";
-            }
-            else
-            {
-                ScrollStatusLasTextBox("Необходимо выбрать калибровочный файл");
-                //StatusLasMenu += $"{DateTime.Now}: Необходимо выбрать калибровочный файл\n";
-            }
-        }
-
+        }      
+        
         // обработчик заголовков таблицы
         void r2_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
         {
@@ -988,15 +942,66 @@ namespace FlashView2
 
         }
 
-        private void btnLasStart_Click(object sender, RoutedEventArgs e)
-        {            
-
-        } 
-
+       // кнопка обновить данные таблицы
         private void btn_UpdateCurrentData_Click(object sender, RoutedEventArgs e)
         {
             UseShiftTime_Click();
             UseShiftDepth();
+        }
+
+        private void btn_HeadLasWrite_Click(object sender, RoutedEventArgs e)
+        {
+            dataTab.Focus();
+        }
+
+        private void btn_BackToDataGrid_Click(object sender, RoutedEventArgs e)
+        {
+            filesTab.Focus();
+        }
+
+        private void btn_OpenCalibrFile_Click(object sender, RoutedEventArgs e)
+        {
+
+            OpenFileDialog openCalibrFile = new OpenFileDialog();
+            openCalibrFile.Filter = "Калибровочный файл|*.nk";
+            openCalibrFile.Title = "Выберите подходящий калибровочный файл";
+            // считываем данные из калибровочного файла
+            if (openCalibrFile.ShowDialog() == true)
+            {
+                try
+                {
+                    // надо переделать выбор калибровочного файла
+                    FileColibr = new List<string[]>();
+                    using (var reader = new StreamReader(openCalibrFile.FileName, Encoding.GetEncoding(1251)))
+                    {
+                        while (!reader.EndOfStream)
+                        {
+                            string line = reader.ReadLine();
+                            if (!string.IsNullOrEmpty(line))
+                            {
+                                var splitLine = line.Split(':');
+                                if (splitLine.Length > 1)
+                                {
+                                    FileColibr.Add(splitLine);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    StatusLasMenu += $"{DateTime.Now}: {ex.Message}\n";
+                    return;
+                }                
+                ScrollStatusLasTextBox($"Калибровочный файл {openCalibrFile.SafeFileName} успешно считан");
+                lblCalibrFile.Content = openCalibrFile.SafeFileName;
+            }
+            else
+            {
+                ScrollStatusLasTextBox("Необходимо выбрать калибровочный файл");
+                //StatusLasMenu += $"{DateTime.Now}: Необходимо выбрать калибровочный файл\n";
+            }
+
         }
     }
 }
