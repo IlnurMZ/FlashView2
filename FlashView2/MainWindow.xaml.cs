@@ -305,8 +305,8 @@ namespace FlashView2
         private void menuButtonFormLas_Click(object sender, RoutedEventArgs e)
         {            
             List<string> abc = new List<string>();
-            var dataRows = dataTable.Rows;
-            _lasMenuForm = new LasMenuForm(dataRows);
+            //var dataRows = dataTable.Rows;
+            _lasMenuForm = new LasMenuForm(dataTable);
             _lasMenuForm.Owner = this;
             _lasMenuForm.Show();            
         }
@@ -462,7 +462,7 @@ namespace FlashView2
             return myTable;
         }
         // нажатие кнопки сохранить файл
-        public void btnSaveExcel_Click(object sender, RoutedEventArgs e)
+        public async void btnSaveExcel_Click(object sender, RoutedEventArgs e)
         {
             string path;
             SaveFileDialog saveFileDialog = new SaveFileDialog();
@@ -470,34 +470,97 @@ namespace FlashView2
             saveFileDialog.Title = "Сохранение";
             if (saveFileDialog.ShowDialog() == true)
             {
-                path = saveFileDialog.FileName;
-                ScrollStatusLasTextBox($"Выполняется экспорт данных в формат .xlsx");
-                //StatusMainWindow += $"{DateTime.Now}: Выполняется экспорт данных в формат .xlsx\n";
-                //txtBoxStatus.ScrollToEnd();
-                FastExportToExcelAsync(path);               
-                txtBoxStatus.ScrollToEnd();
+                path = saveFileDialog.FileName;               
+                await FastDtToExcelAsync(path);  
             }                                    
-        }        
-        async void FastExportToExcelAsync(string path)
+        }
+        
+       
+        async Task FastDtToExcelAsync(string excelFilePath)
         {
+            ScrollStatusLasTextBox($"Выполняется экспорт данных в формат .xlsx");
             await Task.Run(() =>
             {
-                FastDtToExcel(path);
-                MessageBox.Show("Экспорт данных в формат .xlsx завершен");
-                StatusMainWindow += $"{DateTime.Now}: Экспорт данных в формат .xlsx завершен!\n";                
+                int firstRow = 1;
+                int firstCol = 1;
+                int lastRow = DataTable.Rows.Count;
+                int lastCol = DataTable.Columns.Count;
+
+                var excelApp = new Microsoft.Office.Interop.Excel.Application();
+                excelApp.Workbooks.Add();
+
+                // single worksheet
+                _Worksheet workSheet = (_Worksheet)excelApp.ActiveSheet;
+
+                Microsoft.Office.Interop.Excel.Range top = workSheet.Cells[firstRow, firstCol];
+                Microsoft.Office.Interop.Excel.Range bottom = workSheet.Cells[lastRow, lastCol];
+                Microsoft.Office.Interop.Excel.Range all = workSheet.get_Range(top, bottom);
+                string[,] arrayDT = new string[DataTable.Rows.Count + 1, DataTable.Columns.Count]; // данные плюс заголовки данных
+
+                for (var i = 0; i < DataTable.Columns.Count; i++)
+                {
+                    arrayDT[0, i] = DataTable.Columns[i].ColumnName;
+                }
+                byte loadStatus = 0;
+                byte tempVal;
+                int countRows = DataTable.Rows.Count;
+                //loop rows and columns
+                for (int i = 0; i < DataTable.Rows.Count; i++)
+                {
+                    for (int j = 0; j < DataTable.Columns.Count; j++)
+                    {
+                        arrayDT[i + 1, j] = DataTable.Rows[i][j].ToString();
+                    }
+
+                    tempVal = (byte)(i * 1.0 / countRows * 100);
+                    if (tempVal >= loadStatus)
+                    {
+                        loadStatus = (byte)(tempVal + 10);
+                        Percent = loadStatus;
+                    }
+                }
+
+                //insert value in worksheet
+                all.Value2 = arrayDT;                
+                // check file path
+                if (!string.IsNullOrEmpty(excelFilePath))
+                {
+                    try
+                    {
+                        workSheet.SaveAs(excelFilePath);                        
+                        MessageBox.Show("Экспорт данных в формат .xlsx завершен");
+                        excelApp.Quit();
+                    }
+                    catch (Exception ex)
+                    {
+                        Percent = 0;
+                        StatusMainWindow += $"{DateTime.Now}: {ex.Message} \n";
+                    }
+                }
+                else
+                { // no file path is given
+                    excelApp.Visible = true;
+                }
+                Percent = 0;
             });
-            txtBoxStatus.ScrollToEnd();
-        }
+            ScrollStatusLasTextBox($"Экспорт данных в формат .txt завершен!");
+        }   
 
         async void FastExportToTxtAsync(string path)
         {
-            await Task.Run(() =>
-            {
-                FastExportToTxt(path);
-                MessageBox.Show("Экспорт данных завершен");
-                StatusMainWindow += $"{DateTime.Now}: Экспорт данных в формат .txt завершен!\n";
-            });
-            txtBoxStatus.ScrollToEnd();
+            ScrollStatusLasTextBox("");
+            await Task.Delay(0);
+
+            //await Task.Run(() =>
+            //{
+            //    FastExportToTxt(path);
+            //    MessageBox.Show("Экспорт данных завершен");
+            //    StatusMainWindow += $"{DateTime.Now}: Экспорт данных в формат .txt завершен!\n";
+            //});
+            //txtBoxStatus.ScrollToEnd();
+
+
+
         }
 
         // работает быстрее чем ExportToExcel, но жрет много памяти
@@ -510,61 +573,61 @@ namespace FlashView2
             }                       
         }
         // очень долгий метод сохранения данных в Excel
-        public void ExportToExcel(string excelFilePath = null)
-        {
-            try
-            {
-                if (DataTable == null || DataTable.Columns.Count == 0)
-                    throw new Exception("ExportToExcel: Null or empty input table!\n");
+        //public void ExportToExcel(string excelFilePath = null)
+        //{
+        //    try
+        //    {
+        //        if (DataTable == null || DataTable.Columns.Count == 0)
+        //            throw new Exception("ExportToExcel: Null or empty input table!\n");
 
-                // load excel, and create a new workbook
-                var excelApp = new Microsoft.Office.Interop.Excel.Application();
-                excelApp.Workbooks.Add();
+        //        // load excel, and create a new workbook
+        //        var excelApp = new Microsoft.Office.Interop.Excel.Application();
+        //        excelApp.Workbooks.Add();
 
-                // single worksheet
-                Microsoft.Office.Interop.Excel._Worksheet workSheet = (_Worksheet)excelApp.ActiveSheet;
+        //        // single worksheet
+        //        Microsoft.Office.Interop.Excel._Worksheet workSheet = (_Worksheet)excelApp.ActiveSheet;
 
-                // column headings
-                for (var i = 0; i < DataTable.Columns.Count; i++)
-                {
-                    workSheet.Cells[1, i + 1] = DataTable.Columns[i].ColumnName.ToString();
-                }
+        //        // column headings
+        //        for (var i = 0; i < DataTable.Columns.Count; i++)
+        //        {
+        //            workSheet.Cells[1, i + 1] = DataTable.Columns[i].ColumnName.ToString();
+        //        }
 
-                // rows
-                for (var i = 0; i < 102; i++)//dataTable.Rows.Count; i++)
-                {
-                    // to do: format datetime values before printing
-                    for (var j = 0; j < dataTable.Columns.Count; j++)
-                    {
-                        workSheet.Cells[i + 2, j + 1] = dataTable.Rows[i][j].ToString();
-                    }
-                }
+        //        // rows
+        //        for (var i = 0; i < 102; i++)//dataTable.Rows.Count; i++)
+        //        {
+        //            // to do: format datetime values before printing
+        //            for (var j = 0; j < dataTable.Columns.Count; j++)
+        //            {
+        //                workSheet.Cells[i + 2, j + 1] = dataTable.Rows[i][j].ToString();
+        //            }
+        //        }
 
-                // check file path
-                if (!string.IsNullOrEmpty(excelFilePath))
-                {
-                    try
-                    {
-                        workSheet.SaveAs(excelFilePath);
-                        excelApp.Quit();
-                        MessageBox.Show("Excel file saved!");
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception("ExportToExcel: Excel file could not be saved! Check filepath.\n"
-                                            + ex.Message);
-                    }
-                }
-                else
-                { // no file path is given
-                    excelApp.Visible = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("ExportToExcel: \n" + ex.Message);
-            }
-        }
+        //        // check file path
+        //        if (!string.IsNullOrEmpty(excelFilePath))
+        //        {
+        //            try
+        //            {
+        //                workSheet.SaveAs(excelFilePath);
+        //                excelApp.Quit();
+        //                MessageBox.Show("Excel file saved!");
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                throw new Exception("ExportToExcel: Excel file could not be saved! Check filepath.\n"
+        //                                    + ex.Message);
+        //            }
+        //        }
+        //        else
+        //        { // no file path is given
+        //            excelApp.Visible = true;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw new Exception("ExportToExcel: \n" + ex.Message);
+        //    }
+        //}
         // работает быстро и оптимально (пока)
         public void FastDtToExcel(string excelFilePath)
         {            

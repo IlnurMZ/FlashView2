@@ -9,6 +9,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -145,6 +146,20 @@ namespace FlashView2
             }
         }
 
+        private bool isOpenCalibFile;
+        public bool IsOpenCalibFile
+        {
+            get
+            {
+                return isOpenCalibFile;
+            }
+            set
+            {
+                isOpenCalibFile = value;
+                OnPropertyChanged("IsOpenCalibFile");
+            }
+        }
+
         DataTable dataTable;
         public DataTable DataTable 
         { 
@@ -158,15 +173,31 @@ namespace FlashView2
                 OnPropertyChanged("DataTable");
             }
         }
-        public LasMenuForm(DataRowCollection dataRows)
+        public LasMenuForm(DataTable dt)
         {
-            DataRowAVM = dataRows;            
+            DataRowAVM = dt.Rows;          
             isLineCalc = true;           
             InitializeComponent();
             DataContext = this;
             IsMoveTimeUp = true;
             IsMoveTime = false;
             ShiftTime = "00:00:00";
+
+            string[] badVaues = { "N", "[IDустр. /№пакета]", "[Ошибка I2C]", "[конец строки]", "[№]", "[Время/Дата]" };
+            lstBoxLasValues.Items.Add("Глубина");
+            lstBoxLasValues.Items.Add("Коэф. пористости");
+            lstBoxLasValues.Items.Add("Дата");
+
+            lstBoxLasValues.SelectedItems.Add("Глубина");            
+            lstBoxLasValues.SelectedItems.Add("Коэф. пористости");
+            lstBoxLasValues.SelectedItems.Add("Дата");
+
+            for (int i = 0; i < dt.Columns.Count; i++)
+            {                
+                if (badVaues.Contains(dt.Columns[i].ToString().Replace("\n", " ")))
+                    continue;               
+                lstBoxLasValues.Items.Add(dt.Columns[i].ToString().Replace("\n"," "));
+            }
         }
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")
@@ -180,6 +211,7 @@ namespace FlashView2
             try
             {
                 ChoiseCalibrData();
+                var selectedLasValues = lstBoxLasValues.SelectedItems;
                 var timeDepth = UpdateDepthDate();
                 FindNearestTimeValue(timeDepth);
                 
@@ -790,6 +822,12 @@ namespace FlashView2
 
                 PercentLas = 60;
                 DataTable dt = new DataTable();
+                if (FileDepthAndTime.Count == 0)
+                {
+                    MessageBox.Show("Возникла ошибка чтения файла");
+                    PercentLas = 0;
+                    return;
+                }
                 for (int i = 0; i < FileDepthAndTime[0].Length; i++)
                 {
                     DataColumn dataColumn = new DataColumn();                    
@@ -811,8 +849,7 @@ namespace FlashView2
                 }
                 else
                 {
-                    ScrollStatusLasTextBox("Файл не содержит достаточное количество данных");
-                    //StatusLasMenu += $"{DateTime.Now}: Файл не содержит достаточное количество данных \n";                    
+                    ScrollStatusLasTextBox("Файл не содержит достаточное количество данных");                                       
                 }
 
                 //OpenCalibrFile();                
@@ -952,13 +989,15 @@ namespace FlashView2
         private void btn_HeadLasWrite_Click(object sender, RoutedEventArgs e)
         {
             dataTab.Focus();
+            lstBoxLasValues.Focus();
         }
 
         private void btn_BackToDataGrid_Click(object sender, RoutedEventArgs e)
         {
             filesTab.Focus();
         }
-
+        
+        // кнопка открытия калибровочного файла
         private void btn_OpenCalibrFile_Click(object sender, RoutedEventArgs e)
         {
 
@@ -995,11 +1034,17 @@ namespace FlashView2
                 }                
                 ScrollStatusLasTextBox($"Калибровочный файл {openCalibrFile.SafeFileName} успешно считан");
                 lblCalibrFile.Content = openCalibrFile.SafeFileName;
+                IsOpenCalibFile = true;
+
+                if (IsOpenCalibFile && IsOpenCalibFile)
+                {
+                    btnLasStart.IsEnabled = true;
+                    txtBoxShift.IsEnabled = true;
+                }
             }
             else
             {
-                ScrollStatusLasTextBox("Необходимо выбрать калибровочный файл");
-                //StatusLasMenu += $"{DateTime.Now}: Необходимо выбрать калибровочный файл\n";
+                ScrollStatusLasTextBox("Необходимо выбрать калибровочный файл");                
             }
 
         }

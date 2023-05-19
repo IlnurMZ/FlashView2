@@ -7,25 +7,73 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
         Title="FlashViewer v.2: LAS" 
-        Height="840" Width="870" 
+        Height="850" Width="870" 
         WindowStartupLocation="CenterScreen" Background="#FFA2A1A1">
     <Window.Resources>
         <Style x:Key="CenterGridHeaderStyle" TargetType="DataGridColumnHeader">
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
         </Style>
 
-        <Style TargetType="Button">
-            <Style.Triggers>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Background" Value="Green"/>
-                    <Setter Property="Foreground" Value="DeepPink"/>
-                </Trigger>
-            </Style.Triggers>
+        <Style TargetType="Button" x:Key="FocusVisual">
+            <Setter Property="Control.Template">
+                <Setter.Value>
+                    <ControlTemplate>
+                        <Rectangle Margin="2" SnapsToDevicePixels="true" Stroke="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" StrokeThickness="1" StrokeDashArray="1 2"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <SolidColorBrush x:Key="Button.Static.Background" Color="#FFDDDDDD"/>
+        <SolidColorBrush x:Key="Button.Static.Border" Color="#FF707070"/>
+        <SolidColorBrush x:Key="Button.MouseOver.Background" Color="#FFBEE6FD"/>
+        <SolidColorBrush x:Key="Button.MouseOver.Border" Color="#FF3C7FB1"/>
+        <SolidColorBrush x:Key="Button.Pressed.Background" Color="#FFC4E5F6"/>
+        <SolidColorBrush x:Key="Button.Pressed.Border" Color="#FF2C628B"/>
+        <SolidColorBrush x:Key="Button.Disabled.Background" Color="#FFA2A1A1"/>
+        <SolidColorBrush x:Key="Button.Disabled.Border" Color="#FFA2A1A1"/>
+        <SolidColorBrush x:Key="Button.Disabled.Foreground" Color="#FF838383"/>
+        <Style x:Key="ButtonStyle1" TargetType="{x:Type Button}">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
+            <Setter Property="Background" Value="{StaticResource Button.Static.Background}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Button.Static.Border}"/>
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="true">
+                            <ContentPresenter x:Name="contentPresenter" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsDefaulted" Value="true">
+                                <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="true">
+                                <Setter Property="Background" TargetName="border" Value="{StaticResource Button.MouseOver.Background}"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.MouseOver.Border}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="true">
+                                <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Pressed.Background}"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Pressed.Border}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="false">
+                                <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Disabled.Background}"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Disabled.Border}"/>
+                                <Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{StaticResource Button.Disabled.Foreground}"/>
+                                <!--<Setter Property="Image.Opacity" Value="50" />-->
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
     </Window.Resources>
     <TabControl Name="tabCtrlLas" Background="#FFA2A1A1">
-        <TabItem Name="filesTab" Header="Работа с файлами">
+        <TabItem Name="filesTab" Header="Работа с файлами">         
             <TabItem.Content>
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -36,14 +84,14 @@
                         <RowDefinition Height="90"/>
                         <RowDefinition Height="276"/>
                         <RowDefinition Height="134"/>
-                        <RowDefinition Height="203"/>
+                        <RowDefinition Height="215"/>
                         <RowDefinition/>
-                        <RowDefinition Height="80"/>
+                        <RowDefinition Height="85.08"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.ColumnSpan="2" Height="90">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.ColumnSpan="2" Height="90" Width="827">
                         <Button x:Name="btn_LoadDepthAndTime" Click="btn_LoadDepthAndTime_Click" 
-                                Width="100" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
+                                Width="100" Height="70" Margin="10,2,2,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
                             <Button.Content>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                                     <Image Source="/Icons/File.png" Height="30"/>
@@ -58,8 +106,8 @@
                         </Button>
 
                         <Button x:Name="btn_OpenCalibrFile" Click="btn_OpenCalibrFile_Click"  IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}"
-                                Width="100" Height="70" Margin="5,2,5,2" 
-                                Background="#FFA2A1A1" BorderBrush="#FFA2A1A1" Style="{StaticResource ButtonDisable}">
+                                Width="100" Height="70" Margin="5,2,2,2" 
+                                Background="#FFA2A1A1" BorderBrush="#FFA2A1A1" Style="{StaticResource ButtonStyle1}">
                             <Button.Content>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                                     <Image Source="/Icons/CalibrFIle.png" Height="30"/>
@@ -74,7 +122,8 @@
                         </Button>
 
                         <Button x:Name="btn_UpdateCurrentData" Click="btn_UpdateCurrentData_Click" IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}"
-                                Width="100" Height="70" Margin="5,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
+                                Width="100" Height="70" Margin="5,2,2,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+                                Style="{StaticResource ButtonStyle1}">
                             <Button.Content>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                                     <Image Source="/Icons/UpdateData.png" Height="30"/>
@@ -88,12 +137,13 @@
                             </Button.ToolTip>
                         </Button>
 
-                        <Button x:Name="btn_HeadLasWrite" Click="btn_HeadLasWrite_Click"  IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}"
-                                Width="100" Height="70" Margin="5,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
+                        <Button x:Name="btn_HeadLasWrite" Click="btn_HeadLasWrite_Click"  IsEnabled="{Binding IsOpenCalibFile, UpdateSourceTrigger=PropertyChanged}"
+                                Width="80" Height="70" Margin="5,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+                                Style="{StaticResource ButtonStyle1}">
                             <Button.Content>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                                     <Image Source="/Icons/Info.png" Height="30"/>
-                                    <Label Content="Заполнить доп.&#x0a;   данные LAS" />
+                                    <Label Content="Параметры&#x0a;      LAS" />
                                 </StackPanel>
                             </Button.Content>
                             <Button.ToolTip>
@@ -103,15 +153,15 @@
                             </Button.ToolTip>
                         </Button>
                         <Label Content=" "  VerticalAlignment="Center" Height="90" Background="Black" Width="1"/>
-                        
+
                         <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0">
                             <Label Content="Файл с глубиной:" Height="30" Width="135"/>
                             <Label Content="Калибровочный файл:" Height="30" Width="135"/>
                         </StackPanel>
 
                         <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Left">
-                            <Label Name="lblDepthFile" Content="Не загружен" Height="30" Width="auto"/>
-                            <Label Name="lblCalibrFile" Content="Не загружен" Height="30" Width="auto"/>
+                            <Label Name="lblDepthFile" Content="Не загружен" Height="30" Width="270"/>
+                            <Label Name="lblCalibrFile" Content="Не загружен" Height="30" Width="270"/>
                         </StackPanel>
 
                     </StackPanel>
@@ -172,8 +222,17 @@
                                 </GroupBox>
                             </StackPanel>
                         </GroupBox>
-                        <Button Name="btnLasStart" Content="Сформировать LAS" Click="Button_FormLasClick" Height="30" Margin="10"/>
-                        <!--<Button Name="btnLasStart" Content="Сформировать LAS" Click="Button_FormLasClick" Height="30"/>-->
+                        <Button Name="btnLasStart" Click="Button_FormLasClick" Height="40" Margin="10"
+                                Style="{StaticResource ButtonStyle1}" VerticalContentAlignment="Center"
+                                IsEnabled="False">
+                            <Button.Content>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Image Source="/Icons/Form LAS.png" Height="30"/>
+                                    <Label Content="Сформировать LAS" HorizontalContentAlignment="Center" />
+                                </StackPanel>
+                            </Button.Content>
+                        </Button>
+
                     </StackPanel>
                     <StackPanel Orientation="Vertical" Grid.Row="2">
                         <GroupBox Height="120" Width="230" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -192,8 +251,8 @@
                             </StackPanel>
                         </GroupBox>
                     </StackPanel>
-                    <DataGrid x:Name="dtg_DepthAndTime" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" Grid.Column="1" Grid.Row="1" Grid.RowSpan="4"
-                      Margin="10,5,10,1" ItemsSource="{Binding DataTable, UpdateSourceTrigger=PropertyChanged}" 
+                    <DataGrid x:Name="dtg_DepthAndTime" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" Grid.Column="1" Grid.Row="1" Grid.RowSpan="3"
+                      Margin="10,5,10,0" ItemsSource="{Binding DataTable, UpdateSourceTrigger=PropertyChanged}" 
                       AutoGeneratingColumn="r2_AutoGeneratingColumn">
                     </DataGrid>
 
@@ -229,32 +288,17 @@
                 <Grid Name="dataLasGrid" >
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <!--<ColumnDefinition Width="150"/>
-                        <ColumnDefinition Width="150"/>
-                        <ColumnDefinition Width="150"/>
-                        <ColumnDefinition Width="*"/>-->
+                        <ColumnDefinition Width="*"/>
 
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="80"/>
                         <RowDefinition Height="100"/>
                         <RowDefinition Height="300"/>
-                        <!--<RowDefinition Height="30"/>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition Height="60"/>-->
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top">
-
                         <Button x:Name="btn_BackToDataGrid" Click="btn_BackToDataGrid_Click" 
                                 Height="70" Width="70" Margin="5,5,5,5" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
                             <Button.Content>
@@ -357,9 +401,13 @@
 
                         </Grid>
                     </GroupBox>
-                    <!--<Label Content="Well Information Section" Grid.ColumnSpan="3" Grid.Row="4" Grid.Column="1" HorizontalContentAlignment="Center" />
-                                       
-                    <Button Name="btnLasStart" Grid.Row="13" Grid.Column="1" Content="Сформировать LAS" Grid.ColumnSpan="3" Margin="10" Click="Button_FormLasClick"/>-->
+                    <StackPanel Orientation="Vertical"  Grid.Column="1" Grid.Row="1" Grid.RowSpan="2">
+                        <Label Content="Доступные параметры для добавления в LAS" />
+
+                        <ListBox Name="lstBoxLasValues" Margin="5,5,15,5"
+                             SelectionMode="Multiple" Height="335" ScrollViewer.VerticalScrollBarVisibility="Visible"/>
+
+                    </StackPanel>
                 </Grid>
             </TabItem.Content>
         </TabItem>
