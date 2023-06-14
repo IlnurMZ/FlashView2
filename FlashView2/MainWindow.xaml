@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlashView2"
         mc:Ignorable="d"        
-        Title="FlashViewer v.2: Main" Height="610" Width="1700" ResizeMode="CanResize"  Background="#FFA2A1A1">
+        Title="FlashZTK_I: Main" Height="610" Width="1700" ResizeMode="CanResize"  Background="#FFA2A1A1">
     <Window.Resources>
 
         <Style TargetType="Button" x:Key="FocusVisual">

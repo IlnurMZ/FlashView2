@@ -19,6 +19,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using DocumentFormat.OpenXml.Vml;
 using Microsoft.Win32;
 using static System.Environment;
 using static System.IO.Path;
@@ -101,8 +102,21 @@ namespace FlashView2
         }// 00:00:00
 
         public List<string[]> FileDepthAndTime { get; set; } // файл с данными по глубине и времени
-        public List<string[]> FileColibr { get; set; } // файл с колибровочными данными        
-        double[] Coef { get; set; } // коэффициенты для расчета Кп
+        //public List<string[]> FileColibr { get; set; } // файл с колибровочными данными
+        CalibrFile calibrFile;
+        public CalibrFile MyCalibrFile 
+        {
+            get
+            {
+                return calibrFile;
+            }
+            set
+            {
+                calibrFile = value;
+                OnPropertyChanged("MyCalibrFile");
+            } 
+        }
+        //double[] Coef { get; set; } // коэффициенты для расчета Кп
         DataRowCollection DataRowAVM { get; set; }        
         string statusLasMenu;
         public string StatusLasMenu 
@@ -182,22 +196,7 @@ namespace FlashView2
             IsMoveTimeUp = true;
             IsMoveTime = false;
             ShiftTime = "00:00:00";
-
-            string[] badVaues = { "N", "[IDустр. /№пакета]", "[Ошибка I2C]", "[конец строки]", "[№]", "[Время/Дата]" };
-            lstBoxLasValues.Items.Add("Глубина");
-            lstBoxLasValues.Items.Add("Коэф. пористости");
-            lstBoxLasValues.Items.Add("Дата");
-
-            lstBoxLasValues.SelectedItems.Add("Глубина");            
-            lstBoxLasValues.SelectedItems.Add("Коэф. пористости");
-            lstBoxLasValues.SelectedItems.Add("Дата");
-
-            for (int i = 0; i < dt.Columns.Count; i++)
-            {                
-                if (badVaues.Contains(dt.Columns[i].ToString().Replace("\n", " ")))
-                    continue;               
-                lstBoxLasValues.Items.Add(dt.Columns[i].ToString().Replace("\n"," "));
-            }
+      
         }
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")
@@ -211,7 +210,7 @@ namespace FlashView2
             try
             {
                 ChoiseCalibrData();
-                var selectedLasValues = lstBoxLasValues.SelectedItems;
+                //var selectedLasValues = lstBoxLasValues.SelectedItems;
                 var timeDepth = UpdateDepthDate();
                 FindNearestTimeValue(timeDepth);
                 
@@ -227,48 +226,35 @@ namespace FlashView2
         void ChoiseCalibrData()
         {
             string typeOfCalc;
-            string diamTruba = "труба " + lb1_truba.Text;
+            string diamTruba = lb1_truba.Text;
 
             if (isLineCalc)
             {
-                typeOfCalc = "линейная зависимость";
-                Coef = new double[2];
+                typeOfCalc = "линейная зависимость";               
             }
             else
             {
-                typeOfCalc = "квадратичная зависимость";
-                Coef = new double[3];
+                typeOfCalc = "квадратичная зависимость";                
             }
 
-            for (int i = 0; i < FileColibr.Count; i++)
+            var trubaAndZav = MyCalibrFile.TrubaZav;
+
+            for (int i = 0; i < trubaAndZav.Count; i++)
             {
 
-                if (FileColibr[i][1].Contains(diamTruba) && FileColibr[i][1].Contains(typeOfCalc))
+                if (trubaAndZav[i][0].Contains(diamTruba) && typeOfCalc.Contains(trubaAndZav[i][1]))
                 {
-                    string[] values = FileColibr[i][0].Split(" ", StringSplitOptions.RemoveEmptyEntries);
-                    if (values.Length == Coef.Length)
-                    {
-                        for (int j = 0; j < values.Length; j++)
-                        {
-                            try
-                            {
-                                Coef[j] = double.Parse(values[j], CultureInfo.GetCultureInfo("en-US"));
-                            }
-                            catch
-                            {
-                                throw;                                
-                            }
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Несоответствие количества данных коэффициентов");
-                        break;
-                    }
+                    MyCalibrFile.CurrentChoise = i;                   
                     break;
-                }
+                }               
             }
-        }        
+
+            if (MyCalibrFile.CurrentChoise == -1)
+            {
+                throw new Exception("Ошибка поиска калибровочных данных: нет подходящих значений");
+            }
+
+        }
 
         // метод дробления данных глубины забоя (метра) и времени
         SortedDictionary<DateTime, double> UpdateDepthDate()
@@ -562,7 +548,8 @@ namespace FlashView2
                             }
 
                             List<double> KPs = new List<double>();
-                            // перебираем данные флеш файла по времени                        
+                            // перебираем данные флеш файла по времени
+                            var choisedCoef = MyCalibrFile.CoefsCalibr[MyCalibrFile.CurrentChoise];
                             for (int k2 = startPosFlashTime; k2 <= endPosFlashTime; k2++)
                             {
                                 DataRow rowFl = DataRowAVM[k2];
@@ -577,13 +564,13 @@ namespace FlashView2
                                     if (mz != 0)
                                     {
                                         x = bz / mz;
-                                        if (Coef.Length == 2)
+                                        if (choisedCoef.Length == 2)
                                         {
-                                            KP = Coef[0] * x + Coef[1];
+                                            KP = choisedCoef[0] * x + choisedCoef[1];
                                         }
-                                        else if (Coef.Length == 3)
+                                        else if (choisedCoef.Length == 3)
                                         {
-                                            KP = Coef[0] * x * x + Coef[1] * x + Coef[2];
+                                            KP = choisedCoef[0] * x * x + choisedCoef[1] * x + choisedCoef[2];
                                         }
                                         startPosFlashTime++;
                                         KPs.Add(KP);
@@ -828,13 +815,34 @@ namespace FlashView2
                     PercentLas = 0;
                     return;
                 }
+
+                byte counterColumn = 1;                
+
                 for (int i = 0; i < FileDepthAndTime[0].Length; i++)
                 {
-                    DataColumn dataColumn = new DataColumn();                    
-                    dataColumn.ColumnName = FileDepthAndTime[0][i].Trim();                    
+                    string nameCol1 = FileDepthAndTime[0][i];
+                    for (int j = i + 1; j < FileDepthAndTime[0].Length-1; j++)
+                    {
+                        string nameCol2 = FileDepthAndTime[0][j];
+                        if (nameCol2 == nameCol1)
+                        {
+                            FileDepthAndTime[0][j] = $"{FileDepthAndTime[0][j].Trim()}{++counterColumn}"; 
+                        }                       
+                    }
+                    if (counterColumn != 1)
+                    {
+                        FileDepthAndTime[0][i] = $"{FileDepthAndTime[0][i].Trim()}1";
+                        counterColumn = 1;
+                    }
+                }
+
+                for (int i = 0; i < FileDepthAndTime[0].Length; i++)
+                {
+                    DataColumn dataColumn = new DataColumn();
+                    dataColumn.ColumnName = FileDepthAndTime[0][i].Trim();                  
                     dt.Columns.Add(dataColumn);
                 }
-                
+
                 if (FileDepthAndTime.Count>2)
                 {                    
                     for(int i = 1; i < FileDepthAndTime.Count; i++)
@@ -869,7 +877,7 @@ namespace FlashView2
         // обработчик заголовков таблицы
         void r2_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
         {
-            if (e.PropertyName.Contains('[') || e.PropertyName.Contains(' ') && e.Column is DataGridBoundColumn)
+            if (e.PropertyName.Contains('[') || e.PropertyName.Contains(' ') || e.PropertyName.Contains('.') && e.Column is DataGridBoundColumn)
             {
                 DataGridBoundColumn dataGridBoundColumn = e.Column as DataGridBoundColumn;
                 dataGridBoundColumn.Binding = new Binding("[" + e.PropertyName + "]");
@@ -989,7 +997,7 @@ namespace FlashView2
         private void btn_HeadLasWrite_Click(object sender, RoutedEventArgs e)
         {
             dataTab.Focus();
-            lstBoxLasValues.Focus();
+            //lstBoxLasValues.Focus();
         }
 
         private void btn_BackToDataGrid_Click(object sender, RoutedEventArgs e)
@@ -1000,7 +1008,7 @@ namespace FlashView2
         // кнопка открытия калибровочного файла
         private void btn_OpenCalibrFile_Click(object sender, RoutedEventArgs e)
         {
-
+            List<string> FileColibrData = new List<string>();
             OpenFileDialog openCalibrFile = new OpenFileDialog();
             openCalibrFile.Filter = "Калибровочный файл|*.nk";
             openCalibrFile.Title = "Выберите подходящий калибровочный файл";
@@ -1009,8 +1017,7 @@ namespace FlashView2
             {
                 try
                 {
-                    // надо переделать выбор калибровочного файла
-                    FileColibr = new List<string[]>();
+                    // надо переделать выбор калибровочного файла                    
                     using (var reader = new StreamReader(openCalibrFile.FileName, Encoding.GetEncoding(1251)))
                     {
                         while (!reader.EndOfStream)
@@ -1018,14 +1025,24 @@ namespace FlashView2
                             string line = reader.ReadLine();
                             if (!string.IsNullOrEmpty(line))
                             {
-                                var splitLine = line.Split(':');
-                                if (splitLine.Length > 1)
-                                {
-                                    FileColibr.Add(splitLine);
-                                }
+                                //var splitLine = line.Split(':');
+                                //if (splitLine.Length > 1)
+                                //{
+                                FileColibrData.Add(line);
+                                //}
                             }
                         }
                     }
+                    MyCalibrFile = new CalibrFile();                    
+                    bool isSupportedVers = MyCalibrFile.CheckCalibrVers(FileColibrData);
+                    if (!isSupportedVers)
+                    {
+                        MessageBox.Show("Текущий калибровочный файл не поддерживается");
+                        ScrollStatusLasTextBox("Невозможно обработать текущий конфигурационный файл");
+                        return;
+                    }                    
+
+
                 }
                 catch (Exception ex)
                 {
@@ -1036,7 +1053,7 @@ namespace FlashView2
                 lblCalibrFile.Content = openCalibrFile.SafeFileName;
                 IsOpenCalibFile = true;
 
-                if (IsOpenCalibFile && IsOpenCalibFile)
+                if (IsOpenCalibFile)
                 {
                     btnLasStart.IsEnabled = true;
                     txtBoxShift.IsEnabled = true;
@@ -1048,5 +1065,6 @@ namespace FlashView2
             }
 
         }
+        
     }
 }

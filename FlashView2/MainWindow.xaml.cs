@@ -543,20 +543,21 @@ namespace FlashView2
                 }
                 Percent = 0;
             });
-            ScrollStatusLasTextBox($"Экспорт данных в формат .txt завершен!");
+            ScrollStatusLasTextBox($"Экспорт данных в формат .xlsx завершен!");
         }   
 
         async void FastExportToTxtAsync(string path)
         {
-            ScrollStatusLasTextBox("");
-            await Task.Delay(0);
+            ScrollStatusLasTextBox("Выполняется экспорт данных в формат .txt");
+            //await Task.Delay(0);
 
-            //await Task.Run(() =>
-            //{
-            //    FastExportToTxt(path);
-            //    MessageBox.Show("Экспорт данных завершен");
-            //    StatusMainWindow += $"{DateTime.Now}: Экспорт данных в формат .txt завершен!\n";
-            //});
+            await Task.Run(() =>
+            {
+                FastExportToTxt(path);
+                //MessageBox.Show("Экспорт данных завершен");
+                //StatusMainWindow += $"{DateTime.Now}: Экспорт данных в формат .txt завершен!\n";
+            });
+            ScrollStatusLasTextBox("Экспорт данных в формат .txt завершен!");
             //txtBoxStatus.ScrollToEnd();
 
 
@@ -747,10 +748,10 @@ namespace FlashView2
             if (saveFileDialog.ShowDialog() == true)
             {
                 path = saveFileDialog.FileName;
-                StatusMainWindow += $"{DateTime.Now}: Выполняется экспорт данных в формат .txt\n";
-                txtBoxStatus.ScrollToEnd();
+                //StatusMainWindow += $"{DateTime.Now}: Выполняется экспорт данных в формат .txt\n";
+                //txtBoxStatus.ScrollToEnd();
                 FastExportToTxtAsync(path);                
-                txtBoxStatus.ScrollToEnd();
+                //txtBoxStatus.ScrollToEnd();
             }            
         }
         void LoadSeachInfo()
