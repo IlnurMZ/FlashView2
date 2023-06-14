@@ -28,13 +28,16 @@
         <SolidColorBrush x:Key="Button.Disabled.Foreground" Color="#FF838383"/>
         <Style x:Key="ButtonStyle1" TargetType="{x:Type Button}">
             <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
-            <Setter Property="Background" Value="{StaticResource Button.Static.Background}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Button.Static.Border}"/>
+            <Setter Property="Background" Value="#FFA2A1A1"/>
+            <Setter Property="BorderBrush" Value="#FFA2A1A1"/>
             <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Padding" Value="1"/>
+            <Setter Property="Width" Value="85"/>
+            <Setter Property="Height" Value="70"/>
+            <Setter Property="Margin" Value="2,2,5,2"/>            
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
@@ -76,104 +79,64 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <DataGrid Name="datagrid1" Grid.Row ="1" Margin="5,5,5,5" ItemsSource="{Binding DataTable}" AutoGeneratingColumn ="r2_AutoGeneratingColumn" Background="White" IsReadOnly="True"/>
+        <DataGrid Name="datagrid1" Grid.Row ="1" Margin="5,5,5,5" ItemsSource="{Binding DataTable}" 
+                  AutoGeneratingColumn ="r2_AutoGeneratingColumn" Background="White" IsReadOnly="True"/>
         
         <StackPanel Orientation="Horizontal" Grid.Row="0" VerticalAlignment="Top">
-            <Button Name="btnOpenFile" Width="80" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
-                    Click="MenuItemOpenFile_Click">
+            <Button Name="btnOpenFile" Click="MenuItemOpenFile_Click" Style="{StaticResource ButtonStyle1}">
                 <Button.Content>
                     <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                        <Image Source="/Icons/File.png" Height="30"/>
+                        <Image Source="/Icons/Flash.ico" Height="30"/>
                         <Label Content="Открыть&#x0a;  флеш" HorizontalContentAlignment="Center" />
                     </StackPanel>
-                </Button.Content>
-                
-                <Button.ToolTip>
-                    <ToolTip>
-                        Открыть файл
-                    </ToolTip>
-                </Button.ToolTip>
+                </Button.Content>               
             </Button>
-            <Button Name="btnSaveFileExcel" Width="80" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
-                    Click="btnSaveExcel_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}"
+
+            <Button Name="btnOpenDepthFile" Click="btnOpenDepthFile_Click"  Style="{StaticResource ButtonStyle1}">
+                <Button.Content>
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                        <Image Source="/Icons/DrillDepth.png"  Height="30"/>
+                        <Label Content="Открыть&#x0a;глуб.файл" HorizontalContentAlignment="Center" />
+                    </StackPanel>
+                </Button.Content>
+            </Button>
+
+            <Button Name="btnSaveFileExcel" Click="btnSaveExcel_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}"
                     Style="{StaticResource ButtonStyle1}">
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
                         <Image Source="/Icons/File Excel.png" Height="30" />
                         <Label Content="Сохранить &#x0a;  в Excel" />
-                    </StackPanel>
-                    
-                </Button.Content>
-                <Button.ToolTip>
-                    <ToolTip>
-                        Сохранить файл в Excel
-                    </ToolTip>
-                </Button.ToolTip>
+                    </StackPanel>                    
+                </Button.Content>                
             </Button>
-            <Button Name="btnSaveFileTxT" Width="80" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
-                    Click="btnSaveTxT_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}"
+            <Button Name="btnSaveFileTxT" Click="btnSaveTxT_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}"
                     Style="{StaticResource ButtonStyle1}">
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
                         <Image Source="/Icons/File txt.png" Height="30"/>
                         <Label Content="Сохранить&#xA;     в txt" />
-                    </StackPanel>
-                    
-                </Button.Content>
-                <Button.ToolTip>
-                    <ToolTip>
-                        Сохранить файл в txt
-                    </ToolTip>
-                </Button.ToolTip>
+                    </StackPanel>                    
+                </Button.Content>                
             </Button>
-            <Button Name="btnFormLas" Width="80" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
-                    Click="menuButtonFormLas_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}"
+            <Button Name="btnFormLas" Click="menuButtonFormLas_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}"
                     Style="{StaticResource ButtonStyle1}">
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
                         <Image Source="/Icons/Form LAS.png" Height="30"/>
                         <Label Content=" LAS " />
-                    </StackPanel>
-                   
-                </Button.Content>
-                <Button.ToolTip>
-                    <ToolTip>
-                        Сформировать LAS
-                    </ToolTip>
-                </Button.ToolTip>
+                    </StackPanel>                   
+                </Button.Content>               
             </Button>
 
-            <Button Name="btnExit" Width="80" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
-                    Click="MenuItemCloseProgram_Click" >
+            <Button Name="btnExit" Click="MenuItemCloseProgram_Click" Style="{StaticResource ButtonStyle1}">
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
                         <Image Source="/Icons/Exit.png" Height="30" />
                         <Label Content="Выйти" />
                     </StackPanel>
-
-                </Button.Content>
-                <Button.ToolTip>
-                    <ToolTip>
-                        Сохранить файл в Excel
-                    </ToolTip>
-                </Button.ToolTip>
-            </Button>
-
-            <!--<Button Name="btnClearMemory" Width="75" Height="70" Margin="10,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1" 
-                    Click="btnClearMemory_Click">
-                <Button.Content>
-                    <StackPanel Orientation="Vertical">
-                        <Image Source="/Icons/Exit.png" Height="30" />
-                        <Label Content="Clear" />
-                    </StackPanel>
-
-                </Button.Content>
-                <Button.ToolTip>
-                    <ToolTip>
-                        Сохранить файл в Excel
-                    </ToolTip>
-                </Button.ToolTip>
-            </Button>--> 
+                </Button.Content>                
+            </Button>            
 
         </StackPanel>
 

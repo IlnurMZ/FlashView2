@@ -27,6 +27,8 @@ using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Wordprocessing;
 using DocumentFormat.OpenXml.Drawing;
+using DocumentFormat.OpenXml.Drawing.Charts;
+using System.Collections.ObjectModel;
 
 namespace FlashView2
 {
@@ -78,6 +80,22 @@ namespace FlashView2
                 OnPropertyChanged("Percent");
             }
         }
+
+        private List<double> depth; // проценты загрузки для прогресбара
+        public List<double> Depth
+        {
+            get
+            {
+                return depth;
+            }
+            set
+            {
+                depth = value;
+                OnPropertyChanged("Depth");
+            }
+        }
+
+
         private DataTable dataTable; // таблица для datagrid1  
         public DataTable DataTable
         {
@@ -94,6 +112,8 @@ namespace FlashView2
         LasMenuForm _lasMenuForm;        
         List<ConfFileInfo> confFilesInfo;
         Packet mainPacket;
+
+
         public MainWindow()
         {
             InitializeComponent();           
@@ -819,6 +839,109 @@ namespace FlashView2
         {            
             MessageBox.Show("Done!");
         }
-        
+
+        private void btnOpenDepthFile_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Файл глубина-время|*.txt";
+            openFileDialog.Title = "Выберите файл с глубиной и временем";
+            string path;
+            List<(DateTime, double)> listTimeDepth = new List<(DateTime, double)>();
+            
+            if (openFileDialog.ShowDialog() == true)
+            {                
+                path = openFileDialog.FileName;
+                ScrollStatusLasTextBox($"Загрузка файла началась: {openFileDialog.SafeFileName}");
+                try
+                {
+                    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                    using (var reader = new StreamReader(path, Encoding.GetEncoding(1251)))
+                    {
+                        while (!reader.EndOfStream)
+                        {
+                            var row = reader.ReadLine();
+                            if (!String.IsNullOrEmpty(row))
+                            {                                
+                                var splitLine = row.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                                bool isTime = DateTime.TryParse(splitLine[0] + " " + splitLine[1], out DateTime time);
+                                bool isDepth = double.TryParse(splitLine[3], NumberStyles.Any, CultureInfo.InvariantCulture, out double depth);
+                                if (isTime && isDepth)
+                                    listTimeDepth.Add((time, depth));
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ScrollStatusLasTextBox($"{ex.Message}");
+                }
+            }
+
+            // ищем номер столбца с датой
+            int numDate = -1;
+            if (listTimeDepth.Count > 1)
+            {                
+                for (int i = 0; i < datagrid1.Columns.Count; i++)
+                {
+                    if (datagrid1.Columns[i].Header.ToString() == "[Время/Дата]")
+                    {
+                        numDate = i;
+                    }
+                }
+            }
+
+            if (numDate != -1)
+            {
+                TimeSpan timeSpan = TimeSpan.FromSeconds(2);                
+                double[] DepthArray = new double[datagrid1.Items.Count];
+                int listPos = 0;
+                for (int k = 40000; k < datagrid1.Items.Count; k ++)
+                {
+                    DataRowView row = (DataRowView)datagrid1.Items[k];
+                    string text = row.Row.ItemArray[numDate].ToString();
+                    if (DateTime.TryParse(text, out DateTime time1))
+                    {
+                        // проверка вхождения в диапазон
+                        if (time1 >= listTimeDepth[0].Item1 && time1 <= listTimeDepth[listTimeDepth.Count - 1].Item1)
+                        {
+                            for (int i = listPos; i < listTimeDepth.Count; i++)
+                            {
+                                var time2 = listTimeDepth[i].Item1;
+                                if (time1 > time2 - timeSpan && time1 <= time2 + timeSpan)
+                                {
+                                    listPos = i + 1;
+                                    DepthArray[k] = listTimeDepth[i].Item2;
+                                    break;
+                                }
+                                //else if (time1 > time2 + TimeSpan.FromSeconds(3))
+                                //{
+                                //    DepthArray[k] = 0;
+                                //    break;
+                                //}
+                            }
+                        }                        
+                    }
+                }
+                
+                DataGridTextColumn depthColumn = new DataGridTextColumn();                
+                depthColumn.Header = "Глубина";
+                Binding binding = new Binding("Depth")
+                {
+                    Source = Depth
+                };
+
+               
+                binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
+                depthColumn.Binding = binding;
+
+                Depth = DepthArray.ToList();
+                datagrid1.Columns.Add(depthColumn);
+            }
+            else
+            {
+                ScrollStatusLasTextBox($"Не удалось обнаружить столбец [Время/Дата]");
+            }
+            
+        }
     }
 }
