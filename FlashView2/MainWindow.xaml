@@ -80,7 +80,9 @@
         </Grid.ColumnDefinitions>
 
         <DataGrid Name="datagrid1" Grid.Row ="1" Margin="5,5,5,5" ItemsSource="{Binding DataTable}" 
-                  AutoGeneratingColumn ="r2_AutoGeneratingColumn" Background="White" IsReadOnly="True"/>
+                  AutoGeneratingColumn ="r2_AutoGeneratingColumn" Background="White" IsReadOnly="True">
+            <!--<DataGridTextColumn Header="Глубина" Binding="{Binding Depth, TargetNullValue=0}"/>-->
+        </DataGrid>
         
         <StackPanel Orientation="Horizontal" Grid.Row="0" VerticalAlignment="Top">
             <Button Name="btnOpenFile" Click="MenuItemOpenFile_Click" Style="{StaticResource ButtonStyle1}">

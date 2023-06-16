@@ -912,30 +912,24 @@ namespace FlashView2
                                     listPos = i + 1;
                                     DepthArray[k] = listTimeDepth[i].Item2;
                                     break;
-                                }
-                                //else if (time1 > time2 + TimeSpan.FromSeconds(3))
-                                //{
-                                //    DepthArray[k] = 0;
-                                //    break;
-                                //}
+                                }                               
                             }
                         }                        
                     }
                 }
-                
-                DataGridTextColumn depthColumn = new DataGridTextColumn();                
-                depthColumn.Header = "Глубина";
-                Binding binding = new Binding("Depth")
-                {
-                    Source = Depth
-                };
-
-               
-                binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
-                depthColumn.Binding = binding;
 
                 Depth = DepthArray.ToList();
+                DataGridTextColumn depthColumn = new DataGridTextColumn();
+                depthColumn.Header = "Глубина";
+                depthColumn.Binding = new Binding($"Depth");
                 datagrid1.Columns.Add(depthColumn);
+               
+
+
+                //binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
+
+
+
             }
             else
             {
