@@ -1,0 +1,36 @@
+﻿<Window x:Class="FlashZTK_I.OpenDataFilesDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FlashZTK_I"
+        mc:Ignorable="d"
+        Title="FlashZTK_I: Open Files" Height="300" Width="650" Background="#FFA2A1A1"
+        ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="70"/>
+            <RowDefinition Height="140"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Button x:Name="btnOpenFlashFile" Content="Открыть файл flash" Margin="5" Height="35" VerticalAlignment="Top" Click="btnOpenFlashFile_Click"/>
+        <TextBox x:Name="txtBlFlash" Grid.Column="1" Margin="5" VerticalAlignment="Top" Height="50" Text="{Binding FlashPath, UpdateSourceTrigger=PropertyChanged}" 
+                HorizontalScrollBarVisibility="Auto" IsReadOnly="True"/>
+
+        <StackPanel Orientation="Vertical" Grid.Column="0" Grid.Row="1">
+            <Button x:Name="btnOpenDepthFile" Content="Добавить файл&#x0a;с глубиной" Height="40" Margin="5" VerticalAlignment="top" Click="btnOpenDepthFile_Click" />
+            <Button x:Name="btnDeletDepthFile" Content="Удалить файл&#x0a;с глубиной" Height="40" Margin="5" VerticalAlignment="top" Click="btnDeletDepthFile_Click" />
+        </StackPanel>
+        <ListBox x:Name="listDepthFiles" Grid.Column="1" Grid.Row="1" Margin="5" ItemsSource="{Binding DepthPath}" />
+
+        <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Center" >
+            <Button x:Name="btnOK" Content="Принять" Width="140" Height="35" Margin="5,5,200,5" Click="btnOK_Click" />
+            <Button x:Name="btnCancel" Content="Отмена" Width="140" Height="35" Margin="5" Click="btnCancel_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

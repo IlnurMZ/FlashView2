@@ -93,6 +93,7 @@ namespace FlashView2
                 //    break;
                 case "bdTime":
                     result = GetbdTime(value);
+
                     break;
                 default:
                     throw new FormatException("неизвестный тип данных");
