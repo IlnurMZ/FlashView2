@@ -80,36 +80,28 @@
         </Grid.ColumnDefinitions>
 
         <DataGrid Name="datagrid1" Grid.Row ="1" Margin="5,5,5,5" ItemsSource="{Binding DataTable}" 
-                  AutoGeneratingColumn ="r2_AutoGeneratingColumn" Background="White" IsReadOnly="True">            
+                  AutoGeneratingColumn ="r2_AutoGeneratingColumn" Background="White" IsReadOnly="True"
+                  CanUserSortColumns="False" >            
         </DataGrid>
         
         <StackPanel Orientation="Horizontal" Grid.Row="0" VerticalAlignment="Top">
-            <Button Name="btnOpenFile" Click="MenuItemOpenFile_Click" Style="{StaticResource ButtonStyle1}">
+            <!--<Button Name="btnOpenFile" Click="MenuItemOpenFile_Click" Style="{StaticResource ButtonStyle1}">
                 <Button.Content>
                     <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                         <Image Source="/Icons/Flash.ico" Height="30"/>
                         <Label Content="Открыть&#x0a;  флеш" HorizontalContentAlignment="Center" />
                     </StackPanel>
                 </Button.Content>               
-            </Button>
+            </Button>-->
 
             <Button Name="btnOpenFileFlash" Click="btnOpenFileFlash_Click"  Style="{StaticResource ButtonStyle1}">
                 <Button.Content>
                     <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                        <Image Source="/Icons/DrillDepth.png" Height="30"/>
-                        <Label Content="Открыть&#x0a;  флеш 2" HorizontalContentAlignment="Center" />
+                        <Image Source="/Icons/Flash.ico" Height="30"/>
+                        <Label Content="Открыть&#x0a;  флеш" HorizontalContentAlignment="Center" />
                     </StackPanel>
                 </Button.Content>
-            </Button>
-
-            <!--<Button Name="btnOpenDepthFile" Click="btnOpenDepthFile_Click"  Style="{StaticResource ButtonStyle1}">
-                <Button.Content>
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                        <Image Source="/Icons/DrillDepth.png"  Height="30"/>
-                        <Label Content="Открыть&#x0a;глуб.файл" HorizontalContentAlignment="Center" />
-                    </StackPanel>
-                </Button.Content>
-            </Button>-->
+            </Button>           
 
             <Button Name="btnSaveFileExcel" Click="btnSaveExcel_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}"
                     Style="{StaticResource ButtonStyle1}">

@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace FlashView2
 {
+    // Класс содержит описание типа пакета с его характеристиками, которое
+    // будет заложено в основе обработки массива байт
+    // Также определяет в каком то плане модель данных
+    
     public class Packet
     {
         // данные для строк
@@ -24,6 +29,8 @@ namespace FlashView2
         public int LengthLine { get; set; } // длина строки в таблице
         public double badValue { get; set; } // пока не учавствует в работе
 
+        public delegate void FillDepthCol(string data, DataRow row);
+        public event FillDepthCol? handlerFillDepthCol; // Событие определяющее необходимость добавления столбца
 
         public Packet()
         {
@@ -70,7 +77,7 @@ namespace FlashView2
         }
 
         // получение значения по типу
-        public string GetValueByType(string typeValue, byte[] value)
+        public string GetValueByType(string typeValue, byte[] value, DataRow row)
         {
             string result = "";
             switch (typeValue)
@@ -93,7 +100,7 @@ namespace FlashView2
                 //    break;
                 case "bdTime":
                     result = GetbdTime(value);
-
+                    handlerFillDepthCol?.Invoke(result, row);
                     break;
                 default:
                     throw new FormatException("неизвестный тип данных");
@@ -127,5 +134,6 @@ namespace FlashView2
             }
             return date;
         }
+                
     }
 }

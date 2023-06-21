@@ -20,6 +20,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using DocumentFormat.OpenXml.Vml;
+using FlashZTK_I.Model;
 using Microsoft.Win32;
 using static System.Environment;
 using static System.IO.Path;

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlashZTK_I"
         mc:Ignorable="d"
-        Title="FlashZTK_I: Open Files" Height="300" Width="650" Background="#FFA2A1A1"
+        Title="FlashZTK_I: Open Files" Height="300" Width="600" Background="#FFA2A1A1"
         ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.RowDefinitions>
@@ -15,16 +15,17 @@
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="150"/>
+            <ColumnDefinition Width="120"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Button x:Name="btnOpenFlashFile" Content="Открыть файл flash" Margin="5" Height="35" VerticalAlignment="Top" Click="btnOpenFlashFile_Click"/>
+        <Button x:Name="btnOpenFlashFile" Content="Добавить файл&#x0a;       flash" Margin="5" Height="35" VerticalAlignment="Top"
+                Click="btnOpenFlashFile_Click" />
         <TextBox x:Name="txtBlFlash" Grid.Column="1" Margin="5" VerticalAlignment="Top" Height="50" Text="{Binding FlashPath, UpdateSourceTrigger=PropertyChanged}" 
                 HorizontalScrollBarVisibility="Auto" IsReadOnly="True"/>
 
         <StackPanel Orientation="Vertical" Grid.Column="0" Grid.Row="1">
-            <Button x:Name="btnOpenDepthFile" Content="Добавить файл&#x0a;с глубиной" Height="40" Margin="5" VerticalAlignment="top" Click="btnOpenDepthFile_Click" />
-            <Button x:Name="btnDeletDepthFile" Content="Удалить файл&#x0a;с глубиной" Height="40" Margin="5" VerticalAlignment="top" Click="btnDeletDepthFile_Click" />
+            <Button x:Name="btnOpenDepthFile" Content="Добавить файл&#x0a;  с глубиной" Height="40" Margin="5" VerticalAlignment="top" Click="btnOpenDepthFile_Click" />
+            <Button x:Name="btnDeletDepthFile" Content="Удалить файл&#x0a;  с глубиной" Height="40" Margin="5" VerticalAlignment="top" Click="btnDeletDepthFile_Click" />
         </StackPanel>
         <ListBox x:Name="listDepthFiles" Grid.Column="1" Grid.Row="1" Margin="5" ItemsSource="{Binding DepthPath}" />
 

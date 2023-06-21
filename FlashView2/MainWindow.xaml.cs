@@ -30,6 +30,7 @@ using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Drawing.Charts;
 using System.Collections.ObjectModel;
 using FlashZTK_I;
+using FlashZTK_I.Model;
 
 namespace FlashView2
 {
@@ -80,7 +81,8 @@ namespace FlashView2
             }
         }
 
-        public List<List<(DateTime, double)>> Depth;       
+        //public List<List<(DateTime, double)>> Depth;
+        //public List<DepthTimeFile> DepthData;
 
         private DataTable dataTable; // таблица для datagrid1  
         public DataTable DataTable
@@ -101,124 +103,10 @@ namespace FlashView2
         {
             InitializeComponent();           
             DataContext = this;
-            IsLasFile = false;       
-        }
-        
-        public void MenuItemOpenFile_Click(object sender, RoutedEventArgs e)
-        {
-            byte[]? FlashFile;
-            Packet mainPacket = new Packet();
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Flash Files|*.fl";
-            openFileDialog.Title = "Выберите flash-файл с данными";
-            List<List<string>> dataConfig = new List<List<string>>();
-            string nameFile;           
+            IsLasFile = false;
 
-            // Получение данных с конфигурационных файлов
-            List<ConfFileInfo> confFilesInfo = GetConfigData();
-
-            if (openFileDialog.ShowDialog() == true)
-            {           
-                string pathFlash = openFileDialog.FileName;
-                nameFile = openFileDialog.SafeFileName;
-                try
-                {
-                    // считываем данные флеш-файла
-                    FlashFile = File.ReadAllBytes(pathFlash);
-                    FlashFile = FlashFile.Skip(384).ToArray();
-                    string secachPathCong = "";
-                    for (int i = 0; i < FlashFile.Length; i++)
-                    {
-                        foreach (var cf in confFilesInfo)
-                        {
-                            if (i + cf.LengthLine + 1< FlashFile.Length)
-                            {
-                                bool isStart = cf.StartBytes[0] == FlashFile[i] && cf.StartBytes[1] == FlashFile[i + 1];
-                                bool isEnd = false;
-                                // если нет конца строки
-                                if (cf.EndBytes[0] == 0 && cf.EndBytes[1] == 0)
-                                {
-                                    isEnd = cf.StartBytes[0] == FlashFile[i + cf.LengthLine] && cf.StartBytes[1] == FlashFile[i + cf.LengthLine + 1];
-                                }
-                                else
-                                {
-                                    isEnd = cf.EndBytes[0] == FlashFile[i + cf.LengthLine - 2] && cf.EndBytes[1] == FlashFile[i + cf.LengthLine - 1];
-                                }                                
-                                
-                                if (isStart && isEnd)
-                                {
-                                    secachPathCong = cf.PathFile;                                    
-                                    mainPacket.ID_Packet = cf.StartBytes[0];
-                                    mainPacket.ID_Device = cf.StartBytes[1];
-                                    mainPacket.endLine[0] = cf.EndBytes[0];
-                                    mainPacket.endLine[1] = cf.EndBytes[1];
-                                    break;
-                                }
-                            }
-                        }
-                        if (mainPacket.ID_Device != 0)
-                        {
-                            break;
-                        }
-                    }
-
-                    if (mainPacket.ID_Device == 0)
-                    {
-                        ScrollStatusLasTextBox("Возникла ошибка: подходящий конфигурационный файл не найден");                        
-                        return;
-                    }
-
-                    if (!string.IsNullOrEmpty(secachPathCong))
-                    {
-                        //считываем данные конфиг - файла
-                        
-                        char[] separators = { ' ', '\t' };
-                        using (var reader = new StreamReader(secachPathCong))
-                        {
-                            bool isStartData = false;
-                            while (!reader.EndOfStream)
-                            {
-                                var row = reader.ReadLine();
-
-                                if (!string.IsNullOrWhiteSpace(row))
-                                {
-                                    if (!isStartData && row.Contains($"~{mainPacket.ID_Packet}"))
-                                    {
-                                        isStartData = true;
-                                    }
-                                    else if (isStartData)
-                                    {
-                                        if (row.StartsWith('#'))
-                                        {
-                                            break;
-                                        }
-                                        string[] line = row.TrimStart('*').Split(separators, StringSplitOptions.RemoveEmptyEntries);
-                                        dataConfig.Add(new List<string>(line));
-                                    }                                   
-                                }
-                            }
-                        }
-                    }                    
-
-                }
-                catch (Exception ex)
-                {
-                    ScrollStatusLasTextBox($"Возникла ошибка: {ex.Message}");                    
-                    return;
-                }
-            }
-            else
-            {
-                return;
-            }
-            
-            HandleConfigData(dataConfig, mainPacket);
-            ScrollStatusLasTextBox($"Загрузка файла началась: {nameFile}");            
-            Percent = 0;                     
-            UpdateTable(FlashFile, mainPacket);
-            //FlashFile = null;
-            //dataConfig = null;            
-        }
+            MessageBox.Show("Данная версия программы поддерживает только один тип приборов : ННГК");
+        }       
 
         // Обработка конф данных
         void HandleConfigData(List<List<string>> dataConfig, Packet mainPacket)
@@ -312,21 +200,20 @@ namespace FlashView2
                 PropertyChanged(this, new PropertyChangedEventArgs(prop));
         }
 
-        async void UpdateTable(byte[] flash, Packet packet)
+        async void UpdateTable(byte[] flash, Packet packet, List<DepthTimeFile>? DepthData)
         {
             await Task.Run(() =>
             {
-                DataTable = LoadDataTable(packet, flash, Depth);
+                DataTable = LoadDataTable(packet, flash, DepthData);
                 IsLasFile = true;
                 StatusMainWindow += $"{DateTime.Now}: Загрузка завершена!\n";                
-            });
-            //txtBoxStatus.ScrollToEnd();
+            });            
         }        
-        DataTable LoadDataTable(Packet mainPacket, byte[] flash, List<List<(DateTime, double)>> Depth = null)
+        DataTable LoadDataTable(Packet mainPacket, byte[] flash, List<DepthTimeFile> Depth = null)
         {
             DataTable myTable = new DataTable();
             DataRow row;
-            bool isAddCol = Depth != null;
+            bool isAddCols = Depth != null;
 
             int countByteRow = mainPacket.LengthLine; // количество байт на строку
             byte countParams = (byte)mainPacket.TypeParams.Count; // количество столбцов            
@@ -338,14 +225,14 @@ namespace FlashView2
             bool isBadTime = false;
             bool isZeroEndLine = false;
             int listPos = 0; // позиция в коллекции файла глубина - время
-
+            DepthTimeFile? saveDTF = null;
             myTable.Columns.Add("N");            
             foreach (var item in mainPacket.HeaderColumns)
             {
                 string[] splitHeader = item.Split('_');
                 if (splitHeader.Length == 2)
                 {
-                    myTable.Columns.Add(splitHeader[0]  + "\n" + splitHeader[1]);
+                    myTable.Columns.Add(splitHeader[0]  + "\n" + splitHeader[1], typeof(string));
                 }
                 else
                 {
@@ -354,10 +241,14 @@ namespace FlashView2
             }         
                         
             // Добавление дополнительного столбца если мы указали путь к глубинным файлам
-            if (isAddCol)
+            if (isAddCols)
             {
-                myTable.Columns.Add("Глубина");
-                //countParams++;
+                myTable.Columns.Add("[Глубина]");
+                bool isAddSecCol = Depth.Select(x=>x.StatusList).Any(y => y.Count > 0);
+                mainPacket.handlerFillDepthCol += AddDepthValue;
+
+                if (isAddSecCol)
+                    myTable.Columns.Add("[Состояние]");
             }               
             
             if (mainPacket.endLine[0] == 0 && mainPacket.endLine[1] == 0)
@@ -416,7 +307,7 @@ namespace FlashView2
                             byte[] values = new byte[countByte]; // берем необходимое количество байт                   
                             Array.Copy(flash, i, values, 0, countByte); // копируем наш кусок
 
-                            string valueA = GetValueByType2(mainPacket.TypeParams[j-1], values); // вычисляем значение по типу данных
+                            string valueA = mainPacket.GetValueByType(mainPacket.TypeParams[j-1], values, row); // вычисляем значение по типу данных
                             string valueB = mainPacket.CalculateValueByType(mainPacket.TypeCalculate[j - 1], valueA, mainPacket.DataCalculation[j - 1], mainPacket.CountSign[j-1]); // вычисляем пересчет данного по типу
                             row[j] = " " + valueB + " ";                            
                             i += countByte; // смещаем курсор по общему массиву байт                            
@@ -456,97 +347,114 @@ namespace FlashView2
                     Percent = loadStatus;
                 }
             }
-            Percent = 0;
+            Percent = 0;           
             return myTable;
 
-            string GetValueByType2(string typeValue, byte[] value)
+            // Лок. метод сравнение дат файла флеш и глубина время
+            void AddDepthValue(string data, DataRow row)
             {
-                string result = "";
-                switch (typeValue)
-                {
-                    case "byteS":
-                        result = ((sbyte)(value[0])).ToString();
-                        break;
-                    case "byteUs":
-                        result = ((byte)(value[0])).ToString();
-                        break;
-                    case "shortS":
-                        result = ((short)(value[0] | (value[1] << 8))).ToString();
-                        break;
-                    case "shortUs":
-                        result = ((ushort)(value[0] | (value[1] << 8))).ToString();
-                        break;
-                    //case "intS":
-                    //    break;
-                    //case "intUs":
-                    //    break;
-                    case "bdTime":
-                        result = GetbdTime2(value);
-                        if (isAddCol)
-                        {
-                            AddDepthValue(result, row);
-                        }                       
-                        break;
-                    default:
-                        throw new FormatException("неизвестный тип данных");
-                }
-                return result;
-            }
-
-            void AddDepthValue (string data, DataRow row)
-            {              
                 DateTime dtFlash = DateTime.Parse(data);
-                TimeSpan timeSpan = TimeSpan.FromSeconds(2);               
+                TimeSpan timeSpan = TimeSpan.FromSeconds(1);
 
-                foreach (var listDateDepth in Depth)
+                // находим актуальный лист с данными
+                if (Depth.Count > 0)
                 {
-                    if (dtFlash >= listDateDepth[0].Item1 && dtFlash <= listDateDepth[listDateDepth.Count - 1].Item1)
+                    if (saveDTF == null)
                     {
-                        for (int i = listPos; i < listDateDepth.Count; i++)
+                        foreach (var item in Depth)
                         {
-                            var dtDateDepth = listDateDepth[i].Item1;
-                            if (dtFlash > dtDateDepth - timeSpan && dtFlash <= dtDateDepth + timeSpan)
+                            if (dtFlash >= item.DateList[0] && dtFlash <= item.DateList[item.DateList.Count - 1])
+                            {
+                                saveDTF = item;
+                                break;
+                            }
+                        }
+                        // если не нашли
+                        if (saveDTF == null)
+                        {
+                            row[countParams + 1] = -999;
+                            row[countParams + 2] = 0;
+                            return;
+                        }
+                    }
+
+                    // проходимся по нему
+                    if (dtFlash >= saveDTF.DateList[0] && dtFlash <= saveDTF.DateList[saveDTF.DateList.Count - 1])
+                    {
+                        for (int i = listPos; i < saveDTF.DateList.Count; i++)
+                        {
+                            var dtDateDepth = saveDTF.DateList[i];
+                            if (dtFlash >= dtDateDepth - timeSpan && dtFlash <= dtDateDepth + timeSpan)
                             {
                                 listPos = i + 1;
-                                row[countParams + 1] = listDateDepth[i].Item2;
+                                row[countParams + 1] = saveDTF.DepthList[i];
+                                row[countParams + 2] = saveDTF.StatusList[i] ? 1 : 0;
                                 return;
+                            }
+                            else if(dtFlash < dtDateDepth)
+                            {
+                                row[countParams + 1] = -999;
+                                row[countParams + 2] = 0;
+                                return;
+                            }
+
+                            if (i == saveDTF.DateList.Count)
+                            {
+                                Depth.Remove(saveDTF);
+                                saveDTF = null;
+                                listPos = 0;
                             }
                         }
                     }
                     else
                     {
-                        row[countParams + 1] = -999;
+                        Depth.Remove(saveDTF);
+                        saveDTF = null;
                         listPos = 0;
-                        continue;
+                        AddDepthValue(data, row);
                     }
-                }             
-
-            }
-
-            string GetbdTime2(Byte[] array)
-            {
-                string dateTime = Convert.ToHexString(array);
-                string second = "";
-                string minute = "";
-                string hour = "";
-                string day = "";
-                string month = "";
-                string year = "";
-                string date;
-
-                second = dateTime[0].ToString() + dateTime[1].ToString();
-                minute = dateTime[2].ToString() + dateTime[3].ToString();
-                hour = dateTime[4].ToString() + dateTime[5].ToString();
-                day = dateTime[6].ToString() + dateTime[7].ToString();
-                month = dateTime[8].ToString() + dateTime[9].ToString();
-                year = dateTime[10].ToString() + dateTime[11].ToString();
-                //date = new DateTime(year, month, day, hour, minute, second);
-                date = $"{hour}:{minute}:{second} {day}.{month}.{year}";
-                if (!DateTime.TryParse(date, out DateTime timeTest))
-                {
-                    throw new FormatException("Ошибка формата времени");
                 }
-                return date;
+                else
+                {
+                    row[countParams + 1] = -999;
+                    row[countParams + 2] = 0;
+                }
+
+
+                // подумать над возможной оптимизации процесса поиска подходящих дат
+                //if (Depth.Count > 0)
+                //{
+                //    for (int j = 0; j < Depth.Count; j++)
+                //    {
+                //        var dtf = Depth[j];
+                //        if (dtFlash >= dtf.DateList[0] && dtFlash <= dtf.DateList[dtf.DateList.Count - 1])
+                //        {
+                //            for (int i = listPos; i < dtf.DateList.Count; i++)
+                //            {
+                //                var dtDateDepth = dtf.DateList[i];
+                //                if (dtFlash >= dtDateDepth - timeSpan && dtFlash <= dtDateDepth + timeSpan)
+                //                {
+                //                    listPos = i + 1;
+                //                    row[countParams + 1] = dtf.DepthList[i];
+                //                    row[countParams + 2] = dtf.StatusList[i] ? 1 : 0;
+                //                    return;
+                //                }                                                       
+                //            }
+                //        }
+                //        else
+                //        {
+                //            row[countParams + 1] = -999;
+                //            row[countParams + 2] = 0;
+                //            listPos = 0;
+                //            continue;
+                //        }
+                //    }
+                //}
+                //else
+                //{
+                //    row[countParams + 1] = -999;
+                //    row[countParams + 2] = 0;
+                //}
             }
         }
         // нажатие кнопки сохранить файл
@@ -565,7 +473,7 @@ namespace FlashView2
                
         async Task FastDtToExcelAsync(string excelFilePath)
         {
-            ScrollStatusLasTextBox($"Выполняется экспорт данных в формат .xlsx");
+            ScrollStatusTextBox($"Выполняется экспорт данных в формат .xlsx");
             await Task.Run(() =>
             {
                 int firstRow = 1;
@@ -630,12 +538,12 @@ namespace FlashView2
                 }
                 Percent = 0;
             });
-            ScrollStatusLasTextBox($"Экспорт данных в формат .xlsx завершен!");
+            ScrollStatusTextBox($"Экспорт данных в формат .xlsx завершен!");
         }   
 
         async void FastExportToTxtAsync(string path)
         {
-            ScrollStatusLasTextBox("Выполняется экспорт данных в формат .txt");
+            ScrollStatusTextBox("Выполняется экспорт данных в формат .txt");
             //await Task.Delay(0);
 
             await Task.Run(() =>
@@ -644,7 +552,7 @@ namespace FlashView2
                 //MessageBox.Show("Экспорт данных завершен");
                 //StatusMainWindow += $"{DateTime.Now}: Экспорт данных в формат .txt завершен!\n";
             });
-            ScrollStatusLasTextBox("Экспорт данных в формат .txt завершен!");
+            ScrollStatusTextBox("Экспорт данных в формат .txt завершен!");
             //txtBoxStatus.ScrollToEnd();
 
 
@@ -660,63 +568,7 @@ namespace FlashView2
                 workbook.SaveAs("HelloWorld.xlsx");
             }                       
         }
-        // очень долгий метод сохранения данных в Excel
-        //public void ExportToExcel(string excelFilePath = null)
-        //{
-        //    try
-        //    {
-        //        if (DataTable == null || DataTable.Columns.Count == 0)
-        //            throw new Exception("ExportToExcel: Null or empty input table!\n");
-
-        //        // load excel, and create a new workbook
-        //        var excelApp = new Microsoft.Office.Interop.Excel.Application();
-        //        excelApp.Workbooks.Add();
-
-        //        // single worksheet
-        //        Microsoft.Office.Interop.Excel._Worksheet workSheet = (_Worksheet)excelApp.ActiveSheet;
-
-        //        // column headings
-        //        for (var i = 0; i < DataTable.Columns.Count; i++)
-        //        {
-        //            workSheet.Cells[1, i + 1] = DataTable.Columns[i].ColumnName.ToString();
-        //        }
-
-        //        // rows
-        //        for (var i = 0; i < 102; i++)//dataTable.Rows.Count; i++)
-        //        {
-        //            // to do: format datetime values before printing
-        //            for (var j = 0; j < dataTable.Columns.Count; j++)
-        //            {
-        //                workSheet.Cells[i + 2, j + 1] = dataTable.Rows[i][j].ToString();
-        //            }
-        //        }
-
-        //        // check file path
-        //        if (!string.IsNullOrEmpty(excelFilePath))
-        //        {
-        //            try
-        //            {
-        //                workSheet.SaveAs(excelFilePath);
-        //                excelApp.Quit();
-        //                MessageBox.Show("Excel file saved!");
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                throw new Exception("ExportToExcel: Excel file could not be saved! Check filepath.\n"
-        //                                    + ex.Message);
-        //            }
-        //        }
-        //        else
-        //        { // no file path is given
-        //            excelApp.Visible = true;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception("ExportToExcel: \n" + ex.Message);
-        //    }
-        //}
-        // работает быстро и оптимально (пока)
+       
         public void FastDtToExcel(string excelFilePath)
         {            
             int firstRow = 1;
@@ -880,65 +732,152 @@ namespace FlashView2
                     catch
                     {
                         MessageBox.Show("Возникла ошибка в ходе поиска и обработки конфиг. файлов");
-                        throw new Exception();
+                        throw new Exception("Возникла ошибка в ходе поиска и обработки конфиг. файлов");
                     }
                 }
                 if (confFilesInfo.Count == 0)
                 { 
                     MessageBox.Show("В папке Configurations отсутствуют подходящие файлы конфигурации");
-                    throw new Exception();
+                    throw new Exception("В папке Configurations отсутствуют подходящие файлы конфигурации");
                 }
             }
             else
             {
                MessageBox.Show("Остуствует папка Configurations с файлами конфигурации.\n" +
                    "Необходимо скопировать папку и перезапустить программу!");
-                throw new Exception();
+                throw new Exception("Остуствует папка Configurations с файлами конфигурации.");
             }
 
             return confFilesInfo;
         }
 
-        void ScrollStatusLasTextBox(string message)
+        void ScrollStatusTextBox(string message)
         {
             StatusMainWindow += $"{DateTime.Now}: {message} \n";
             txtBoxStatus.ScrollToEnd();
         }
 
-        private void btnClearMemory_Click(object sender, RoutedEventArgs e)
-        {            
-            MessageBox.Show("Done!");
-        }
-
-        // Чтение данных из выбранных файлов в переменную Depth
-        List<List<(DateTime,double)>> OpenDepthFiles(List<string> depthPaths)
+        // Чтение данных из выбранных файлов с глубиной и временем в переменную Depth
+        List<DepthTimeFile> OpenDepthFiles(List<string> depthPaths)
         {
-            List<List<(DateTime, double)>> resultList = new List<List<(DateTime, double)>>();
-
+            //List<List<(DateTime, double)>> resultList = new List<List<(DateTime, double)>>();            
+            List<DepthTimeFile> resultList = new List<DepthTimeFile>();
             try
             {                
                 foreach (string path in depthPaths)
                 {
-                    List<(DateTime, double)> listTimeDepth = new List<(DateTime, double)>();
+                    DepthTimeFile dtf = new DepthTimeFile();
+                    //List<(DateTime, double)> listTimeDepth = new List<(DateTime, double)>();
                     Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
                     using (var reader = new StreamReader(path, Encoding.GetEncoding(1251)))
                     {
+                        bool isData = false;                        
+                                                                   
                         while (!reader.EndOfStream)
                         {
                             var row = reader.ReadLine();
                             if (!String.IsNullOrEmpty(row))
-                            {
-                                var splitLine = row.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                                bool isTime = DateTime.TryParse(splitLine[0] + " " + splitLine[1], out DateTime time);
-                                bool isDepth = double.TryParse(splitLine[3], NumberStyles.Any, CultureInfo.InvariantCulture, out double depth);
-                                if (isTime && isDepth)
-                                    listTimeDepth.Add((time, depth));
+                            {       
+                                if (!isData)
+                                {
+
+                                    if (row.ToLower().Contains("данные с"))
+                                    {
+                                        var splitLine = row.Split(" ");
+                                        foreach (var item in splitLine)
+                                        {
+                                            if(DateTime.TryParse(item, out DateTime data))
+                                            {
+                                                dtf.Year += "." + data.Year.ToString();
+                                                break;
+                                            }
+                                        }
+                                        continue;
+                                    }
+
+                                    if (row.ToLower().Contains("дата") && row.ToLower().Contains("время") && row.ToLower().Contains("забой"))
+                                    {   
+                                        if (!string.IsNullOrEmpty(dtf.Year))
+                                        {
+                                            dtf.Separator = '|';
+                                            dtf.DepthName = "забой"; // версия файла без глубиномера
+                                            dtf.ColNumbers[3] = 999; // т.к. в старой версии файла таких данных уже не будет
+                                        }
+
+                                        var splitLine = row.Split(dtf.Separator, StringSplitOptions.RemoveEmptyEntries);
+                                        dtf.ColNumbers[0] = Array.FindIndex(splitLine, value => value.ToLower().Trim() == dtf.TimeName);
+                                        dtf.ColNumbers[1] = Array.FindIndex(splitLine, value => value.ToLower().Trim() == dtf.DateName);
+                                        dtf.ColNumbers[2] = Array.FindIndex(splitLine, value => value.ToLower().Trim() == dtf.DepthName);
+                                        dtf.ColNumbers[3] = Array.FindLastIndex(splitLine, value => value.Trim() == dtf.StatusName) - 1; // из-за лишнего пробела
+
+                                        if (dtf.ColNumbers.Any(x => x == -1))
+                                        {
+                                            continue;
+                                        }
+                                        else
+                                        {
+                                            // вычисляем длину строки, для новой версии файла она будет меньше на 2 столбца
+                                            // из-за sbSendData акт.  sbSendData сост.
+                                            dtf.lengthStr = dtf.Separator == ' ' ? splitLine.Length - 2 : splitLine.Length;                                            
+                                            isData = true;
+                                            continue;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    var splitLine = row.Split(dtf.Separator, StringSplitOptions.RemoveEmptyEntries);
+                                    if (dtf.lengthStr != splitLine.Length)
+                                    {
+                                        continue;
+                                    }
+
+                                    bool isTime = DateTime.TryParse(splitLine[dtf.ColNumbers[1]] + dtf.Year + " " + splitLine[dtf.ColNumbers[0]], out DateTime time);
+                                    bool isDepth = double.TryParse(splitLine[dtf.ColNumbers[2]], NumberStyles.Any, CultureInfo.InvariantCulture, out double depth);
+                                    bool status = false;
+                                    if (dtf.ColNumbers[3] != 999)
+                                    {
+                                        string statStr = splitLine[dtf.ColNumbers[3]];
+                                        status = statStr == "отж." ? false : true;
+                                    }                                        
+
+                                    if (isTime && isDepth)
+                                    {
+                                        if (dtf.PrevDate != null)
+                                        {
+                                            if (dtf.PrevDate > time)
+                                            {
+                                                time = time.AddYears(1);
+                                                bool isParsedValue = int.TryParse(dtf.Year.TrimStart('.'), out int val);
+                                                val++;
+                                                if (isParsedValue)
+                                                {
+                                                    dtf.Year = "." + val + ToString();
+                                                }                                               
+                                                dtf.PrevDate = time;
+                                            }
+                                            else
+                                            {
+                                                dtf.PrevDate = time;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            dtf.PrevDate = time;
+                                        }
+                                        dtf.DepthList.Add(depth);
+                                        dtf.DateList.Add(time);
+                                        dtf.StatusList.Add(status);                                       
+                                    }
+                                        
+                                }                               
                             }
                         }
                     }
-                    if (listTimeDepth.Count > 0)
+                    if (dtf.DepthList.Count > 0)
                     {
-                        resultList.Add(listTimeDepth);
+                        ScrollStatusTextBox($"{path} данные считаны успешно");                        
+                        resultList.Add(dtf);
                     }                    
                 }
             }
@@ -947,63 +886,7 @@ namespace FlashView2
                 throw new Exception(ex.Message);
             }
 
-            return resultList;
-
-            //// ищем номер столбца с датой
-            //int numDate = -1;
-            //if (listTimeDepth.Count > 1)
-            //{                
-            //    for (int i = 0; i < datagrid1.Columns.Count; i++)
-            //    {
-            //        if (datagrid1.Columns[i].Header.ToString() == "[Время/Дата]")
-            //        {
-            //            numDate = i;
-            //        }
-            //    }
-            //}
-
-            //if (numDate != -1)
-            //{
-            //    TimeSpan timeSpan = TimeSpan.FromSeconds(2);                
-            //    double[] DepthArray = new double[datagrid1.Items.Count];
-            //    int listPos = 0;
-            //    // надо 40к изменить потом
-            //    for (int k = 40000; k < datagrid1.Items.Count; k ++)
-            //    {
-            //        DataRowView row = (DataRowView)datagrid1.Items[k];
-            //        string text = row.Row.ItemArray[numDate].ToString();
-            //        if (DateTime.TryParse(text, out DateTime time1))
-            //        {
-            //            // проверка вхождения в диапазон
-            //            if (time1 >= listTimeDepth[0].Item1 && time1 <= listTimeDepth[listTimeDepth.Count - 1].Item1)
-            //            {
-            //                for (int i = listPos; i < listTimeDepth.Count; i++)
-            //                {
-            //                    var time2 = listTimeDepth[i].Item1;
-            //                    if (time1 > time2 - timeSpan && time1 <= time2 + timeSpan)
-            //                    {
-            //                        listPos = i + 1;
-            //                        DepthArray[k] = listTimeDepth[i].Item2;
-            //                        break;
-            //                    }                               
-            //                }
-            //            }                        
-            //        }
-            //    }
-
-            //    Depth = DepthArray.ToList();
-            //    DataGridTextColumn depthColumn = new DataGridTextColumn();
-            //    depthColumn.Header = "Глубина";
-            //    depthColumn.Binding = new Binding($"Depth");
-            //    datagrid1.Columns.Add(depthColumn);               
-
-
-            //}
-            //else
-            //{
-            //    ScrollStatusLasTextBox($"Не удалось обнаружить столбец [Время/Дата]");
-            //}
-            
+            return resultList;           
         }
 
         private void btnOpenFileFlash_Click(object sender, RoutedEventArgs e)
@@ -1011,8 +894,9 @@ namespace FlashView2
             bool isDepth;
             var newFlashWindow = new OpenDataFilesDialog();
             byte[]? FlashFile;
-            Packet mainPacket;
-            List<List<string>> dataConfig;
+            Packet? mainPacket;
+            List<List<string>>? dataConfig;
+            List<DepthTimeFile>? DepthData = null;
             newFlashWindow.ShowDialog();
             if (newFlashWindow.FlashPath != null)
             {
@@ -1021,7 +905,7 @@ namespace FlashView2
                 {
                     try
                     {
-                        Depth = OpenDepthFiles(newFlashWindow.DepthPath.ToList());                        
+                        DepthData = OpenDepthFiles(newFlashWindow.DepthPath.ToList());                        
                     }
                     catch (Exception ex)
                     {
@@ -1033,12 +917,13 @@ namespace FlashView2
                 try
                 {
                     FlashFile = File.ReadAllBytes(newFlashWindow.FlashPath).Skip(384).ToArray();
+                    ScrollStatusTextBox($"{newFlashWindow.FlashPath} данные flash считаны успешно");
                     mainPacket = new Packet();
-                    dataConfig = FillDateConf(FlashFile, Depth, mainPacket);
+                    dataConfig = FillDateConf(FlashFile, mainPacket);
                     HandleConfigData(dataConfig, mainPacket);
                     Percent = 0;
-                    UpdateTable(FlashFile, mainPacket);
-                    txtBoxStatus.ScrollToEnd();
+                    if (DepthData != null)
+                        UpdateTable(FlashFile, mainPacket, DepthData);                   
                 }
                 catch (Exception ex)
                 {
@@ -1048,7 +933,7 @@ namespace FlashView2
             }                        
         }
 
-        List<List<string>> FillDateConf(byte[]? FlashFile, List<List<(DateTime, double)>> listDateDepth, Packet mainPacket)
+        List<List<string>> FillDateConf(byte[]? FlashFile, Packet mainPacket)
         {                     
             List<List<string>> dataConfig = new List<List<string>>();           
 
@@ -1057,8 +942,8 @@ namespace FlashView2
 
             try
             {
-                // считываем данные флеш-файла                                
-                string secachPathCong = "";
+                // считываем данные флеш-файла, запускаем процесс поиска подходящих конфиг. данных                         
+                string pathConfig = "";
                 for (int i = 0; i < FlashFile.Length; i++)
                 {
                     foreach (var cf in confFilesInfo)
@@ -1079,7 +964,7 @@ namespace FlashView2
 
                             if (isStart && isEnd)
                             {
-                                secachPathCong = cf.PathFile;
+                                pathConfig = cf.PathFile;
                                 mainPacket.ID_Packet = cf.StartBytes[0];
                                 mainPacket.ID_Device = cf.StartBytes[1];
                                 mainPacket.endLine[0] = cf.EndBytes[0];
@@ -1096,16 +981,16 @@ namespace FlashView2
 
                 if (mainPacket.ID_Device == 0)
                 {
-                    ScrollStatusLasTextBox("Возникла ошибка: подходящий конфигурационный файл не найден");
+                    ScrollStatusTextBox("Возникла ошибка: подходящий конфигурационный файл не найден");
                     throw new Exception("Возникла ошибка: подходящий конфигурационный файл не найден");
                 }
 
-                if (!string.IsNullOrEmpty(secachPathCong))
+                if (!string.IsNullOrEmpty(pathConfig))
                 {
                     //считываем данные конфиг - файла
 
                     char[] separators = { ' ', '\t' };
-                    using (var reader = new StreamReader(secachPathCong))
+                    using (var reader = new StreamReader(pathConfig))
                     {
                         bool isStartData = false;
                         while (!reader.EndOfStream)

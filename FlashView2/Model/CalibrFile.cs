@@ -9,12 +9,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace FlashView2
+namespace FlashZTK_I.Model
 {
-    public class CalibrFile: INotifyPropertyChanged
+    public class CalibrFile : INotifyPropertyChanged
     {
         public List<string> spisokTrub;
-        public List<string> SpisokTrub 
+        public List<string> SpisokTrub
         {
             get
             {
@@ -51,7 +51,7 @@ namespace FlashView2
         // Проверка поддержки версии калибровочного файла
         public bool CheckCalibrVers(List<string> fileCalibrData)
         {
-            string vers = fileCalibrData[0].Trim();            
+            string vers = fileCalibrData[0].Trim();
             if (int.TryParse(vers, out int versCalFile))
             {
                 try
@@ -70,8 +70,8 @@ namespace FlashView2
                     MessageBox.Show(ex.Message);
                     return false;
                 }
-                
-            } 
+
+            }
             else
             {
                 return false;
@@ -80,7 +80,7 @@ namespace FlashView2
 
         // Обработка калибровочного файла. Извлечение полезных данных
         private void UpdateDataFileColibrVers3(List<string> fileCalibrData)
-        {            
+        {
             for (int i = 1; i < fileCalibrData.Count; i++)
             {
                 string[] splitLine = fileCalibrData[i].Trim().Split(':');
@@ -109,7 +109,7 @@ namespace FlashView2
                 //    throw new ArgumentException("Ошибка в линии данных времени калибровки");
                 //}
                 //DateCalibr.Add(time);
-            }            
+            }
             SpisokTrub = SpisokTrub.Distinct().ToList();
         }
 
