@@ -922,8 +922,7 @@ namespace FlashView2
                     dataConfig = FillDateConf(FlashFile, mainPacket);
                     HandleConfigData(dataConfig, mainPacket);
                     Percent = 0;
-                    if (DepthData != null)
-                        UpdateTable(FlashFile, mainPacket, DepthData);                   
+                    UpdateTable(FlashFile, mainPacket, DepthData);
                 }
                 catch (Exception ex)
                 {
