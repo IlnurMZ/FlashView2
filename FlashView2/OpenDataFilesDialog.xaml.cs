@@ -59,7 +59,7 @@ namespace FlashZTK_I
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Flash Files|*.fl";
-            openFileDialog.Title = "Выберите flash-файл с данными";
+            openFileDialog.Title = "Выберите flash-файл с данными";            
 
             if (openFileDialog.ShowDialog() == true)
             {
@@ -73,6 +73,8 @@ namespace FlashZTK_I
             openFileDialog.Filter = "Файл глубина-время|*.txt";
             openFileDialog.Title = "Выберите файл с глубиной и временем";
             openFileDialog.Multiselect = true;
+            openFileDialog.Title = "Выберите flash-файл с данными";           
+            
             if (openFileDialog.ShowDialog() == true)
             {
                 foreach (var file in openFileDialog.FileNames)
@@ -87,7 +89,8 @@ namespace FlashZTK_I
 
         private void btnDeletDepthFile_Click(object sender, RoutedEventArgs e)
         {
-            var selStr = listDepthFiles.SelectedItem.ToString();
+            if (listDepthFiles.SelectedItem == null) return;
+            string selStr = listDepthFiles.SelectedItem.ToString();
             if (!string.IsNullOrEmpty(selStr))
             {
                 DepthPath.Remove(selStr);

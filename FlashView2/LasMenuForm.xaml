@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="FlashZTK_I: LAS" 
         Height="870" Width="870" 
-        WindowStartupLocation="CenterScreen" Background="#FFA2A1A1">
+        WindowStartupLocation="CenterScreen" Background="#FFA2A1A1" Closing="OnClosing" >
     <Window.Resources>
         <Style x:Key="CenterGridHeaderStyle" TargetType="DataGridColumnHeader">
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -97,7 +97,7 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.ColumnSpan="2" Height="90" Width="827">
-                        <Button x:Name="btn_LoadDepthAndTime" Click="btn_LoadDepthAndTime_Click" 
+                        <Button x:Name="btn_LoadDepthAndTime" Click="btn_LoadDepthAndTime_Click2" 
                                 Width="100" Height="70" Margin="10,2,2,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
                             <Button.Content>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
@@ -127,22 +127,7 @@
                                 </ToolTip>
                             </Button.ToolTip>
                         </Button>
-
-                        <Button x:Name="btn_UpdateCurrentData" Click="btn_UpdateCurrentData_Click" IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}"
-                                Width="100" Height="70" Margin="5,2,2,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
-                                Style="{StaticResource ButtonStyle1}">
-                            <Button.Content>
-                                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                                    <Image Source="/Icons/UpdateData.png" Height="30"/>
-                                    <Label Content="Обновить&#x0a; таблицу" />
-                                </StackPanel>
-                            </Button.Content>
-                            <Button.ToolTip>
-                                <ToolTip>
-                                    Открыть файл с глубиной
-                                </ToolTip>
-                            </Button.ToolTip>
-                        </Button>
+                        
 
                         <Button x:Name="btn_HeadLasWrite" Click="btn_HeadLasWrite_Click"  IsEnabled="{Binding IsOpenCalibFile, UpdateSourceTrigger=PropertyChanged}"
                                 Width="80" Height="70" Margin="5,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
@@ -162,28 +147,29 @@
                         <Label Content=" "  VerticalAlignment="Center" Height="90" Background="Black" Width="1"/>
 
                         <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0">
-                            <Label Content="Файл с глубиной:" Height="30" Width="135"/>
+                            <Label Content="Файл с глубиной:" Height="30" Width="135" Margin="0,0,0,15"/>
                             <Label Content="Калибровочный файл:" Height="30" Width="135"/>
                         </StackPanel>
 
                         <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Left">
-                            <Label Name="lblDepthFile" Content="Не загружен" Height="30" Width="270"/>
-                            <Label Name="lblCalibrFile" Content="Не загружен" Height="30" Width="270"/>
+                            <TextBox Name="lblDepthFile" Text="Не загружен" Height="35" Width="270" VerticalScrollBarVisibility="Visible"
+                                     IsReadOnly="True" Margin="0,0,0,15" />
+                            <TextBox Name="lblCalibrFile" Text="Не загружен" Height="25" Width="270" IsReadOnly="True" />
                         </StackPanel>
 
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,15">
                             <Label Content="NULL значение" Margin="10,0,5,5"/>
                             <TextBox Name="txtBoxNULL" Width="95" Text="-999,99" Margin="35,5,5,5" Height="20" HorizontalContentAlignment="Center"/>
                         </StackPanel>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                        <!--<StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                             <Label Content="Расстояние от долота&#x0a;до датчика" Margin="10,0,5,5" />
                             <TextBox Name="txtBoxShift" Width="95" Text="1" Margin="0,5,0,0" Height="20" HorizontalContentAlignment="Center" 
                                      IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}"/>
-                        </StackPanel>
+                        </StackPanel>-->
 
                         <GroupBox Padding="5" Width="230" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <GroupBox.Header>
@@ -194,7 +180,7 @@
                             </GroupBox.Header>
                             <StackPanel Orientation="Vertical">
                                 <RadioButton x:Name="rbtnInInter" Margin="3" IsChecked="True">В интервале определения</RadioButton>
-                                <RadioButton Margin="3" IsChecked="{Binding IsSetInterval, Mode=OneWayToSource}">В задаваемом интервале</RadioButton>
+                                <RadioButton Margin="3" IsChecked="{Binding IsSetInterval, Mode=TwoWay}">В задаваемом интервале</RadioButton>
                                 <GroupBox Header="Задать время">
                                     <StackPanel>
                                         <Label>с</Label>
@@ -222,7 +208,7 @@
                                 </ComboBox>
                                 <GroupBox Header="Расчет Кп" Margin="15,15,0,0" Padding="5" Width="220" HorizontalAlignment="Left">
                                     <StackPanel>
-                                        <RadioButton IsChecked="{Binding isLineCalc, Mode=TwoWay}" Name="rb1_Lin" Margin="5">По линейной зависимости</RadioButton>
+                                        <RadioButton Name="rb1_Lin" IsChecked="{Binding isLineCalc, Mode=TwoWay}" Margin="5">По линейной зависимости</RadioButton>
                                         <RadioButton Name="rb2_Kvad" Margin="5">По квадратичной зависимости</RadioButton>
                                     </StackPanel>
                                 </GroupBox>
@@ -245,14 +231,29 @@
                             <GroupBox.Header>
                                 <StackPanel Orientation="Horizontal">
                                     <Image Source="/Icons/Shift Time.png" Height="20" Margin="5,0,0,0"/>
-                                    <TextBlock Text="Сдвинуть время" Margin="5,0,5,0"/>
+                                    <TextBlock Text="Сдвинуть время файла глубины" Margin="5,0,5,0"/>
                                 </StackPanel>
                             </GroupBox.Header>
 
-                            <StackPanel>
-                                <RadioButton Name="rb1_Sdvig" Margin="5" Content="Вперед" IsChecked="{Binding IsMoveTimeUp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                <RadioButton Name="rb2_Sdvig" Margin="5" Content="Назад"/>
-                                <xctk:TimePicker Format="LongTime" Width="100" HorizontalAlignment="Left" Margin="5" Text="{Binding ShiftTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></xctk:TimePicker>
+                            <StackPanel Orientation="Horizontal">
+                                <StackPanel Orientation="Vertical">
+                                    <RadioButton Name="rb1_Sdvig" Margin="5" Content="Вперед" IsChecked="{Binding IsMoveTimeUp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <RadioButton Name="rb2_Sdvig" Margin="5" Content="Назад"/>
+                                    <xctk:TimePicker Format="LongTime" Width="100" HorizontalAlignment="Left" Margin="5" Text="{Binding ShiftTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></xctk:TimePicker>
+                                </StackPanel>
+                                
+                                <Button x:Name="btn_UpdateCurrentData" Click="btn_UpdateCurrentData_Click" IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}"
+                                Width="100" Height="70" Margin="5,0,2,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+                                Style="{StaticResource ButtonStyle1}">
+                                    <Button.Content>
+                                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                                            <Image Source="/Icons/UpdateData.png" Height="30"/>
+                                            <Label Content="Обновить&#x0a; таблицу" />
+                                        </StackPanel>
+                                    </Button.Content>
+                                </Button>
+
+                                
                                 <!--<Button Name="btnUseShiftTime" Content="Применить" Margin="5" Height="30" Click="btnUseShiftTime_Click" IsEnabled="{Binding IsMoveTime, UpdateSourceTrigger=PropertyChanged}"/>-->
                             </StackPanel>
                         </GroupBox>
