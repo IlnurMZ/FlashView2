@@ -8,6 +8,7 @@
         Title="FlashZTK_I: Main" Height="610" Width="1700" ResizeMode="CanResize"  Background="#FFA2A1A1">
     <Window.Resources>
 
+        
         <Style TargetType="Button" x:Key="FocusVisual">
             <Setter Property="Control.Template">
                 <Setter.Value>
@@ -126,19 +127,49 @@
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
                         <Image Source="/Icons/Form LAS.png" Height="30"/>
-                        <Label Content=" LAS " />
+                        <Label Content="Построить&#xA;     LAS " />
                     </StackPanel>                   
                 </Button.Content>               
             </Button>
 
-            <Button Name="btnExit" Click="MenuItemCloseProgram_Click" Style="{StaticResource ButtonStyle1}">
+            <Button Name="btnShiftTime" Click="btnShiftTime_Click"  IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}"
+                    Style="{StaticResource ButtonStyle1}">
+                <Button.Content>
+                    <StackPanel Orientation="Vertical">
+                        <Image Source="/Icons/Time2.png" Height="30"/>
+                        <Label Content="Настройка&#xA; времени" />
+                    </StackPanel>
+                </Button.Content>
+            </Button>
+
+            <Button Name="btnFilterTime" Click="btnFilterTime_Click"  IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}"
+                    Style="{StaticResource ButtonStyle1}">
+                <Button.Content>
+                    <StackPanel Orientation="Vertical">
+                        <Image Source="/Icons/Filter.png" Height="30"/>
+                        <Label Content="Выбрать&#xA; фильтр" />
+                    </StackPanel>
+                </Button.Content>
+            </Button>
+
+            <Button Name="btnResetFilter" Click="btnResetFilter_Click"  IsEnabled="{Binding IsLasFile}"
+                    Style="{StaticResource ButtonStyle1}">
+                <Button.Content>
+                    <StackPanel Orientation="Vertical">
+                        <Image Source="/Icons/Cancel.png" Height="30"/>
+                        <Label Content="Сбросить&#xA; фильтр" />
+                    </StackPanel>
+                </Button.Content>
+            </Button>
+
+            <!--<Button Name="btnExit" Click="MenuItemCloseProgram_Click" Style="{StaticResource ButtonStyle1}" >
                 <Button.Content>
                     <StackPanel Orientation="Vertical">
                         <Image Source="/Icons/Exit.png" Height="30" />
                         <Label Content="Выйти" />
                     </StackPanel>
                 </Button.Content>                
-            </Button>            
+            </Button>-->            
 
         </StackPanel>
 

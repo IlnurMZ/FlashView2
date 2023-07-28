@@ -1,11 +1,11 @@
-﻿<Window x:Class="FlashZTK_I.OpenDataFilesDialog"
+﻿<Window x:Class="FlashView2.OpenDataFilesDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:FlashZTK_I"
+        xmlns:local="clr-namespace:FlashView2"
         mc:Ignorable="d"
-        Title="FlashZTK_I: Open Files" Height="300" Width="600" Background="#FFA2A1A1"
+        Title="FlashZTK_I: Open Files" Height="300" Width="650" Background="#FFA2A1A1"
         ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.RowDefinitions>

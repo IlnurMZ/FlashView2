@@ -8,11 +8,95 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using FlashView2;
 using Microsoft.Win32;
 using System.Windows;
+using FlashView2.Model;
+using System.Data;
+using System.Globalization;
 
-namespace FlashZTK_I
+namespace FlashView2
 {
     internal class UnUsedCode
     {
+        // метод обработки данных и формирования LAS
+        //private SortedDictionary<double, double> GetDataForLasType2(List<(double, DateTime)> listDepthDate)
+        //{
+        //    SortedDictionary<double, double> depthAndKp = new SortedDictionary<double, double>();
+        //    var choisedCoef = MyCalibrFile.CoefsCalibr[MyCalibrFile.CurrentChoise];
+        //    int savePos = 0;
+        //    TimeSpan timeSpan = TimeSpan.FromSeconds(3);
+
+        //    if (IsSetInterval)
+        //    {
+        //        if (StartTimeRead > EndTimeRead) throw new ArgumentException("Неверно указан период даты считывания");
+        //    }
+
+        //    for (int i = 0; i < dtf.Data.Count; i++)
+        //    {
+        //        bool isTimeDepth = DateTime.TryParse(dtf.Data[i][dtf.ColumnDate], out DateTime timeDepth); // берем время с глубины время
+        //        if (IsSetInterval)
+        //        {
+        //            if (timeDepth < StartTimeRead || timeDepth > EndTimeRead) continue;
+        //        }
+        //        if (!isTimeDepth) continue;
+
+        //        double KP = -999; // коэф. по умолчанию
+
+        //        for (int j = savePos; j < DataRowAVM.Count; j++)
+        //        {
+        //            DataRow row = DataRowAVM[j];
+        //            var isTimeFlash = DateTime.TryParse(row["[Время/Дата]"].ToString(), out DateTime timeFlash); // берем время с флешки
+
+        //            if (!isTimeFlash)
+        //            {
+        //                continue;
+        //            }
+
+        //            if (timeDepth >= timeFlash - timeSpan && timeDepth < timeFlash + timeSpan)
+        //            {
+        //                // вычисляем МЗ и БЗ и находим КП
+
+        //                double mz = double.Parse(row["[ННК1/\nННК1(вода)]"].ToString()) / 333;
+        //                double bz = double.Parse(row["[ННК2/\nННК2(вода)]"].ToString()) / 33;
+        //                double x;
+
+
+
+        //                if (bz != 0)
+        //                {
+        //                    x = mz / bz;
+        //                    if (choisedCoef.Length == 2)
+        //                    {
+        //                        KP = choisedCoef[0] * x + choisedCoef[1];
+        //                    }
+        //                    else if (choisedCoef.Length == 3)
+        //                    {
+        //                        KP = choisedCoef[0] * x * x + choisedCoef[1] * x + choisedCoef[2];
+        //                    }
+        //                    double valueDepth1 = double.Parse(dtf.Data[i][2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture);
+        //                    depthAndKp.TryAdd(valueDepth1, KP);
+        //                }
+
+        //                savePos = j;
+        //                break;
+        //            }
+
+        //            else if (timeFlash + timeSpan > timeDepth)
+        //            {
+        //                double valueDepth1 = double.Parse(dtf.Data[i][2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture);
+        //                depthAndKp.TryAdd(valueDepth1, KP);
+        //                savePos = j--;
+        //                break;
+        //            }
+        //        }
+        //        if (KP != -999)
+        //        {
+        //            continue;
+        //        }
+        //        double valueDepth = double.Parse(dtf.Data[i][2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture);
+        //        depthAndKp.TryAdd(valueDepth, KP);
+        //    }
+        //    return depthAndKp;
+        //}
+        int a2 = 0;
         // очень долгий метод сохранения данных в Excel
         //public void ExportToExcel(string excelFilePath = null)
         //{

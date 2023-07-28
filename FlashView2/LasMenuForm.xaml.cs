@@ -22,7 +22,7 @@ using System.Windows.Shapes;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Vml;
-using FlashZTK_I.Model;
+using FlashView2.Model;
 using Microsoft.Win32;
 using static System.Environment;
 using static System.IO.Path;
@@ -103,7 +103,7 @@ namespace FlashView2
                 OnPropertyChanged("ShiftTime"); 
             }
         }// 00:00:00
-        DepthTimeLas dtf;       
+        DepthTimeLas dtl;       
         CalibrFile calibrFile;
         public CalibrFile MyCalibrFile 
         {
@@ -196,8 +196,7 @@ namespace FlashView2
             DataContext = this;
             IsMoveTimeUp = true;
             IsMoveTime = false;
-            ShiftTime = "00:00:00";
-      
+            ShiftTime = "00:00:00";      
         }
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")
@@ -219,7 +218,7 @@ namespace FlashView2
                     ScrollStatusLasTextBox($"Ошибка конвертации Null value. Установлено дефолтное значение {nullValue}");
                 }
 
-                if (dtf.Separator == '|')
+                if (dtl.Separator == '|')
                 {                    
                     var timeDepth = UpdateDepthDate();
                     PercentLas = 20;
@@ -228,12 +227,13 @@ namespace FlashView2
                     RecordDataLas(nullValue, dataLas);
                     PercentLas = 0;
                 }
-                else if (dtf.Separator == ' ')
+                else if (dtl.Separator == ' ')
                 {
-                    UpdateDepthDate2();
-                    var dataLas = GetDataForLasType2();
+                    var listDepthDate = UpdateDepthDate2();
+                    PercentLas = 20;
+                    var dataLas = GetDataForLasType2(listDepthDate);
                     PercentLas = 80;
-                    RecordDataLas2(GetDataForLasType2());
+                    RecordDataLas2(dataLas);
                     PercentLas = 0;
                 }
                 else
@@ -249,56 +249,89 @@ namespace FlashView2
             }                     
         }
 
-        private void UpdateDepthDate2()
-        {
-            List<double> newDepths = new List<double>();
-            List<DateTime> newTimes = new List<DateTime>();
+        private List<(double, DateTime)> UpdateDepthDate2()
+        {            
+            List<(double, DateTime)> listDepthTime = new List<(double, DateTime)>();
 
-            for (int i = 0; i < dtf.ColNames.Count; i++)
+            for (int i = 0; i < dtl.ColNames.Count; i++)
             {
-                if (dtf.ColNames[i].ToLower().Contains("забой"))
+                if (dtl.ColNames[i].ToLower().Contains("забой"))
                 {
-                    dtf.ColumnZab = i;
+                    dtl.ColumnZab = i;
+                    break;
                 }
             }
 
-            bool isPars1 = double.TryParse(dtf.Data[0][dtf.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out double first);
-            first = Math.Round(first, 1, MidpointRounding.ToNegativeInfinity);
+            bool isParsDepth1;
+            double depth1 = 0;
+            bool isParsDate1;
+            DateTime date1 = new DateTime();
+            int pos = 0;
 
-            for (int i = 1; i < dtf.Data.Count; i++)
+            //тут необходимо повесить условие поиска для состояние = 3
+            for (int i = 0; i < dtl.Data.Count; i++)
             {
-                bool isPars2 = double.TryParse(dtf.Data[i][dtf.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out double second);
-                if (!isPars2) continue;
+                isParsDepth1 = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out depth1);
+                isParsDate1 = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out date1);
+                pos++;
+                if (!isParsDate1 || !isParsDepth1) continue;
+                depth1 = Math.Round(depth1, 1, MidpointRounding.ToNegativeInfinity);                
+                break;
+            }                                   
 
-                second = Math.Round(second, 1, MidpointRounding.ToNegativeInfinity);                
-                double delta = Math.Round(second - first, 1);
-                if (delta > 2 || delta < -2)
+            for (int i = pos; i < dtl.Data.Count; i++)
+            {
+                bool isParsDepth2 = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out double depth2);
+                bool isParsDate2 = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out DateTime date2);
+                if (!isParsDepth2 || !isParsDate2) continue;
+
+                depth2 = Math.Round(depth2, 1, MidpointRounding.ToNegativeInfinity);                
+                double deltaDepth = Math.Round(depth2 - depth1, 1);
+                TimeSpan deltaTime = date2 - date1;
+                if (deltaDepth > 2 || deltaDepth < -2)
                 {
-                    first = second;
+                    depth1 = depth2;
+                    date1 = date2;
                     continue;
                 }                
-                else if (delta >= 0.1)
+                else if (deltaDepth >= 0.1)
                 {                    
-                    int k = (int)(delta / 0.1);
-                    
+                    double k1 = Math.Round(deltaDepth / 0.1);
+                    int k = (int)k1;
+                    TimeSpan step = deltaTime / k;
                     for (int j = 0; j < k; j++)
                     {
-                        newDepths.Add(first);
-                        first = Math.Round(first + 0.1, 1);
+                        listDepthTime.Add((depth1, date1));
+                        //newDepths.Add(depth1);                        
+                        depth1 = Math.Round(depth1 + 0.1, 1);
+
+                        //newTimes.Add(date1);
+                        date1 += step;
                     }          
 
-                    first = second;
+                    depth1 = depth2;
+                    date1 = date2;
                 }
-                else if (delta <= -0.1)
+                else if (deltaDepth <= -0.1)
                 {
-                    int k = (int)(Math.Abs(delta) / 0.1);
+                    double k1 = Math.Round((Math.Abs(deltaDepth) / 0.1));
+                    int k = (int)k1;
+                    TimeSpan step = deltaTime / k;
                     for (int j = 0; j < k; j++)
                     {
-                        newDepths.Add(first);
-                        first = Math.Round(first - 0.1, 1);
+                        listDepthTime.Add((depth1, date1));
+                        //newDepths.Add(depth1);
+                        depth1 = Math.Round(depth1 - 0.1, 1);
+
+                        //newTimes.Add(date1);
+                        date1 += step;
                     }
+
+                    depth1 = depth2;
+                    date1 = date2;
                 }
             }
+            return listDepthTime;
         }
 
         private void RecordDataLas2(SortedDictionary<double, double> data)
@@ -350,7 +383,7 @@ namespace FlashView2
             }
         }
         // формирование данных для las файла из данных файла глубиномера
-        private SortedDictionary<double, double> GetDataForLasType2()
+        private SortedDictionary<double, double> GetDataForLasType2(List<(double, DateTime)> listDepthDate)
         {
             SortedDictionary<double, double> depthAndKp = new SortedDictionary<double, double>();
             var choisedCoef = MyCalibrFile.CoefsCalibr[MyCalibrFile.CurrentChoise];
@@ -362,15 +395,14 @@ namespace FlashView2
                 if (StartTimeRead > EndTimeRead) throw new ArgumentException("Неверно указан период даты считывания");
             }
 
-            for (int i = 0; i < dtf.Data.Count; i++)
+            for (int i = 0; i < listDepthDate.Count; i++)
             {
-                bool isTimeDepth = DateTime.TryParse(dtf.Data[i][dtf.ColumnDate], out DateTime timeDepth); // берем время с глубины время
+                DateTime timeDepth = listDepthDate[i].Item2; // берем время с глубины время
                 if (IsSetInterval)
                 {
                     if (timeDepth < StartTimeRead || timeDepth > EndTimeRead) continue;
-                }                
-                if (!isTimeDepth) continue;
-             
+                }               
+                             
                 double KP = -999; // коэф. по умолчанию
             
                 for (int j = savePos; j < DataRowAVM.Count; j++)
@@ -404,18 +436,18 @@ namespace FlashView2
                             {
                                 KP = choisedCoef[0] * x * x + choisedCoef[1] * x + choisedCoef[2];
                             }
-                            double valueDepth1 = double.Parse(dtf.Data[i][2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture);                         
-                            depthAndKp.TryAdd(valueDepth1, KP);
+                            //double valueDepth1 = double.Parse(dtf.Data[i][2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture);                         
+                            depthAndKp.TryAdd(listDepthDate[i].Item1, KP);
                         }
 
-                        savePos = j;
+                        savePos = j--;
                         break;
                     } 
                     
                     else if(timeFlash + timeSpan > timeDepth)
                     {
-                        double valueDepth1 = double.Parse(dtf.Data[i][2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture);
-                        depthAndKp.TryAdd(valueDepth1, KP);
+                        //double valueDepth1 = double.Parse(dtf.Data[i][2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture);
+                        depthAndKp.TryAdd(listDepthDate[i].Item1, KP);
                         savePos = j--;
                         break;
                     }
@@ -424,8 +456,8 @@ namespace FlashView2
                 {
                     continue;
                 }
-                double valueDepth = double.Parse(dtf.Data[i][2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture);
-                depthAndKp.TryAdd(valueDepth, KP);
+                //double valueDepth = double.Parse(dtf.Data[i][2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture);
+                depthAndKp.TryAdd(listDepthDate[i].Item1, KP);
             }
             return depthAndKp;
         }
@@ -471,11 +503,11 @@ namespace FlashView2
             int posTime = -1;
             int posDepth = -1;            
 
-            for (int i = 0; i < dtf.Data[0].Length; i++)
+            for (int i = 0; i < dtl.Data[0].Length; i++)
             {
-                if (dtf.ColNames[i].ToLower().Trim() == "забой")
+                if (dtl.ColNames[i].ToLower().Trim() == "забой")
                     posDepth = i;
-                if (dtf.ColNames[i].ToLower().Trim() == "дата")
+                if (dtl.ColNames[i].ToLower().Trim() == "дата")
                     posTime = i;
             }
 
@@ -491,20 +523,20 @@ namespace FlashView2
                     {
                         throw new Exception("Считать данные => Стартовое время диапазона должно быть меньше конечного времени");
                     }
-                    for (int i = 1; i < dtf.Data.Count; i++)
+                    for (int i = 1; i < dtl.Data.Count; i++)
                     {
-                        if (DateTime.Parse(dtf.Data[i][posTime]) >= StartTimeRead)
+                        if (DateTime.Parse(dtl.Data[i][posTime]) >= StartTimeRead)
                         {
-                            depthStart = double.Parse(dtf.Data[i][posDepth]);
-                            timeStart = DateTime.Parse(dtf.Data[i][posTime]);
+                            depthStart = double.Parse(dtl.Data[i][posDepth]);
+                            timeStart = DateTime.Parse(dtl.Data[i][posTime]);
                             shift = i - 1;
                             break;
                         }                       
                     }
 
-                    for (int i = shift + 1; i < dtf.Data.Count; i++)
+                    for (int i = shift + 1; i < dtl.Data.Count; i++)
                     {
-                        DateTime timeFinish = DateTime.Parse(dtf.Data[i][posTime]);
+                        DateTime timeFinish = DateTime.Parse(dtl.Data[i][posTime]);
                         if (timeFinish > EndTimeRead)
                         {
                             lastCount = i - 1;
@@ -523,14 +555,14 @@ namespace FlashView2
                     if (lastCount == 0)
                     {
                         ScrollStatusLasTextBox("Конечное значение времени указано не верно");                        
-                        lastCount = dtf.Data.Count;
+                        lastCount = dtl.Data.Count;
                     }
                 }
                 else
                 {
-                    depthStart = double.Parse(dtf.Data[1][posDepth]);
-                    timeStart = DateTime.Parse(dtf.Data[1][posTime]);
-                    lastCount = dtf.Data.Count;
+                    depthStart = double.Parse(dtl.Data[1][posDepth]);
+                    timeStart = DateTime.Parse(dtl.Data[1][posTime]);
+                    lastCount = dtl.Data.Count;
                 }
                 
                 DepthTimeDetail.Add(timeStart, depthStart);
@@ -538,8 +570,8 @@ namespace FlashView2
                 {
                     for (int j = i; j < lastCount; j++)
                     {
-                        int depthStop = int.Parse(dtf.Data[j][posDepth]);
-                        DateTime timeStop = DateTime.Parse(dtf.Data[j][posTime]);
+                        int depthStop = int.Parse(dtl.Data[j][posDepth]);
+                        DateTime timeStop = DateTime.Parse(dtl.Data[j][posTime]);
 
                         if (depthStop > depthStart && depthStop - depthStart <= 10)
                         {
@@ -1098,7 +1130,7 @@ namespace FlashView2
                 //FileDepthAndTime = new List<string[]>();
                 var paths = openFileDialog.FileNames;
                 ScrollStatusLasTextBox($"Загрузка файла началась: {openFileDialog.SafeFileName}");
-                dtf = new DepthTimeLas();                
+                dtl = new DepthTimeLas();                
 
                 try
                 {
@@ -1118,19 +1150,19 @@ namespace FlashView2
                                     {
                                         if (row.Contains("Дата") && row.Contains("Время") && row.Contains("Забой") && row.Contains("|"))
                                         {
-                                            if (string.IsNullOrEmpty(dtf.Year))
+                                            if (string.IsNullOrEmpty(dtl.Year))
                                             {
                                                 break;
                                             }
-                                            dtf.Separator = '|';
-                                            dtf.LoadDepthFromZtkProg(row);
+                                            dtl.Separator = '|';
+                                            dtl.LoadDepthFromZtkProg(row);
                                             isData = true;
                                             continue;
                                         }
                                         else if (row.Contains("дата") && row.Contains("время") && row.Contains("забой") && !row.Contains("|"))
                                         {
-                                            dtf.Separator = ' ';
-                                            dtf.LoadDepthFromGlub(row);
+                                            dtl.Separator = ' ';
+                                            dtl.LoadDepthFromGlub(row);
                                             isData = true;
                                             continue;
                                         }
@@ -1142,7 +1174,7 @@ namespace FlashView2
                                             {
                                                 if (DateTime.TryParse(date, out DateTime result))
                                                 {
-                                                    dtf.Year = result.Year.ToString();
+                                                    dtl.Year = result.Year.ToString();
                                                     break;
                                                 }
                                             }
@@ -1151,7 +1183,7 @@ namespace FlashView2
                                     // записываем табличные данные
                                     else
                                     {
-                                        dtf.addData.Invoke(row);
+                                        dtl.addData.Invoke(row);
                                     }
                                 }
                             }
@@ -1170,14 +1202,14 @@ namespace FlashView2
                 PercentLas = 60;
                 DataTable dt = new DataTable();
 
-                if (dtf.Data.Count == 0)
+                if (dtl.Data.Count == 0)
                 {
                     MessageBox.Show("Возникла ошибка чтения файла");
                     PercentLas = 0;
                     return;
                 }
 
-                EditColAndFillTalbe(dtf, dt);
+                EditColAndFillTalbe(dtl, dt);
                 DataTable = dt;
                 PercentLas = 100;
 
@@ -1254,9 +1286,9 @@ namespace FlashView2
         {
             int posTime = -1;
 
-            for (int i = 0; i < dtf.Data[0].Length; i++)
+            for (int i = 0; i < dtl.Data[0].Length; i++)
             {
-                if (dtf.ColNames[i].ToLower().Trim() == "дата")
+                if (dtl.ColNames[i].ToLower().Trim() == "дата")
                 {
                     posTime = i;
                     break;
@@ -1266,7 +1298,7 @@ namespace FlashView2
 
             if (TimeSpan.TryParse(ShiftTime,out TimeSpan ts))
             {
-                if (posTime >= 0 && posTime < dtf.Data[0].Length)
+                if (posTime >= 0 && posTime < dtl.Data[0].Length)
                 {
                     if (IsMoveTimeUp)
                     {
@@ -1274,9 +1306,9 @@ namespace FlashView2
                         {
                             dataTable.Rows[i]["Дата"] = " " + (DateTime.Parse(dataTable.Rows[i]["Дата"].ToString()) + ts).ToString("HH:mm:ss dd.MM.yy") + " ";
                         }
-                        for (int i = 1; i < dtf.Data.Count; i++)
+                        for (int i = 1; i < dtl.Data.Count; i++)
                         {
-                            dtf.Data[i][posTime] = (DateTime.Parse(dtf.Data[i][posTime]) + ts).ToString("HH:mm:ss dd.MM.yy");
+                            dtl.Data[i][posTime] = (DateTime.Parse(dtl.Data[i][posTime]) + ts).ToString("HH:mm:ss dd.MM.yy");
                         }
                     }
                     else
@@ -1285,9 +1317,9 @@ namespace FlashView2
                         {
                             dataTable.Rows[i]["Дата"] = " " + (DateTime.Parse(dataTable.Rows[i]["Дата"].ToString()) - ts).ToString("HH:mm:ss dd.MM.yy") + " ";
                         }
-                        for (int i = 1; i < dtf.Data.Count; i++)
+                        for (int i = 1; i < dtl.Data.Count; i++)
                         {
-                            dtf.Data[i][posTime] = (DateTime.Parse(dtf.Data[i][posTime]) - ts).ToString("HH:mm:ss dd.MM.yy");
+                            dtl.Data[i][posTime] = (DateTime.Parse(dtl.Data[i][posTime]) - ts).ToString("HH:mm:ss dd.MM.yy");
                         }
                     }
                 }
@@ -1301,8 +1333,7 @@ namespace FlashView2
             {
                 ScrollStatusLasTextBox("Не могу преобразовать значение указанное в поле для сдвига времени");
                 //StatusLasMenu += $"{DateTime.Now}: Не могу преобразовать значение указанное в поле для сдвига времени";
-            }        
-           
+            }                   
         }        
 
        // кнопка обновить данные таблицы
@@ -1335,6 +1366,7 @@ namespace FlashView2
             {
                 try
                 {
+                    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
                     // надо переделать выбор калибровочного файла                    
                     using (var reader = new StreamReader(openCalibrFile.FileName, Encoding.GetEncoding(1251)))
                     {
@@ -1387,6 +1419,146 @@ namespace FlashView2
         private void OnClosing(object sender, CancelEventArgs e)
         {
             Owner.Activate();
+        }
+
+        private void btn_LoadGlubDate_Click(object sender, RoutedEventArgs e)
+        {
+            GC.Collect();
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            //openFileDialog.Filter = "Файл глубина-время";
+            openFileDialog.Title = "Выберите файл с глубиной и временем";
+            openFileDialog.Multiselect = true;
+
+            // выводим данные из файла на экран
+            if (openFileDialog.ShowDialog() == true)
+            {
+                lblDepthFile.Text = "";                
+                var paths = openFileDialog.FileNames;
+                ScrollStatusLasTextBox($"Загрузка файла началась: {openFileDialog.SafeFileName}");
+                dtl = new DepthTimeLas();
+                dtl.FillStandColumn();
+                List<byte> resultData = new List<byte>();
+                try
+                {
+                    foreach (var filePath in paths)
+                    {                        
+                        resultData.AddRange(File.ReadAllBytes(filePath).Skip(256));
+                        var pathFile = filePath.Split("\\");
+                        lblDepthFile.Text += pathFile[pathFile.Length - 1] + "\n";
+                    }                    
+                                        
+                    for (int i = 0; i < resultData.Count; i = i + 16) // 16 байт в одной строке
+                    {
+                        int flag = BitConverter.ToInt16(resultData.Skip(i + 12).Take(2).ToArray());                        
+                        //long x = BitConverter.ToInt64(resultData.Skip(i).Take(8).ToArray());
+                        double x = BitConverter.Int64BitsToDouble(BitConverter.ToInt64(resultData.Skip(i).Take(8).ToArray()));
+                        DateTime dateLine = DateTime.FromOADate(x);
+                        double depth = (BitConverter.ToInt32(resultData.Skip(i + 8).Take(4).ToArray())) * 1.0 / 100;                        
+                        string activ = "неопр.";
+                        string push = "неопр.";
+                        switch (flag)
+                        {
+                            case 0:
+                                activ = "неактив";
+                                push = "отж";
+                                break;
+                            case 1:
+                                activ = "актив";
+                                push = "отж";
+                                break;
+                            case 2:
+                                activ = "неактив";
+                                push = "наж";
+                                break;
+                            case 3:
+                                activ = "актив";
+                                push = "наж";
+                                break;
+                            default:                                
+                                break;
+                        }
+                        string[] arr = new string[5] { dateLine.ToString("G"), dateLine.Millisecond.ToString(), depth.ToString() ,activ, push };
+                        dtl.Data.Add(arr);                        
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка чтения файла");
+                    ScrollStatusLasTextBox(ex.Message);
+                    return;
+                }
+
+                PercentLas = 60;
+                DataTable dt = new DataTable();
+
+                if (dtl.Data.Count == 0)
+                {
+                    MessageBox.Show("Возникла ошибка чтения файла");
+                    PercentLas = 0;
+                    return;
+                }
+
+                EditColAndFillTalbe(dtl, dt);
+                DataTable = dt;
+                PercentLas = 100;
+
+                ScrollStatusLasTextBox("Загрузка завершена");
+                StartTimeRead = DateTime.Parse(dt.Rows[0]["Дата"].ToString());
+                EndTimeRead = DateTime.Parse(dt.Rows[dt.Rows.Count - 1]["Дата"].ToString());
+                IsMoveTime = true;
+                PercentLas = 0;
+            }
+            IsOpenFile = true;
+
+            // Процедура проверки одинаковых имен столбцов
+            // И заполнение табличных данных
+            void EditColAndFillTalbe(DepthTimeLas dtf, DataTable dt)
+            {
+                byte counterColumn = 1;
+
+                for (int i = 0; i < dtf.ColNames.Count; i++)
+                {
+                    string nameCol1 = dtf.ColNames[i];
+                    for (int j = i + 1; j < dtf.ColNames.Count - 1; j++)
+                    {
+                        string nameCol2 = dtf.ColNames[j];
+                        if (nameCol2 == nameCol1)
+                        {
+                            dtf.ColNames[j] = $"{dtf.ColNames[j].Trim()}{++counterColumn}";
+                        }
+                    }
+                    if (counterColumn != 1)
+                    {
+                        dtf.ColNames[i] = $"{dtf.ColNames[i].Trim()}1";
+                        counterColumn = 1;
+                    }
+                }
+
+                for (int i = 0; i < dtf.ColNames.Count; i++)
+                {
+                    DataColumn dataColumn = new DataColumn();
+                    dataColumn.ColumnName = dtf.ColNames[i].Trim();
+                    dt.Columns.Add(dataColumn);
+                }
+
+                if (dtf.Data.Count > 2)
+                {
+                    for (int i = 0; i < dtf.Data.Count; i++)
+                    {
+                        var rowTable = dt.NewRow();
+                        for (int j = 0; j < dtf.Data[i].Length; j++)
+                        {
+                            rowTable[j] = dtf.Data[i][j];
+                        }
+                        dt.Rows.Add(rowTable);
+                    }
+                }
+                else
+                {
+                    ScrollStatusLasTextBox("Файл не содержит достаточное количество данных");
+                }
+            }
+
         }
     }
 }

@@ -1,0 +1,23 @@
+﻿<Window x:Class="FlashView2.SettingTime"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FlashView2" xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        mc:Ignorable="d"
+        Title="FlashZTK_I: SettingTime" Height="200" Width="350" 
+        Background="#FFA2A1A1" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Label Content="Сдвинуть время:" Margin="5"/>
+            <RadioButton Margin="5" Content="Вперед" IsChecked="{Binding IsMoveTimeUp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <RadioButton Margin="5" Content="Назад" />
+            <xctk:TimePicker Format="LongTime" Width="230" HorizontalAlignment="Center" Margin="5" Text="{Binding ShiftTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Применить" Name="btnOK_SettingTime" Width="110" Height="40" Margin="5" Click="btnOK_SettingTime_Click"/>
+                <Button Content="Отмена" Name="btnCancel_SettingTime" Width="110" Height="40" Margin="5" Click="btnCancel_SettingTime_Click"/>
+            </StackPanel>            
+        </StackPanel>
+    </Grid>
+</Window>

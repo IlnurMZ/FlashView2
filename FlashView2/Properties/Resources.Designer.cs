@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace FlashZTK_I.Properties {
+namespace FlashView2.Properties {
     using System;
     
     

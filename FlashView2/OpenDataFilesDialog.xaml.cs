@@ -16,7 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
 
-namespace FlashZTK_I
+namespace FlashView2
 {
     /// <summary>
     /// Interaction logic for OpenDataFilesDialog.xaml
@@ -70,10 +70,10 @@ namespace FlashZTK_I
         private void btnOpenDepthFile_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Файл глубина-время|*.txt";
+            //openFileDialog.Filter = "Файл глубина-время";
             openFileDialog.Title = "Выберите файл с глубиной и временем";
             openFileDialog.Multiselect = true;
-            openFileDialog.Title = "Выберите flash-файл с данными";           
+            //openFileDialog.Title = "Выберите flash-файл с данными";           
             
             if (openFileDialog.ShowDialog() == true)
             {

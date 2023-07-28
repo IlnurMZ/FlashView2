@@ -7,7 +7,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
         Title="FlashZTK_I: LAS" 
-        Height="870" Width="870" 
+        Height="900" Width="870" 
         WindowStartupLocation="CenterScreen" Background="#FFA2A1A1" Closing="OnClosing" >
     <Window.Resources>
         <Style x:Key="CenterGridHeaderStyle" TargetType="DataGridColumnHeader">
@@ -76,22 +76,23 @@
                     <Setter Property="IsEnabled" Value="False"/>                    
                 </DataTrigger>
             </Style.Triggers>
-        </Style>
-
+        </Style>     
+        
+        
     </Window.Resources>
     <TabControl Name="tabCtrlLas" Background="#FFA2A1A1">
         <TabItem Name="filesTab" Header="Работа с файлами">         
             <TabItem.Content>
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="250"/>
+                        <ColumnDefinition Width="280"/>
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="90"/>
-                        <RowDefinition Height="276"/>
+                        <RowDefinition Height="250"/>
                         <RowDefinition Height="134"/>
-                        <RowDefinition Height="215"/>
+                        <RowDefinition Height="280"/>
                         <RowDefinition/>
                         <RowDefinition Height="85.08"/>
                     </Grid.RowDefinitions>
@@ -102,7 +103,22 @@
                             <Button.Content>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                                     <Image Source="/Icons/File.png" Height="30"/>
-                                    <Label Content="Открыть файл&#x0a; с глубиной" />
+                                    <Label Content="Открыть файл&#x0a;          txt" />
+                                </StackPanel>
+                            </Button.Content>
+                            <Button.ToolTip>
+                                <ToolTip>
+                                    Открыть файл с глубиной
+                                </ToolTip>
+                            </Button.ToolTip>
+                        </Button>
+
+                        <Button x:Name="btn_LoadGlubDate" Click="btn_LoadGlubDate_Click" 
+                                Width="100" Height="70" Margin="10,2,2,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
+                            <Button.Content>
+                                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                                    <Image Source="/Icons/File.png" Height="30"/>
+                                    <Label Content="Открыть файл&#x0a;глубиномера" />
                                 </StackPanel>
                             </Button.Content>
                             <Button.ToolTip>
@@ -160,7 +176,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical">
-                        <StackPanel Orientation="Horizontal" Margin="0,5,0,15">
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,8">
                             <Label Content="NULL значение" Margin="10,0,5,5"/>
                             <TextBox Name="txtBoxNULL" Width="95" Text="-999,99" Margin="35,5,5,5" Height="20" HorizontalContentAlignment="Center"/>
                         </StackPanel>
@@ -171,7 +187,7 @@
                                      IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>-->
 
-                        <GroupBox Padding="5" Width="230" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <GroupBox Padding="5" Width="250" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <GroupBox.Header>
                                 <StackPanel Orientation="Horizontal">
                                     <Image Source="/Icons/SeachData2.png" Height="20" Margin="5,0,5,0" />
@@ -193,9 +209,9 @@
                         </GroupBox>
                     </StackPanel>
                     <StackPanel Grid.Row="3">
-                        <GroupBox Name="gbxTruba">
+                        <GroupBox Name="gbxTruba" Margin="5,0,5,5" Width="250">
                             <GroupBox.Header>
-                                <StackPanel Orientation="Horizontal" Margin="15,0,0,5">
+                                <StackPanel Orientation="Horizontal" Margin="10,0,0,5">
                                     <Image Source="/Icons/Diam3.png" Height="25"/>
                                     <Label Margin="5,0,0,0"  HorizontalAlignment="Left">Труба для МНК</Label>
                                 </StackPanel>
@@ -214,7 +230,9 @@
                                 </GroupBox>
                             </StackPanel>
                         </GroupBox>
-                        <Button Name="btnLasStart" Click="Button_FormLasClick" Height="40" Margin="10"
+                        <RadioButton Content="Использовать все данные глубиномера" Margin="10,10,5,5" IsChecked="True"/>
+                        <RadioButton Content="Использовать только активное и&#x0a; нажатое состояние" Margin="10,5,5,5" />
+                        <Button Name="btnLasStart" Click="Button_FormLasClick" Height="40" Margin="5"
                                 Style="{StaticResource ButtonStyle1}" VerticalContentAlignment="Center"
                                 IsEnabled="False">
                             <Button.Content>
@@ -224,10 +242,9 @@
                                 </StackPanel>
                             </Button.Content>
                         </Button>
-
                     </StackPanel>
                     <StackPanel Orientation="Vertical" Grid.Row="2">
-                        <GroupBox Height="120" Width="230" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <GroupBox Height="120" Width="250" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <GroupBox.Header>
                                 <StackPanel Orientation="Horizontal">
                                     <Image Source="/Icons/Shift Time.png" Height="20" Margin="5,0,0,0"/>
@@ -239,7 +256,7 @@
                                 <StackPanel Orientation="Vertical">
                                     <RadioButton Name="rb1_Sdvig" Margin="5" Content="Вперед" IsChecked="{Binding IsMoveTimeUp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                     <RadioButton Name="rb2_Sdvig" Margin="5" Content="Назад"/>
-                                    <xctk:TimePicker Format="LongTime" Width="100" HorizontalAlignment="Left" Margin="5" Text="{Binding ShiftTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></xctk:TimePicker>
+                                    <xctk:TimePicker Format="LongTime" Width="100" HorizontalAlignment="Left" Margin="5" Text="{Binding ShiftTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 
                                 <Button x:Name="btn_UpdateCurrentData" Click="btn_UpdateCurrentData_Click" IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}"

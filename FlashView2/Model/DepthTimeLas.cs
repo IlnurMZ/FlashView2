@@ -8,7 +8,7 @@ using DocumentFormat.OpenXml.Presentation;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Xceed.Wpf.Toolkit.PropertyGrid.Editors;
 
-namespace FlashZTK_I.Model
+namespace FlashView2.Model
 {
     public class DepthTimeLas
     {
@@ -30,6 +30,18 @@ namespace FlashZTK_I.Model
             ColNames = new List<string>();
         }
        
+        public void FillStandColumn()
+        {
+            ColNames.Add("дата");
+            ColNames.Add("мс");
+            ColNames.Add("забой");
+            ColNames.Add("sbSendData акт.");
+            ColNames.Add("sbSendData сост.");
+
+            ColumnZab = 2;
+            ColumnDate = 0;
+        }
+
         public void LoadDepthFromGlub(string row )
         {              
             if (ColNames.Count > 0)

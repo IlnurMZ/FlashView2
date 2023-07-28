@@ -13,12 +13,16 @@
     <None Remove="Back.png" />
     <None Remove="CalibrFIle.png" />
     <None Remove="Diam3.png" />
+    <None Remove="Icons\Cancel.png" />
+    <None Remove="Icons\Cancel2.png" />
     <None Remove="Icons\Diam3.png" />
     <None Remove="Icons\DrillDepth.png" />
+    <None Remove="Icons\Filter.png" />
     <None Remove="Icons\Flash.ico" />
     <None Remove="Icons\OpenDepthFile.png" />
     <None Remove="Icons\SeachData2.png" />
     <None Remove="Icons\Shift Time.png" />
+    <None Remove="Icons\Time2.png" />
     <None Remove="Icons\UpdateData.png" />
     <None Remove="Info.png" />
     <None Remove="Save As.png" />
@@ -70,12 +74,15 @@
   <ItemGroup>
     <Resource Include="Icons\CalibrFIle.png" />
     <Resource Include="Icons\Back.png" />
+    <Resource Include="Icons\Cancel.png" />
+    <Resource Include="Icons\Cancel2.png" />
     <Resource Include="Icons\Diam3.png" />
     <Resource Include="Icons\DrillDepth.png" />
     <Resource Include="Icons\Exit.png" />
     <Resource Include="Icons\File Excel.png" />
     <Resource Include="Icons\File txt.png" />
     <Resource Include="Icons\File.png" />
+    <Resource Include="Icons\Filter.png" />
     <Resource Include="Icons\Flash.ico" />
     <Resource Include="Icons\Form LAS.png" />
     <Resource Include="Icons\Open File.png" />
@@ -83,6 +90,7 @@
     <Resource Include="Icons\Save As.png" />
     <Resource Include="Icons\SeachData2.png" />
     <Resource Include="Icons\Shift Time.png" />
+    <Resource Include="Icons\Time2.png" />
     <Resource Include="Icons\UpdateData.png" />
     <Resource Include="Icons\Info.png" />
   </ItemGroup>

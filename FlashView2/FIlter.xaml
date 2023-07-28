@@ -1,0 +1,34 @@
+﻿<Window x:Class="FlashZTK_I.FIlterWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FlashZTK_I"
+        mc:Ignorable="d"
+        Title="FlashZTK_I: FIlter" Height="350" Width="600" Background="#FFA2A1A1"
+        ResizeMode="NoResize" WindowStartupLocation="CenterScreen"> 
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <CheckBox Name="cbFilterByPeriod" Content="Фильтровать по времени включения" Margin="10"/>
+        <StackPanel Orientation="Vertical" Grid.Row="0" Grid.Column="1">
+            <Label Content="Обнаруженные периоды" Margin="5" />
+            <ListBox Name="lbPeriods" ItemsSource="{Binding Periods}" Width="280" Height="70" SelectionMode="Single" SelectedIndex="0" 
+                     IsEnabled="{Binding ElementName=cbFilterByPeriod, Path=IsChecked}"/>
+        </StackPanel>
+        <CheckBox x:Name="cbFilterByStat" Content="Фильтровать по состоянию&#xA; &quot;активный&quot; и &quot;нажатый&quot;" 
+                  Margin="10" Grid.Row="1" IsEnabled="{Binding IsDepthFile}"/>
+        
+        <Button Name="btn_OK" Content="Применить" Width="120" Height="40" Grid.Row="2" Grid.Column="0" 
+                Click="btn_OK_Click"/>
+        <Button Name="btn_Cancel" Content="Отмена" Width="120" Height="40" Grid.Row="2" Grid.Column="1" 
+                Click="btn_Cancel_Click"/>
+    </Grid>
+</Window>

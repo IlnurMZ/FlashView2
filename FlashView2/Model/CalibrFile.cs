@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace FlashZTK_I.Model
+namespace FlashView2.Model
 {
     public class CalibrFile : INotifyPropertyChanged
     {

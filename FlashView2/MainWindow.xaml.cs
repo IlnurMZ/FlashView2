@@ -29,8 +29,11 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Drawing.Charts;
 using System.Collections.ObjectModel;
+using FlashView2;
+using FlashView2.Model;
+using DocumentFormat.OpenXml.Vml;
 using FlashZTK_I;
-using FlashZTK_I.Model;
+using DocumentFormat.OpenXml.Office2013.Drawing.ChartStyle;
 
 namespace FlashView2
 {
@@ -94,13 +97,18 @@ namespace FlashView2
                 OnPropertyChanged("DataTable");
             }
         }        
-        LasMenuForm _lasMenuForm;      
+        LasMenuForm _lasMenuForm;
+
+        List<(DateTime?, DateTime?)> periods;
+
+        private bool isDepthLoad = false;
 
         public MainWindow()
         {
             InitializeComponent();           
             DataContext = this;
             IsLasFile = false;
+            periods = new List<(DateTime?, DateTime?)>();
             MessageBox.Show("Данная версия программы поддерживает только один тип приборов : ННГК");
         }       
 
@@ -130,11 +138,11 @@ namespace FlashView2
                 mainPacket.TypeParams.Add(list[0]);
                 if (list[3] == "[]")
                 {
-                    mainPacket.HeaderColumns.Add(list[2]); //.Trim('[', ']')
+                    mainPacket.HeaderColumns.Add(list[2].Trim('[', ']'));
                 }
                 else
                 {
-                    mainPacket.HeaderColumns.Add($"{list[2]} {list[3]}"); // .Trim('[', ']')
+                    mainPacket.HeaderColumns.Add($"{list[2].Trim('[', ']')}_{list[3].Trim('[', ']')}"); // .Trim('[', ']')
                 }
 
                 // пропускаем значение неопределенности
@@ -171,8 +179,16 @@ namespace FlashView2
 
         // Обработка заголовков таблицы
         void r2_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
-        {            
-            if (e.PropertyName.Contains('[') || e.PropertyName.Contains(']') && e.Column is DataGridBoundColumn)
+        {
+            if (e.PropertyType == typeof(DateTime))
+            {
+                DataGridTextColumn dataGridTextColumn = e.Column as DataGridTextColumn;
+                if (dataGridTextColumn != null)
+                {
+                    dataGridTextColumn.Binding.StringFormat = "{0:HH:mm:ss dd.MM.yy}";
+                }
+            }
+            if (e.PropertyName.Contains('(') || e.PropertyName.Contains(')') && e.Column is DataGridBoundColumn)
             {
                 DataGridBoundColumn dataGridBoundColumn = e.Column as DataGridBoundColumn;
                 dataGridBoundColumn.Binding = new Binding("[" + e.PropertyName + "]");
@@ -219,31 +235,39 @@ namespace FlashView2
             bool isBadLine = false;
             bool isBadTime = false;
             bool isZeroEndLine = false;
+            DateTime? start = null, finish = null;
             int listPos = 0; // позиция в коллекции файла глубина - время
             DepthTimeFlash? saveDTF = null;
             myTable.Columns.Add("N");            
             foreach (var item in mainPacket.HeaderColumns)
             {
-                string[] splitHeader = item.Split('_');
-                if (splitHeader.Length == 2)
-                {
-                    myTable.Columns.Add(splitHeader[0]  + "\n" + splitHeader[1], typeof(string));
+                //string[] splitHeader = item.Split('_');                
+                //if (splitHeader.Length == 2)
+                //{
+                //    //string s = splitHeader[0] + "\n" + splitHeader[1];
+                //    myTable.Columns.Add((splitHeader[0]  + "\n" + splitHeader[1]), typeof(string));
+                //}
+                //else
+                //{
+                if (item == "Дата")
+                {                   
+                    myTable.Columns.Add(item, typeof(DateTime), "");                   
                 }
                 else
                 {
                     myTable.Columns.Add(item);
-                }
-            }         
-                        
+                }                
+            }
+
             // Добавление дополнительного столбца если мы указали путь к глубинным файлам
             if (isAddCols)
             {
-                myTable.Columns.Add("[Глубина]");
+                myTable.Columns.Add("Глубина");
                 bool isAddSecCol = Depth.Select(x=>x.StatusList).Any(y => y.Count > 0);
                 mainPacket.handlerFillDepthCol += AddDepthValue;
 
                 if (isAddSecCol)
-                    myTable.Columns.Add("[Состояние]");
+                    myTable.Columns.Add("Состояние");
             }               
             
             if (mainPacket.endLine[0] == 0 && mainPacket.endLine[1] == 0)
@@ -284,27 +308,27 @@ namespace FlashView2
                     if (isGoodStartLine && isGoodEndLine) // проверка совпадения на начало и конец строки
                     {
                         if (isBadLine)
-                        {                           
+                        {
                             StatusMainWindow += $"{DateTime.Now}: Ошибка после {myTable.Rows.Count} строки, количество ошибочных байт: {countBadBites}\n";
                             countBadBites = 0;
                             isBadLine = false;
-                        } 
+                        }
 
                         row = myTable.NewRow(); // создаем строку для таблицы
                         for (int j = 0; j < countParams + 1; j++) // добавил счетчик строк
                         {
                             if (j == 0)
                             {
-                                row[j] = " " + (myTable.Rows.Count + 1).ToString() + " ";                                
+                                row[j] = " " + (myTable.Rows.Count + 1).ToString() + " ";
                                 continue;
                             }
-                            byte countByte = mainPacket.LengthParams[j-1]; // определяем количество байт на параметр
+                            byte countByte = mainPacket.LengthParams[j - 1]; // определяем количество байт на параметр
                             byte[] values = new byte[countByte]; // берем необходимое количество байт                   
                             Array.Copy(flash, i, values, 0, countByte); // копируем наш кусок
 
-                            string valueA = mainPacket.GetValueByType(mainPacket.TypeParams[j-1], values, row); // вычисляем значение по типу данных
-                            string valueB = mainPacket.CalculateValueByType(mainPacket.TypeCalculate[j - 1], valueA, mainPacket.DataCalculation[j - 1], mainPacket.CountSign[j-1]); // вычисляем пересчет данного по типу
-                            row[j] = " " + valueB + " ";                            
+                            string valueA = mainPacket.GetValueByType(mainPacket.TypeParams[j - 1], values, row); // вычисляем значение по типу данных
+                            string valueB = mainPacket.CalculateValueByType(mainPacket.TypeCalculate[j - 1], valueA, mainPacket.DataCalculation[j - 1], mainPacket.CountSign[j - 1]); // вычисляем пересчет данного по типу
+                            row[j] = valueB;
                             i += countByte; // смещаем курсор по общему массиву байт                            
                         }
 
@@ -315,7 +339,8 @@ namespace FlashView2
                             countBadTimes = 0;
                         }
                         i--;
-                        myTable.Rows.Add(row);                     
+                        AddPeriodOnOff(myTable, row, ref start, ref finish);
+                        myTable.Rows.Add(row);
                     }
                     else
                     {
@@ -342,7 +367,10 @@ namespace FlashView2
                     Percent = loadStatus;
                 }
             }
-            Percent = 0;           
+            var row3 = myTable.Rows[myTable.Rows.Count - 1];
+            finish = DateTime.Parse(row3[3].ToString());
+            periods.Add((start, finish));
+            Percent = 0;   
             return myTable;
 
             // Лок. метод сравнение дат файла флеш и глубина время
@@ -350,7 +378,8 @@ namespace FlashView2
             {
                 DateTime dtFlash = DateTime.Parse(data);
                 TimeSpan timeSpan = TimeSpan.FromSeconds(1);
-
+                int NAdepth = -999;
+                int NAstatus = -1;
                 // находим актуальный лист с данными
                 if (Depth.Count > 0)
                 {
@@ -367,8 +396,8 @@ namespace FlashView2
                         // если не нашли
                         if (saveDTF == null)
                         {
-                            row[countParams + 1] = -999;
-                            row[countParams + 2] = 0;
+                            row[countParams + 1] = NAdepth;
+                            row[countParams + 2] = NAstatus;
                             return;
                         }
                     }
@@ -383,17 +412,18 @@ namespace FlashView2
                             {
                                 listPos = i + 1;
                                 row[countParams + 1] = saveDTF.DepthList[i];
-                                row[countParams + 2] = saveDTF.StatusList[i] ? 1 : 0;
+                                row[countParams + 2] = saveDTF.StatusList[i];
                                 return;
                             }
                             else if(dtFlash < dtDateDepth)
                             {
-                                row[countParams + 1] = -999;
-                                row[countParams + 2] = 0;
+                                row[countParams + 1] = NAdepth;
+                                row[countParams + 2] = NAstatus;
                                 return;
                             }
+                            
 
-                            if (i == saveDTF.DateList.Count)
+                            if (i == saveDTF.DateList.Count - 1)
                             {
                                 Depth.Remove(saveDTF);
                                 saveDTF = null;
@@ -403,7 +433,7 @@ namespace FlashView2
                     }
                     else
                     {
-                        Depth.Remove(saveDTF);
+                        //Depth.Remove(saveDTF);
                         saveDTF = null;
                         listPos = 0;
                         AddDepthValue(data, row);
@@ -411,8 +441,22 @@ namespace FlashView2
                 }
                 else
                 {
-                    row[countParams + 1] = -999;
-                    row[countParams + 2] = 0;
+                    row[countParams + 1] = NAdepth;
+                    row[countParams + 2] = NAstatus;
+                }
+            }
+
+            void AddPeriodOnOff(DataTable myTable, DataRow row, ref DateTime? start, ref DateTime? finish)
+            {
+                if (row[2].ToString().Trim() == "1")
+                {
+                    if (start != null)
+                    {
+                        var row2 = myTable.Rows[myTable.Rows.Count - 1];
+                        finish = DateTime.Parse(row2[3].ToString());
+                        periods.Add((start, finish));
+                    }
+                    start = DateTime.Parse(row[3].ToString());
                 }
             }
         }
@@ -718,128 +762,171 @@ namespace FlashView2
         List<DepthTimeFlash> OpenDepthFiles(List<string> depthPaths)
         {                       
             List<DepthTimeFlash> resultList = new List<DepthTimeFlash>();
-            try
-            {                
-                foreach (string path in depthPaths)
+            DepthTimeFlash df = new DepthTimeFlash();
+            if (!depthPaths.Any(x=>x.Contains("txt")))
+            {
+                var resultData = new List<byte>();
+                try
                 {
-                    DepthTimeFlash df = new DepthTimeFlash();                    
-                    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-                    using (var reader = new StreamReader(path, Encoding.GetEncoding(1251)))
+                    foreach (var filePath in depthPaths)
                     {
-                        bool isData = false;                        
-                                                                   
-                        while (!reader.EndOfStream)
+                        resultData.AddRange(File.ReadAllBytes(filePath).Skip(256));
+                        ScrollStatusTextBox($"{filePath} данные считаны успешно");
+                    }
+
+                    for (int i = 0; i < resultData.Count; i = i + 16) // 16 байт в одной строке
+                    {
+                        df.StatusList.Add(BitConverter.ToInt16(resultData.Skip(i + 12).Take(2).ToArray()));                        
+                        double x = BitConverter.Int64BitsToDouble(BitConverter.ToInt64(resultData.Skip(i).Take(8).ToArray()));
+                        var temp = DateTime.FromOADate(x);
+                        DateTime dt = new DateTime(temp.Year, temp.Month, temp.Day, temp.Hour, temp.Minute, temp.Second);
+                        df.DateList.Add(dt);
+                        df.DepthList.Add((BitConverter.ToInt32(resultData.Skip(i + 8).Take(4).ToArray())) * 1.0 / 100);   
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка чтения файла");
+                    throw new Exception(ex.Message);
+                }
+
+                if (df.DepthList.Count > 0)
+                {  
+                    resultList.Add(df);
+                }
+            }
+            else
+            {
+                try
+                {
+                    foreach (string path in depthPaths)
+                    {                        
+                        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                        using (var reader = new StreamReader(path, Encoding.GetEncoding(1251)))
                         {
-                            var row = reader.ReadLine();
-                            if (!String.IsNullOrEmpty(row))
-                            {       
-                                if (!isData)
+                            bool isData = false;
+
+                            while (!reader.EndOfStream)
+                            {
+                                var row = reader.ReadLine();
+                                if (!String.IsNullOrEmpty(row))
                                 {
-                                    if (row.ToLower().Contains("данные с"))
+                                    if (!isData)
                                     {
-                                        var splitLine = row.Split(" ");
-                                        foreach (var item in splitLine)
+                                        if (row.ToLower().Contains("данные с"))
                                         {
-                                            if(DateTime.TryParse(item, out DateTime data))
+                                            var splitLine = row.Split(" ");
+                                            foreach (var item in splitLine)
                                             {
-                                                df.Year += "." + data.Year.ToString();
-                                                break;
+                                                if (DateTime.TryParse(item, out DateTime data))
+                                                {
+                                                    df.Year += "." + data.Year.ToString();
+                                                    break;
+                                                }
+                                            }
+                                            continue;
+                                        }
+
+                                        if (row.ToLower().Contains("дата") && row.ToLower().Contains("время") && row.ToLower().Contains("забой"))
+                                        {
+                                            if (!string.IsNullOrEmpty(df.Year))
+                                            {
+                                                df.Separator = '|';
+                                                df.DepthName = "забой"; // версия файла без глубиномера
+                                                df.ColNumbers[3] = 999; // т.к. в старой версии файла таких данных уже не будет
+                                            }
+
+                                            var splitLine = row.Split(df.Separator, StringSplitOptions.RemoveEmptyEntries);
+                                            df.ColNumbers[0] = Array.FindIndex(splitLine, value => value.ToLower().Trim() == df.TimeName);
+                                            df.ColNumbers[1] = Array.FindIndex(splitLine, value => value.ToLower().Trim() == df.DateName);
+                                            df.ColNumbers[2] = Array.FindIndex(splitLine, value => value.ToLower().Trim() == df.DepthName);
+                                            df.ColNumbers[3] = Array.FindIndex(splitLine, value => value.Trim() == df.StatusName);
+                                            df.ColNumbers[4] = Array.FindLastIndex(splitLine, value => value.Trim() == df.StatusName) - 1; // из-за лишнего пробела
+
+                                            if (df.ColNumbers.Any(x => x == -1))
+                                            {
+                                                continue;
+                                            }
+                                            else
+                                            {
+                                                // вычисляем длину строки, для новой версии файла она будет меньше на 2 столбца
+                                                // из-за sbSendData акт.  sbSendData сост.
+                                                df.LengthStr = df.Separator == ' ' ? splitLine.Length - 2 : splitLine.Length;
+                                                isData = true;
+                                                continue;
                                             }
                                         }
-                                        continue;
                                     }
-
-                                    if (row.ToLower().Contains("дата") && row.ToLower().Contains("время") && row.ToLower().Contains("забой"))
-                                    {   
-                                        if (!string.IsNullOrEmpty(df.Year))
-                                        {
-                                            df.Separator = '|';
-                                            df.DepthName = "забой"; // версия файла без глубиномера
-                                            df.ColNumbers[3] = 999; // т.к. в старой версии файла таких данных уже не будет
-                                        }
-
+                                    else
+                                    {
                                         var splitLine = row.Split(df.Separator, StringSplitOptions.RemoveEmptyEntries);
-                                        df.ColNumbers[0] = Array.FindIndex(splitLine, value => value.ToLower().Trim() == df.TimeName);
-                                        df.ColNumbers[1] = Array.FindIndex(splitLine, value => value.ToLower().Trim() == df.DateName);
-                                        df.ColNumbers[2] = Array.FindIndex(splitLine, value => value.ToLower().Trim() == df.DepthName);
-                                        df.ColNumbers[3] = Array.FindLastIndex(splitLine, value => value.Trim() == df.StatusName) - 1; // из-за лишнего пробела
-
-                                        if (df.ColNumbers.Any(x => x == -1))
+                                        if (df.LengthStr != splitLine.Length)
                                         {
                                             continue;
                                         }
-                                        else
-                                        {
-                                            // вычисляем длину строки, для новой версии файла она будет меньше на 2 столбца
-                                            // из-за sbSendData акт.  sbSendData сост.
-                                            df.LengthStr = df.Separator == ' ' ? splitLine.Length - 2 : splitLine.Length;                                            
-                                            isData = true;
-                                            continue;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    var splitLine = row.Split(df.Separator, StringSplitOptions.RemoveEmptyEntries);
-                                    if (df.LengthStr != splitLine.Length)
-                                    {
-                                        continue;
-                                    }
 
-                                    bool isTime = DateTime.TryParse(splitLine[df.ColNumbers[1]] + df.Year + " " + splitLine[df.ColNumbers[0]], out DateTime time);
-                                    bool isDepth = double.TryParse(splitLine[df.ColNumbers[2]], NumberStyles.Any, CultureInfo.InvariantCulture, out double depth);
-                                    bool status = false;
-                                    if (df.ColNumbers[3] != 999)
-                                    {
-                                        string statStr = splitLine[df.ColNumbers[3]];
-                                        status = statStr == "отж." ? false : true;
-                                    }                                        
-
-                                    if (isTime && isDepth)
-                                    {
-                                        if (df.PrevDate != null)
+                                        bool isTime = DateTime.TryParse(splitLine[df.ColNumbers[1]] + df.Year + " " + splitLine[df.ColNumbers[0]], out DateTime time);
+                                        bool isDepth = double.TryParse(splitLine[df.ColNumbers[2]], NumberStyles.Any, CultureInfo.InvariantCulture, out double depth);
+                                        int status = -1;
+                                        if (df.ColNumbers[3] != 999)
                                         {
-                                            if (df.PrevDate > time)
+                                            string activ = splitLine[df.ColNumbers[3]].Trim();
+                                            string push = splitLine[df.ColNumbers[4]].Trim();
+                                            status = (activ, push) switch
                                             {
-                                                time = time.AddYears(1);
-                                                bool isParsedValue = int.TryParse(df.Year.TrimStart('.'), out int val);
-                                                val++;
-                                                if (isParsedValue)
+                                                ("неакт.", "отж.") => 0,
+                                                ("акт.", "отж.") => 1,
+                                                ("неакт.", "наж.") => 2,
+                                                ("акт.", "наж.") => 3,
+                                                _ => -1
+                                            };
+                                        }
+
+                                        if (isTime && isDepth)
+                                        {
+                                            if (df.PrevDate != null)
+                                            {
+                                                if (df.PrevDate > time)
                                                 {
-                                                    df.Year = "." + val + ToString();
-                                                }                                               
-                                                df.PrevDate = time;
+                                                    time = time.AddYears(1);
+                                                    bool isParsedValue = int.TryParse(df.Year.TrimStart('.'), out int val);
+                                                    val++;
+                                                    if (isParsedValue)
+                                                    {
+                                                        df.Year = "." + val + ToString();
+                                                    }
+                                                    df.PrevDate = time;
+                                                }
+                                                else
+                                                {
+                                                    df.PrevDate = time;
+                                                }
                                             }
                                             else
                                             {
                                                 df.PrevDate = time;
                                             }
+                                            df.DepthList.Add(depth);
+                                            df.DateList.Add(time);
+                                            df.StatusList.Add(status);
                                         }
-                                        else
-                                        {
-                                            df.PrevDate = time;
-                                        }
-                                        df.DepthList.Add(depth);
-                                        df.DateList.Add(time);
-                                        df.StatusList.Add(status);                                       
+
                                     }
-                                        
-                                }                               
+                                }
                             }
                         }
+                        if (df.DepthList.Count > 0)
+                        {
+                            ScrollStatusTextBox($"{path} данные считаны успешно");
+                            resultList.Add(df);
+                        }
                     }
-                    if (df.DepthList.Count > 0)
-                    {
-                        ScrollStatusTextBox($"{path} данные считаны успешно");                        
-                        resultList.Add(df);
-                    }                    
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception(ex.Message);
                 }
             }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-
             return resultList;           
         }
 
@@ -855,6 +942,7 @@ namespace FlashView2
             if (newFlashWindow.FlashPath != null)
             {
                 isDepth = newFlashWindow.DepthPath != null;
+                isDepthLoad = isDepth;
                 if (isDepth)
                 {
                     try
@@ -886,7 +974,11 @@ namespace FlashView2
                     MessageBox.Show("В ходе обработки данных произошла ошибка");
                     return;
                 }                               
-            }                        
+            }
+
+            
+
+            
         }
 
         List<List<string>> FillDateConf(byte[]? FlashFile, Packet mainPacket)
@@ -981,6 +1073,34 @@ namespace FlashView2
                 MessageBox.Show($"Возникла ошибка: {ex.Message}");
                 throw;
             }           
+        }
+
+        private void btnShiftTime_Click(object sender, RoutedEventArgs e)
+        {
+            var timeSetting = new SettingTime();
+            timeSetting.ShowDialog();
+            if (timeSetting.IsShift && timeSetting.ShiftTime != "00:00:00")
+            {
+                if (timeSetting.IsMoveTimeUp)
+                {
+                    TimeSpan ts = TimeSpan.Parse(timeSetting.ShiftTime);
+                    for (int i = 0; i < DataTable.Rows.Count; i++)
+                    {
+                        DataTable.Rows[i]["Дата"] = (DateTime.Parse(DataTable.Rows[i]["Дата"].ToString()) + ts).ToString("HH:mm:ss dd.MM.yy");
+                    }                    
+                }
+            }
+        }
+
+        private void btnFilterTime_Click(object sender, RoutedEventArgs e)
+        {
+            var filter = new FIlterWindow(DataTable, periods, isDepthLoad);
+            filter.ShowDialog();
+        }
+
+        private void btnResetFilter_Click(object sender, RoutedEventArgs e)
+        {
+            DataTable.DefaultView.RowFilter = "";
         }
     }
 }
