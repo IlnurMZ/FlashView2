@@ -3,32 +3,53 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:FlashZTK_I"
         mc:Ignorable="d"
-        Title="FlashZTK_I: FIlter" Height="350" Width="600" Background="#FFA2A1A1"
-        ResizeMode="NoResize" WindowStartupLocation="CenterScreen"> 
+        Title="FlashZTK_I: FIlter" Height="370" Width="640" Background="#FFA2A1A1"
+        ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
+            <ColumnDefinition Width="320"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition/>
-            <RowDefinition/>
+            <RowDefinition Height="220"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="80"/>
         </Grid.RowDefinitions>
-        <CheckBox Name="cbFilterByPeriod" Content="Фильтровать по времени включения" Margin="10"/>
         <StackPanel Orientation="Vertical" Grid.Row="0" Grid.Column="1">
-            <Label Content="Обнаруженные периоды" Margin="5" />
+            <Label Content="Обнаруженные периоды" Margin="5" HorizontalAlignment="Center" />
             <ListBox Name="lbPeriods" ItemsSource="{Binding Periods}" Width="280" Height="70" SelectionMode="Single" SelectedIndex="0" 
                      IsEnabled="{Binding ElementName=cbFilterByPeriod, Path=IsChecked}"/>
+
+            <StackPanel Orientation="Horizontal" Margin="15,30,0,0">
+                <Label>с</Label>
+                <xctk:DateTimePicker Name="dtpFilt1" Value="{Binding StartTimeRead, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                 FormatString="HH:mm:ss dd.MM.yyyy" Format="Custom" Width="245" Height="20" Margin="18,0,0,0"
+                                 IsEnabled="{Binding ElementName=cbFilterByUserDate, Path=IsChecked}"/>
+            </StackPanel>
+            
+            <StackPanel Orientation="Horizontal" Margin="5">
+                <Label Margin="10,0,0,0">по</Label>
+                <xctk:DateTimePicker Name="dtpFilt2" Value="{Binding EndTimeRead, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 FormatString="HH:mm:ss dd.MM.yyyy" Format="Custom" Width="245" Height="20" Margin="10,0,0,0"
+                                 IsEnabled="{Binding ElementName=cbFilterByUserDate, Path=IsChecked}"/>
+            </StackPanel>
+            
+
         </StackPanel>
-        <CheckBox x:Name="cbFilterByStat" Content="Фильтровать по состоянию&#xA; &quot;активный&quot; и &quot;нажатый&quot;" 
-                  Margin="10" Grid.Row="1" IsEnabled="{Binding IsDepthFile}"/>
-        
-        <Button Name="btn_OK" Content="Применить" Width="120" Height="40" Grid.Row="2" Grid.Column="0" 
-                Click="btn_OK_Click"/>
-        <Button Name="btn_Cancel" Content="Отмена" Width="120" Height="40" Grid.Row="2" Grid.Column="1" 
-                Click="btn_Cancel_Click"/>
+        <StackPanel Orientation="Vertical" Grid.Row="0">
+            <RadioButton Name="cbFilterByPeriod" Content="Фильтровать по времени включения" Margin="10,40,0,0"/>
+            <RadioButton x:Name="cbFilterByUserDate" Content="Фильтрация по времени заданное пользователем" Margin="10,85,0,0"/>
+            <RadioButton x:Name="cbFilterOff" Content="Без фильтра по времени" Margin="10,40,0,0" IsChecked="True" />
+        </StackPanel>
+        <CheckBox x:Name="cbFilterByStat" Content="Фильтровать по состоянию &quot;активный&quot; и &quot;нажатый&quot;" 
+                  Margin="10,10,10,10" Grid.Row="1" Grid.ColumnSpan="2" IsEnabled="{Binding IsDepthFile}"/>
+
+        <Button Name="btn_OK" Content="Применить" Grid.Row="2" Grid.Column="0" Height="40" Width="120" HorizontalAlignment="Center" VerticalAlignment="Center"
+                Click="btn_OK_Click" />
+        <Button Name="btn_Cancel" Content="Отмена" Grid.Row="2" Grid.Column="1" Height="40" Width="120" HorizontalAlignment="Center" VerticalAlignment="Center"
+                Click="btn_Cancel_Click" />
     </Grid>
 </Window>

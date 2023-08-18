@@ -20,6 +20,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using DocumentFormat.OpenXml.Drawing;
+using DocumentFormat.OpenXml.InkML;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Vml;
 using FlashView2.Model;
@@ -62,6 +63,20 @@ namespace FlashView2
                 OnPropertyChanged("EndTimeRead");
             }
         } // Конечное время считывания
+
+        bool isUseStat;
+        public bool IsUseStat
+        {
+            get
+            {
+                return isUseStat;
+            }
+            set
+            {
+                isUseStat = value;
+                OnPropertyChanged("IsUseStat");
+            }
+        }// проверка включения радиобатона "Вперед" в группе "Сдвигать время"
 
         bool isMoveTime;
         public bool IsMoveTime
@@ -249,6 +264,7 @@ namespace FlashView2
             }                     
         }
 
+        // Код для дальнейшей модификации
         private List<(double, DateTime)> UpdateDepthDate2()
         {            
             List<(double, DateTime)> listDepthTime = new List<(double, DateTime)>();
@@ -262,30 +278,122 @@ namespace FlashView2
                 }
             }
 
-            bool isParsDepth1;
+            int startPos = 1;
+            int endPos = dtl.Data.Count;
+
+            // Если включена опция в заданном интервале, корректируем начало и конец таблицы
+            if (IsSetInterval)
+            {
+                // Проверка корректности нач. и конечю даты
+                if (StartTimeRead >= EndTimeRead)
+                {
+                    throw new Exception("Считать данные => Стартовое время диапазона должно быть меньше конечного времени");
+                }
+
+                // Определение начальной строки таблицы
+                for (int i = 1; i < dtl.Data.Count; i++)
+                {
+                    bool isParsDate = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out DateTime tempDate);
+                    if (isParsDate)
+                    {
+                        if (tempDate >= StartTimeRead)
+                        {
+                            bool isParsDepth = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out double tempDepth);
+                            if (isParsDepth)
+                            {
+                                startPos = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Проверка что найдена первая позиция строки по времени-старту
+                if (startPos == 1)
+                {
+                    ScrollStatusLasTextBox("Не удалось найти позицию строки по времени начало интервала." +
+                        "\nВозможно неверно указан временной интервал");
+                    throw new ArgumentException("Неверно указан временной интервал");
+                }
+
+                // Определение конечной строки таблицы
+                for (int i = startPos; i < dtl.Data.Count; i++)
+                {
+                    bool isParsDate = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out DateTime tempDate);
+                    if (isParsDate)
+                    {
+                        if (tempDate > EndTimeRead)
+                        {
+                            bool isParsDepth = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out double tempDepth);
+                            if (isParsDepth)
+                            {
+                                endPos = i - 1;
+                                break;
+                            }
+                        }
+                        else if (tempDate == EndTimeRead)
+                        {
+                            bool isParsDepth = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out double tempDepth);
+                            if (isParsDepth)
+                            {
+                                endPos = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+                // Проверка что найдена последняя позиция строки по времени-старту
+                //if (endPos == 1)
+                //{
+                //    ScrollStatusLasTextBox("Не удалось найти позицию строки по времени конца интервала." +
+                //        "\nВозможно неверно указан временной интервал");
+                //    throw new ArgumentException("Неверно указан временной интервал");
+                //}
+            }
+
             double depth1 = 0;
-            bool isParsDate1;
-            DateTime date1 = new DateTime();
-            int pos = 0;
+            double depth2 = 0;
+            DateTime date1 = DateTime.MinValue;
+            DateTime date2 = DateTime.MinValue;
 
-            //тут необходимо повесить условие поиска для состояние = 3
-            for (int i = 0; i < dtl.Data.Count; i++)
+            // ищем первую глубину для отключенного статуса
+            if (!IsUseStat)
             {
-                isParsDepth1 = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out depth1);
-                isParsDate1 = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out date1);
-                pos++;
-                if (!isParsDate1 || !isParsDepth1) continue;
-                depth1 = Math.Round(depth1, 1, MidpointRounding.ToNegativeInfinity);                
-                break;
-            }                                   
-
-            for (int i = pos; i < dtl.Data.Count; i++)
+                depth1 = double.Parse(dtl.Data[startPos][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture);
+                depth1 = Math.Round(depth1, 1, MidpointRounding.ToNegativeInfinity);                               
+            }
+            // ищем первую глубину для включенного статуса
+            else
             {
-                bool isParsDepth2 = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out double depth2);
-                bool isParsDate2 = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out DateTime date2);
-                if (!isParsDepth2 || !isParsDate2) continue;
+                dtl.ColumnStat = 3; // 3 - активность, 4 - нажатие
+                FindFirstDepth(ref startPos, endPos, ref depth1, ref date1);
+            }
 
-                depth2 = Math.Round(depth2, 1, MidpointRounding.ToNegativeInfinity);                
+            for (int i = startPos; i < endPos; i++)
+            {
+                // проверка активности при включенной опции
+                if (IsUseStat)
+                {
+                    if (dtl.Data[i][dtl.ColumnStat].Trim() != "акт." || dtl.Data[i][dtl.ColumnStat + 1].Trim() != "наж.")
+                    {
+                        FindFirstDepth(ref startPos, endPos, ref depth1, ref date1);
+                        continue;
+                    }                   
+                }
+
+                bool isParsDate2 = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out date2);
+                bool isParsDepth2 = false;
+                if (isParsDate2)
+                {
+                    isParsDepth2 = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out depth2);
+                    if (isParsDepth2)
+                    {
+                        depth2 = Math.Round(depth2, 1, MidpointRounding.ToNegativeInfinity);
+                    }
+                }
+
+                if (!isParsDepth2 || !isParsDate2) continue;                        
+
                 double deltaDepth = Math.Round(depth2 - depth1, 1);
                 TimeSpan deltaTime = date2 - date1;
                 if (deltaDepth > 2 || deltaDepth < -2)
@@ -293,21 +401,18 @@ namespace FlashView2
                     depth1 = depth2;
                     date1 = date2;
                     continue;
-                }                
+                }
                 else if (deltaDepth >= 0.1)
-                {                    
+                {
                     double k1 = Math.Round(deltaDepth / 0.1);
                     int k = (int)k1;
                     TimeSpan step = deltaTime / k;
                     for (int j = 0; j < k; j++)
                     {
-                        listDepthTime.Add((depth1, date1));
-                        //newDepths.Add(depth1);                        
-                        depth1 = Math.Round(depth1 + 0.1, 1);
-
-                        //newTimes.Add(date1);
+                        listDepthTime.Add((depth1, date1));                                               
+                        depth1 = Math.Round(depth1 + 0.1, 1);                        
                         date1 += step;
-                    }          
+                    }
 
                     depth1 = depth2;
                     date1 = date2;
@@ -319,21 +424,40 @@ namespace FlashView2
                     TimeSpan step = deltaTime / k;
                     for (int j = 0; j < k; j++)
                     {
-                        listDepthTime.Add((depth1, date1));
-                        //newDepths.Add(depth1);
+                        listDepthTime.Add((depth1, date1));                       
                         depth1 = Math.Round(depth1 - 0.1, 1);
-
-                        //newTimes.Add(date1);
                         date1 += step;
                     }
 
                     depth1 = depth2;
                     date1 = date2;
                 }
-            }
+            }                      
+                                 
             return listDepthTime;
-        }
 
+            // локальный метод поиска начала интервала
+            void FindFirstDepth(ref int startPos, int endPos, ref double depth1, ref DateTime date1)
+            {
+                for (int i = startPos; i < endPos; i++)
+                {
+                    if (dtl.Data[i][dtl.ColumnStat].Trim() == "акт." && dtl.Data[i][dtl.ColumnStat + 1].Trim() == "наж.")
+                    {
+                        bool isParsDate = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out date1);
+                        if (isParsDate)
+                        {
+                            bool isParsDepth = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out depth1);
+                            if (isParsDepth)
+                            {
+                                startPos = i;
+                                depth1 = Math.Round(depth1, 1, MidpointRounding.ToNegativeInfinity);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         private void RecordDataLas2(SortedDictionary<double, double> data)
         {
             StringBuilder headLasFile = FormHeadLasFile(data.ElementAt(0).Key, data.ElementAt(data.Count-1).Key);
@@ -523,6 +647,8 @@ namespace FlashView2
                     {
                         throw new Exception("Считать данные => Стартовое время диапазона должно быть меньше конечного времени");
                     }
+
+                    // Поиск строки которая по времени >= чем StartTimeRead
                     for (int i = 1; i < dtl.Data.Count; i++)
                     {
                         if (DateTime.Parse(dtl.Data[i][posTime]) >= StartTimeRead)
@@ -531,9 +657,10 @@ namespace FlashView2
                             timeStart = DateTime.Parse(dtl.Data[i][posTime]);
                             shift = i - 1;
                             break;
-                        }                       
+                        }
                     }
 
+                    // Поиск строки которая по времени <= чем EndTimeRead
                     for (int i = shift + 1; i < dtl.Data.Count; i++)
                     {
                         DateTime timeFinish = DateTime.Parse(dtl.Data[i][posTime]);
@@ -564,7 +691,8 @@ namespace FlashView2
                     timeStart = DateTime.Parse(dtl.Data[1][posTime]);
                     lastCount = dtl.Data.Count;
                 }
-                
+
+
                 DepthTimeDetail.Add(timeStart, depthStart);
                 for (int i = 2 + shift; i < lastCount; i++)
                 {
@@ -588,8 +716,8 @@ namespace FlashView2
                                 double newDepth = depthStart + depthStep;
                                 depthStep = Math.Round(depthStep += 0.1, 1);
                                 DateTime newTime = time1 + (deltaTime * time3);
-                                time3 += timeStep;                                
-                                DepthTimeDetail.Add(newTime, newDepth);                                
+                                time3 += timeStep;
+                                DepthTimeDetail.Add(newTime, newDepth);
                             }
                             depthStart = depthStop;
                             timeStart = timeStop;
@@ -614,7 +742,7 @@ namespace FlashView2
                                 depthStep = Math.Round(depthStep += 0.1, 1);
                                 DateTime newTime = time1 + (deltaTime * time3);
                                 time3 += timeStep;
-                                DepthTimeDetail.Add(newTime, newDepth);                                
+                                DepthTimeDetail.Add(newTime, newDepth);
                             }
                             depthStart = depthStop;
                             timeStart = timeStop;
@@ -628,6 +756,7 @@ namespace FlashView2
                         i++;
                     }
                 }
+
             }
             return DepthTimeDetail;
         }
@@ -1390,8 +1519,7 @@ namespace FlashView2
                         MessageBox.Show("Текущий калибровочный файл не поддерживается");
                         ScrollStatusLasTextBox("Невозможно обработать текущий конфигурационный файл");
                         return;
-                    }                    
-
+                    }                   
 
                 }
                 catch (Exception ex)

@@ -19,6 +19,7 @@ namespace FlashView2.Model
         public DateTime? PrevDate { get; set; } // дата, необх. для отслеживания изменения года       
         public int ColumnZab; // номер столбца с забоем
         public int ColumnDate; // номер столбца с датой
+        public int ColumnStat; // номер столбца с датой
         public List<string[]> Data { get; set; } // данные считанные с файла глубиномера
         public List<string> ColNames; // названия столбцов
 

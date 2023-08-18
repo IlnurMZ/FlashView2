@@ -7,7 +7,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
         Title="FlashZTK_I: LAS" 
-        Height="900" Width="870" 
+        Height="920" Width="870" 
         WindowStartupLocation="CenterScreen" Background="#FFA2A1A1" Closing="OnClosing" >
     <Window.Resources>
         <Style x:Key="CenterGridHeaderStyle" TargetType="DataGridColumnHeader">
@@ -90,11 +90,11 @@
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="90"/>
-                        <RowDefinition Height="250"/>
+                        <RowDefinition Height="310"/>
                         <RowDefinition Height="134"/>
-                        <RowDefinition Height="280"/>
+                        <RowDefinition Height="230"/>
                         <RowDefinition/>
-                        <RowDefinition Height="85.08"/>
+                        <RowDefinition Height="85"/>
                     </Grid.RowDefinitions>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.ColumnSpan="2" Height="90" Width="827">
@@ -199,11 +199,26 @@
                                 <RadioButton Margin="3" IsChecked="{Binding IsSetInterval, Mode=TwoWay}">В задаваемом интервале</RadioButton>
                                 <GroupBox Header="Задать время">
                                     <StackPanel>
-                                        <Label>с</Label>
-                                        <xctk:DateTimePicker Name="dtp1" Value="{Binding StartTimeRead, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" FormatString="HH:mm:ss dd.MM.yyyy" Format="Custom"/>
-                                        <Label>по</Label>
-                                        <xctk:DateTimePicker Name="dtp2" Value="{Binding EndTimeRead, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" FormatString="HH:mm:ss dd.MM.yyyy" Format="Custom" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <Label>с</Label>
+                                            <xctk:DateTimePicker Name="dtp1" Value="{Binding StartTimeRead, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                                 FormatString="HH:mm:ss dd.MM.yyyy" Format="Custom"
+                                                                 Height="20" Width="180" Margin="13,0,0,0"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Label>по</Label>
+                                            <xctk:DateTimePicker Name="dtp2" Value="{Binding EndTimeRead, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                                 FormatString="HH:mm:ss dd.MM.yyyy" Format="Custom" 
+                                                                 Height="20" Width="180" Margin="5,0,0,0"/>
+                                        </StackPanel>
                                     </StackPanel>
+                                </GroupBox>
+                                <GroupBox Header="Ограничение" Margin="0,5,0,0">
+                                    <StackPanel Orientation="Vertical">
+                                        <RadioButton Content="Использовать все данные и&#x0a;глубиномера" Margin="0,0,0,0" IsChecked="True"/>
+                                        <RadioButton Content="Использовать только активное и&#x0a; нажатое состояние" Margin="0,5,5,5" 
+                                                      IsChecked="{Binding IsUseStat}"/>
+                                    </StackPanel>                                    
                                 </GroupBox>
                             </StackPanel>
                         </GroupBox>
@@ -229,9 +244,7 @@
                                     </StackPanel>
                                 </GroupBox>
                             </StackPanel>
-                        </GroupBox>
-                        <RadioButton Content="Использовать все данные глубиномера" Margin="10,10,5,5" IsChecked="True"/>
-                        <RadioButton Content="Использовать только активное и&#x0a; нажатое состояние" Margin="10,5,5,5" />
+                        </GroupBox>                        
                         <Button Name="btnLasStart" Click="Button_FormLasClick" Height="40" Margin="5"
                                 Style="{StaticResource ButtonStyle1}" VerticalContentAlignment="Center"
                                 IsEnabled="False">
@@ -275,7 +288,7 @@
                             </StackPanel>
                         </GroupBox>
                     </StackPanel>
-                    <DataGrid x:Name="dtg_DepthAndTime" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" Grid.Column="1" Grid.Row="1" Grid.RowSpan="3"
+                    <DataGrid x:Name="dtg_DepthAndTime" ColumnHeaderStyle="{StaticResource CenterGridHeaderStyle}" Grid.Column="1" Grid.Row="1" Grid.RowSpan="4"
                       Margin="10,5,10,0" ItemsSource="{Binding DataTable, UpdateSourceTrigger=PropertyChanged}" 
                       AutoGeneratingColumn="r2_AutoGeneratingColumn" CanUserSortColumns="False" >
                     </DataGrid>

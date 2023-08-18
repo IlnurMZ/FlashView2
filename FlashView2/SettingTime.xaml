@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlashView2" xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
-        Title="FlashZTK_I: SettingTime" Height="200" Width="350" 
+        Title="FlashZTK_I: SettingTime" Height="210" Width="350" 
         Background="#FFA2A1A1" ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen">
     <Grid>

@@ -22,7 +22,34 @@ namespace FlashZTK_I
     /// Interaction logic for FIlter.xaml
     /// </summary>
     public partial class FIlterWindow : Window, INotifyPropertyChanged
-    {        
+    {
+        DateTime startDateTime;
+        public DateTime StartTimeRead
+        {
+            get
+            {
+                return startDateTime;
+            }
+            set
+            {
+                startDateTime = value;
+                OnPropertyChanged("StartTimeRead");
+            }
+        } // Стартовое времея считывания
+        DateTime endTimeRead;
+        public DateTime EndTimeRead
+        {
+            get
+            {
+                return endTimeRead;
+            }
+            set
+            {
+                endTimeRead = value;
+                OnPropertyChanged("EndTimeRead");
+            }
+        } // Конечное время считывания
+
         public List<(DateTime?, DateTime?)> Periods { get; set; }
         private System.Data.DataTable myDataTable;
 
@@ -45,7 +72,9 @@ namespace FlashZTK_I
             Periods = periods;
             DataContext = this;
             IsDepthFile = isDepth;
-            MessageBox.Show("Данный пункт меню пока только ознакомительный");
+            StartTimeRead = DateTime.Parse(myDataTable.Rows[0]["Дата"].ToString());
+            EndTimeRead = DateTime.Parse(myDataTable.Rows[myDataTable.Rows.Count - 1]["Дата"].ToString());
+            //MessageBox.Show("Данный пункт меню пока только ознакомительный");
         }
 
         private void btn_OK_Click(object sender, RoutedEventArgs e)
@@ -53,24 +82,42 @@ namespace FlashZTK_I
             string sqlQuerry = "";
             bool IsPeriod = cbFilterByPeriod.IsChecked.Value;
             bool IsStat = cbFilterByStat.IsChecked.Value;
+            bool IsUserDate = cbFilterByUserDate.IsChecked.Value;
+
             if (IsPeriod)
             {
                 sqlQuerry += string.Format("Дата >= '{0}' AND Дата <= '{1}'",
                 Periods[lbPeriods.SelectedIndex].Item1.Value.ToString("HH:mm:ss dd/MM/yyyy"),
                 Periods[lbPeriods.SelectedIndex].Item2.Value.ToString("HH:mm:ss dd/MM/yyyy"));
-            }            
-            if (IsStat && IsPeriod)
-            {
-                sqlQuerry += " AND СОСТОЯНИЕ = 3";
             }
-            else if (IsStat)
+
+            if (IsUserDate)
             {
-                sqlQuerry += "СОСТОЯНИЕ = 3";
+                if (EndTimeRead >= StartTimeRead)
+                {
+                    sqlQuerry += string.Format("Дата >= '{0}' AND Дата <= '{1}'",
+                StartTimeRead.ToString("HH:mm:ss dd/MM/yyyy"),
+                EndTimeRead.ToString("HH:mm:ss dd/MM/yyyy"));
+                }
+                else
+                {
+                    MessageBox.Show("Неверно указан пользовательский период");
+                    return;
+                }                
             }
-            else if (!IsPeriod && !IsStat)
+
+            if (IsStat)
             {
-                sqlQuerry = "";
+                if (string.IsNullOrEmpty(sqlQuerry))
+                {
+                    sqlQuerry += " AND СОСТОЯНИЕ = 3";
+                }
+                else
+                {
+                    sqlQuerry += "СОСТОЯНИЕ = 3";
+                }
             }
+            
             myDataTable.DefaultView.RowFilter = sqlQuerry;
             Close();
         }

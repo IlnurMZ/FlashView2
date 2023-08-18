@@ -16,6 +16,207 @@ namespace FlashView2
 {
     internal class UnUsedCode
     {
+        //Определение интервала глубины для дальнейшей работы
+        //bool isParsDepth1;
+        //double depth1 = -999;
+        //bool isParsDate1;
+        //DateTime date1 = new DateTime();
+        //int pos = 0;
+        //int lastCount = 0;
+
+        //if (!IsSetInterval)
+        //{
+        //    //тут необходимо повесить условие поиска для состояние = 3
+        //    for (int i = 0; i < dtl.Data.Count; i++)
+        //    {
+        //        isParsDepth1 = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out depth1);
+        //        isParsDate1 = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out date1);
+        //        pos++;
+        //        if (!isParsDate1 || !isParsDepth1) continue;
+        //        depth1 = Math.Round(depth1, 1, MidpointRounding.ToNegativeInfinity);
+        //        break;
+        //    }
+
+        //    for (int i = pos; i < dtl.Data.Count; i++)
+        //    {
+        //        bool isParsDepth2 = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out double depth2);
+        //        bool isParsDate2 = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out DateTime date2);
+        //        if (!isParsDepth2 || !isParsDate2) continue;
+
+        //        depth2 = Math.Round(depth2, 1, MidpointRounding.ToNegativeInfinity);
+        //        double deltaDepth = Math.Round(depth2 - depth1, 1);
+        //        TimeSpan deltaTime = date2 - date1;
+        //        if (deltaDepth > 2 || deltaDepth < -2)
+        //        {
+        //            depth1 = depth2;
+        //            date1 = date2;
+        //            continue;
+        //        }
+        //        else if (deltaDepth >= 0.1)
+        //        {
+        //            double k1 = Math.Round(deltaDepth / 0.1);
+        //            int k = (int)k1;
+        //            TimeSpan step = deltaTime / k;
+        //            for (int j = 0; j < k; j++)
+        //            {
+        //                listDepthTime.Add((depth1, date1));
+        //                //newDepths.Add(depth1);                        
+        //                depth1 = Math.Round(depth1 + 0.1, 1);
+
+        //                //newTimes.Add(date1);
+        //                date1 += step;
+        //            }
+
+        //            depth1 = depth2;
+        //            date1 = date2;
+        //        }
+        //        else if (deltaDepth <= -0.1)
+        //        {
+        //            double k1 = Math.Round((Math.Abs(deltaDepth) / 0.1));
+        //            int k = (int)k1;
+        //            TimeSpan step = deltaTime / k;
+        //            for (int j = 0; j < k; j++)
+        //            {
+        //                listDepthTime.Add((depth1, date1));
+        //                //newDepths.Add(depth1);
+        //                depth1 = Math.Round(depth1 - 0.1, 1);
+
+        //                //newTimes.Add(date1);
+        //                date1 += step;
+        //            }
+
+        //            depth1 = depth2;
+        //            date1 = date2;
+        //        }
+        //    }
+        //}
+        //else
+        //{
+        //    // Проверка что начальное время не больше конечного
+        //    if (StartTimeRead >= EndTimeRead)
+        //    {
+        //        throw new Exception("Считать данные => Стартовое время диапазона должно быть меньше конечного времени");
+        //    }
+
+        //    // Поиск оп времени начальной и конечной строки таблицы
+        //    for (int i = 1; i < dtl.Data.Count; i++)
+        //    {                    
+        //        isParsDate1 = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out date1);
+        //        if (isParsDate1)
+        //        {
+        //            if (date1 >= StartTimeRead)
+        //            {
+        //                isParsDepth1 = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out depth1);
+        //                if (isParsDepth1)
+        //                {
+        //                    pos = i;
+        //                    break;
+        //                }
+        //            }
+        //        }                    
+        //    }
+
+        //    // Поиск строки которая по времени <= чем EndTimeRead
+        //    for (int i = pos; i < dtl.Data.Count; i++)
+        //    {
+        //        isParsDate1 = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out DateTime date2);                    
+        //        if (isParsDate1)
+        //        {
+        //            if (date2 > EndTimeRead)
+        //            {
+        //                isParsDepth1 = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out double depth2);
+        //                if (isParsDepth1)
+        //                {
+        //                    lastCount = i - 1;
+        //                    break;
+        //                }                            
+        //            }
+        //            else if (date2 == EndTimeRead)
+        //            {
+        //                isParsDepth1 = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out double depth2);
+        //                if (isParsDepth1)
+        //                {
+        //                    lastCount = i;
+        //                    break;
+        //                }                            
+        //            }
+        //        }                   
+        //    }
+
+        //    if (depth1 == -999)
+        //    {
+        //        ScrollStatusLasTextBox("Стартовое значение времени указано не верно");
+        //    }
+        //    if (lastCount == 0)
+        //    {
+        //        ScrollStatusLasTextBox("Конечное значение времени указано не верно");
+        //        lastCount = dtl.Data.Count;
+        //    }
+
+        //    if (!IsUseStat)
+        //    {
+        //        // Анализ опции органичения с фильтрацией данных по статусу (3 - хорошо, остальное - плохо)
+        //        //for (int i = pos; i < lastCount; i++)
+        //        //{
+        //        //    isParsDepth1 = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out depth1);
+        //        //    isParsDate1 = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out date1);
+        //        //    pos++;
+        //        //    if (!isParsDate1 || !isParsDepth1) continue;
+        //        //    depth1 = Math.Round(depth1, 1, MidpointRounding.ToNegativeInfinity);
+        //        //    break;
+        //        //}
+
+        //        for (int i = pos; i < lastCount; i++)
+        //        {
+        //            bool isParsDepth2 = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.InvariantCulture, out double depth2);
+        //            bool isParsDate2 = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out DateTime date2);
+        //            if (!isParsDepth2 || !isParsDate2) continue;
+
+        //            depth2 = Math.Round(depth2, 1, MidpointRounding.ToNegativeInfinity);
+        //            double deltaDepth = Math.Round(depth2 - depth1, 1);
+        //            TimeSpan deltaTime = date2 - date1;
+        //            if (deltaDepth > 2 || deltaDepth < -2)
+        //            {
+        //                depth1 = depth2;
+        //                date1 = date2;
+        //                continue;
+        //            }
+        //            else if (deltaDepth >= 0.1)
+        //            {
+        //                double k1 = Math.Round(deltaDepth / 0.1);
+        //                int k = (int)k1;
+        //                TimeSpan step = deltaTime / k;
+        //                for (int j = 0; j < k; j++)
+        //                {
+        //                    listDepthTime.Add((depth1, date1));                                                    
+        //                    depth1 = Math.Round(depth1 + 0.1, 1);
+        //                    date1 += step;
+        //                }
+        //                depth1 = depth2;
+        //                date1 = date2;
+        //            }
+        //            else if (deltaDepth <= -0.1)
+        //            {
+        //                double k1 = Math.Round((Math.Abs(deltaDepth) / 0.1));
+        //                int k = (int)k1;
+        //                TimeSpan step = deltaTime / k;
+        //                for (int j = 0; j < k; j++)
+        //                {
+        //                    listDepthTime.Add((depth1, date1));
+        //                    //newDepths.Add(depth1);
+        //                    depth1 = Math.Round(depth1 - 0.1, 1);
+
+        //                    //newTimes.Add(date1);
+        //                    date1 += step;
+        //                }
+
+        //                depth1 = depth2;
+        //                date1 = date2;
+        //            }
+        //        }
+        //    }                
+        //}   
+        int a3 = 0;        
         // метод обработки данных и формирования LAS
         //private SortedDictionary<double, double> GetDataForLasType2(List<(double, DateTime)> listDepthDate)
         //{
