@@ -90,7 +90,7 @@
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="90"/>
-                        <RowDefinition Height="310"/>
+                        <RowDefinition Height="315"/>
                         <RowDefinition Height="134"/>
                         <RowDefinition Height="230"/>
                         <RowDefinition/>
@@ -103,7 +103,7 @@
                             <Button.Content>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                                     <Image Source="/Icons/File.png" Height="30"/>
-                                    <Label Content="Открыть файл&#x0a;          txt" />
+                                    <Label Content="Открыть файл&#x0a;в формате txt" />
                                 </StackPanel>
                             </Button.Content>
                             <Button.ToolTip>
@@ -118,7 +118,7 @@
                             <Button.Content>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                                     <Image Source="/Icons/File.png" Height="30"/>
-                                    <Label Content="Открыть файл&#x0a;глубиномера" />
+                                    <Label Content="Открыть файл&#x0a;  без расшир." />
                                 </StackPanel>
                             </Button.Content>
                             <Button.ToolTip>
@@ -134,7 +134,7 @@
                             <Button.Content>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                                     <Image Source="/Icons/CalibrFIle.png" Height="30"/>
-                                    <Label Content="Открыть калиб.&#x0a;      файл" />
+                                    <Label Content="Открыть калиб.&#x0a;        файл" />
                                 </StackPanel>
                             </Button.Content>
                             <Button.ToolTip>
@@ -213,11 +213,12 @@
                                         </StackPanel>
                                     </StackPanel>
                                 </GroupBox>
-                                <GroupBox Header="Ограничение" Margin="0,5,0,0">
+                                <GroupBox x:Name="grLimit" Header="Ограничение" Margin="0,5,0,0">
                                     <StackPanel Orientation="Vertical">
-                                        <RadioButton Content="Использовать все данные и&#x0a;глубиномера" Margin="0,0,0,0" IsChecked="True"/>
-                                        <RadioButton Content="Использовать только активное и&#x0a; нажатое состояние" Margin="0,5,5,5" 
+                                        <RadioButton Content="Использовать все данные" Margin="0,0,0,2" IsChecked="True"/>
+                                        <RadioButton Content="Использовать только активное и&#x0a; нажатое состояние" Margin="0,5,5,2" 
                                                       IsChecked="{Binding IsUseStat}"/>
+                                        <CheckBox Content="Использовать 1 точку времени&#x0a;на глубину" IsChecked="{Binding IsOnePoint}"/>
                                     </StackPanel>                                    
                                 </GroupBox>
                             </StackPanel>
