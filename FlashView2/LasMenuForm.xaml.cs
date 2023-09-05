@@ -395,8 +395,7 @@ namespace FlashView2
             // ищем первую глубину для отключенного статуса
             if (!IsUseStat)
             {
-                depth1 = double.Parse(dtl.Data[startPos][dtl.ColumnZab], CultureInfo.CurrentCulture);
-                //depth1 = Math.Round(depth1, 1, MidpointRounding.ToNegativeInfinity);                               
+                depth1 = Math.Round(double.Parse(dtl.Data[startPos][dtl.ColumnZab], CultureInfo.CurrentCulture),1);                                              
             }
             // ищем первую глубину для включенного статуса
             else
@@ -424,6 +423,7 @@ namespace FlashView2
                 if (isParsDate2)
                 {
                     isParsDepth2 = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.CurrentCulture, out depth2);
+                    depth2 = Math.Round(depth2, 1);
                     if (!isParsDepth2)
                     {
                         continue; //depth2 /= 100; //Math.Round((depth2 / 100), 2, MidpointRounding.ToNegativeInfinity);
@@ -434,11 +434,11 @@ namespace FlashView2
                     continue;
                 }               
 
-                double tempD2 = Math.Round(depth2, 1, MidpointRounding.ToNegativeInfinity);
-                double tempD1 = Math.Round(depth1, 1, MidpointRounding.ToNegativeInfinity);
+                //double tempD2 = Math.Round(depth2, 1, MidpointRounding.ToNegativeInfinity);
+                //double tempD1 = Math.Round(depth1, 1, MidpointRounding.ToNegativeInfinity);
                 //double delta2 = tempD2 - tempD1;
 
-                double deltaDepth = Math.Round(tempD2 - tempD1, 1);//Math.Round(depth2 - depth1, 1);
+                double deltaDepth = Math.Round(depth2 - depth1, 1);//Math.Round(depth2 - depth1, 1);
                 TimeSpan deltaTime = date2 - date1;
                 if (deltaDepth > 2 || deltaDepth < -2)
                 {
@@ -459,13 +459,16 @@ namespace FlashView2
                 else if (deltaDepth >= 0.1)
                 {                    
                     int k = (int)(Math.Round((Math.Abs(deltaDepth) / 0.1)));
-                    double tempDelta = Math.Round(depth2 - depth1, 2);                    
+                    //double tempDelta = Math.Round(depth2 - depth1, 2);                    
                     for (int j = 0; j < k; j++)
                     {
-                        double depth = Math.Round(depth1, 1, MidpointRounding.ToPositiveInfinity) + Math.Round(0.1 * j, 1);
-                        var d = Math.Round(depth - depth1, 2);
-                        var dt = date1 + (d / tempDelta) * deltaTime;
-                        listDepthTime.Add((Math.Round(depth, 1), dt));                    
+                        //double depth = Math.Round(depth1, 1, MidpointRounding.ToPositiveInfinity) + Math.Round(0.1 * j, 1);
+                        double depth = Math.Round(depth1 + 0.1 * j ,1);
+                        //var d = Math.Round(depth - depth1, 1);
+                        var d = Math.Round(0.1 * j, 1);
+                        var dt = date1 + (d / deltaDepth) * deltaTime;
+                        //listDepthTime.Add((Math.Round(depth, 1), dt));
+                        listDepthTime.Add((Math.Round(depth, 1), dt));
                     }
                     depth1 = depth2;
                     date1 = date2;
@@ -473,12 +476,14 @@ namespace FlashView2
                 else if (deltaDepth <= -0.1)
                 {
                     int k = (int)(Math.Round((Math.Abs(deltaDepth) / 0.1)));                 
-                    double tempDelta = Math.Round(depth1 - depth2,2);                    
+                    //double tempDelta = Math.Round(depth1 - depth2,2);                    
                     for (int j = 0; j < k; j++)
                     {
-                        double depth = Math.Round(depth1, 1, MidpointRounding.ToNegativeInfinity) - Math.Round(0.1 * j, 1);
-                        var d = Math.Round(depth1 - depth, 2);
-                        var dt = date1 + (d / tempDelta) * deltaTime;                        
+                        //double depth = Math.Round(depth1, 1, MidpointRounding.ToNegativeInfinity) - Math.Round(0.1 * j, 1);
+                        double depth = Math.Round(depth1 - 0.1 * j, 1);
+                        //var d = Math.Round(depth1 - depth, 2);
+                        var d = Math.Round(0.1 * j, 1);
+                        var dt = date1 + (d / Math.Abs(deltaDepth)) * deltaTime;                        
                         listDepthTime.Add((Math.Round(depth, 1), dt));                        
                     }
                     depth1 = depth2;
@@ -486,6 +491,7 @@ namespace FlashView2
                 }
                 else
                 {
+                    listDepthTime.Add((depth1, date1));
                     date1 = date2;
                     depth1 = depth2;
                 }
@@ -514,6 +520,7 @@ namespace FlashView2
                         if (isParsDate)
                         {
                             bool isParsDepth = double.TryParse(dtl.Data[i][dtl.ColumnZab], NumberStyles.Any, CultureInfo.CurrentCulture, out depth1);
+                            depth1 = Math.Round(depth1, 1);
                             if (isParsDepth)
                             {
                                 startPos = i + 1;
