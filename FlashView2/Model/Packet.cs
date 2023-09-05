@@ -19,7 +19,7 @@ namespace FlashView2
         public List<byte> LengthParams { get; set; } // количество байт на параметр
         public List<string> TypeParams { get; set; } // тип параметра        
         public List<string> TypeCalculate { get; set; } // тип вычисления
-        public List<double[]> DataCalculation { get; set; } // данные для вычисления
+        public List<float[]> DataCalculation { get; set; } // данные для вычисления
         public List<byte> CountSign { get; set; } // количество знаков после запятой        
         public byte[] endLine { get; set; } // 2 байта на конец строки
 
@@ -38,13 +38,13 @@ namespace FlashView2
             TypeParams = new List<string>();
             HeaderColumns = new List<string>();
             TypeCalculate = new List<string>();
-            DataCalculation = new List<double[]>();
+            DataCalculation = new List<float[]>();
             CountSign = new List<byte>();
             WidthColumn = new List<byte>();
             endLine = new byte[2];
         }
         // вычисление значения по его типу
-        public string CalculateValueByType(string typeCalc, string value, double[] data, byte countSign)
+        public string CalculateValueByType(string typeCalc, string value, float[] data, byte countSign)
         {
             string result = "";
             switch (typeCalc) // смотрим тип вычисления

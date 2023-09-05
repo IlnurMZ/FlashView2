@@ -146,7 +146,6 @@ namespace FlashView2
                 OnPropertyChanged("MyCalibrFile");
             } 
         }
-        //double[] Coef { get; set; } // коэффициенты для расчета Кп
         DataRowCollection DataRowAVM { get; set; }        
         string statusLasMenu;
         public string StatusLasMenu 
@@ -162,8 +161,8 @@ namespace FlashView2
             } 
         }
 
-        private int percentLas; // проценты загрузки для прогресбара
-        public int PercentLas
+        private byte percentLas; // проценты загрузки для прогресбара
+        public byte PercentLas
         {
             get
             {
@@ -217,7 +216,7 @@ namespace FlashView2
                 OnPropertyChanged("DataTable");
             }
         }
-        public LasMenuForm(DataTable dt)
+        public LasMenuForm(DataTable dt, CalibrFile calibrFile, List<string> Paths)
         {
             DataRowAVM = dt.Rows;          
             isLineCalc = true;           
@@ -227,6 +226,27 @@ namespace FlashView2
             IsMoveTime = false;
             ShiftTime = "00:00:00";
             IsOnePoint = true;
+            MyCalibrFile = calibrFile;
+            if (Paths != null && Paths.Count > 0)
+            {
+                if (MyCalibrFile != null)
+                {
+                    btnLasStart.IsEnabled = true;
+                    IsOpenCalibFile = true;
+                }
+                if (Paths[0].Contains(".txt"))
+                {
+                    // открытие файлов с расширением .txt
+                    OpenGlubFileTxt(Paths);
+                }
+                else
+                {
+                    // открытие файлов без расширения
+                    OpenGlubFile(Paths);
+                }                
+            }
+
+            
         }
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")
@@ -242,11 +262,11 @@ namespace FlashView2
                 ChoiseCalibrData(); // сверяем включенные опции (кнопки, выбр.пункты меню)
                                     // для выбора необходимых конф данных
                 PercentLas = 5;
-                if (!double.TryParse(txtBoxNULL.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double nullValue))
-                {
-                    nullValue = -999.99;
-                    ScrollStatusLasTextBox($"Ошибка конвертации Null value. Установлено дефолтное значение {nullValue}");
-                }
+                //if (!double.TryParse(txtBoxNULL.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double nullValue))
+                //{
+                    double nullValue = -999.99;
+                    //ScrollStatusLasTextBox($"Ошибка конвертации Null value. Установлено дефолтное значение {nullValue}");
+               // }
 
                 if (dtl.Separator == '|')
                 {                    
@@ -275,6 +295,7 @@ namespace FlashView2
             catch (Exception ex)
             {
                 MessageBox.Show("При формировании las-файла возникла ошибка");
+                PercentLas = 0;
                 ScrollStatusLasTextBox(ex.Message);
             }                     
         }
@@ -389,7 +410,7 @@ namespace FlashView2
                 // проверка активности при включенной опции
                 if (IsUseStat)
                 {
-                    if (dtl.Data[i][dtl.ColumnStat].Trim() != "актив" || dtl.Data[i][dtl.ColumnStat + 1].Trim() != "наж")
+                    if (dtl.Data[i][dtl.ColumnStat].Trim() != "акт." || dtl.Data[i][dtl.ColumnStat + 1].Trim() != "наж.")
                     {
                         startPos = i;
                         FindFirstDepth(ref startPos, endPos, ref depth1, ref date1);
@@ -487,7 +508,7 @@ namespace FlashView2
                 bool isEndData = true;
                 for (int i = startPos; i < endPos; i++)
                 {
-                    if (dtl.Data[i][dtl.ColumnStat].Trim() == "актив" && dtl.Data[i][dtl.ColumnStat + 1].Trim() == "наж")
+                    if (dtl.Data[i][dtl.ColumnStat].Trim() == "акт." && dtl.Data[i][dtl.ColumnStat + 1].Trim() == "наж.")
                     {
                         bool isParsDate = DateTime.TryParse(dtl.Data[i][dtl.ColumnDate], out date1);
                         if (isParsDate)
@@ -610,6 +631,39 @@ namespace FlashView2
                     }
                 }                
             }
+
+            // проверка на пропуски точек глубины
+            // обычно появляются при включении опции активный и нажатый
+
+            double first = depthAndKp.ElementAt(0).Key;
+            List<double> firstList = depthAndKp.ElementAt(0).Value;
+            var sortList = new SortedDictionary<double, List<double>>();
+
+            foreach (var item in depthAndKp)
+            {
+                if (item.Key - first > 0.15)
+                {
+                    do
+                    {
+                        first = Math.Round(first + 0.1, 1);
+                        sortList.Add(first, firstList);
+                    }
+                    while (item.Key - first > 0.15);
+                    first = item.Key;
+                    firstList = item.Value;
+                }
+                else
+                {
+                    first = item.Key;
+                    firstList = item.Value;
+                }
+            }
+
+            foreach (var item in sortList)
+            {
+                depthAndKp.Add(item.Key, item.Value);
+            }            
+
             return depthAndKp;
         }
 
@@ -1070,13 +1124,14 @@ namespace FlashView2
 
             // Второй раздел
             countSigns = 25;
+            double nullValue = -999;
             result.AppendLine("~WELL INFORMATION SECTION");
             result.AppendLine("#MNEM                    .UNIT   VALUE/NAME               : DESCRIPTION");
             result.AppendLine("#----                     ----   -----------------        -----------------");
             result.AppendLine($"STRT                     .M      {startM}{new string(' ', countSigns - startM.ToString().Length)}: START DEPTH");
             result.AppendLine($"STOP                     .M      {stopM}{new string(' ', countSigns - stopM.ToString().Length)}: STOP DEPTH");
             result.AppendLine($"STEP                     .M      {stepM.ToString("0.00")}{new string(' ', countSigns - stepM.ToString("0.00").Length)}: STEP");
-            result.AppendLine($"NULL                     .M      {txtBoxNULL.Text}{new string(' ', countSigns - txtBoxNULL.Text.Length)}: NULL VALUE");
+            result.AppendLine($"NULL                     .M      {nullValue}{new string(' ', countSigns - nullValue.ToString().Length)}: NULL VALUE");
             result.AppendLine($"DATE                     .M      {StartTimeRead.ToString("yyyy-MM-dd HH:mm:ss")}{new string(' ', countSigns - 19)}: DATE");
             result.AppendLine($"API                      .       {txtBoxAPI.Text}{new string(' ', countSigns - txtBoxAPI.Text.Length)}: API NUMBER");
             result.AppendLine($"WELL                     .       {txtBoxWell.Text}{new string(' ', countSigns - txtBoxWell.Text.Length)}: WELL");
@@ -1271,7 +1326,7 @@ namespace FlashView2
         // кнопка загрузки двух типов файлов глубина-время: с глубиномера
         // и старый формат с дискретность метр из программы InfoFrom
 
-        void btn_LoadGlubDate_Click(object sender, RoutedEventArgs e)
+        void btn_LoadDepthTimeFile_Click(object sender, RoutedEventArgs e)
         {
             GC.Collect();
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -1284,286 +1339,186 @@ namespace FlashView2
             {
                 lblDepthFile.Text = "";
                 var paths = openFileDialog.FileNames;
-                ScrollStatusLasTextBox($"Загрузка файла началась: {openFileDialog.SafeFileName}");
-                dtl = new DepthTimeLas();
-                dtl.FillStandColumn();
-                List<byte> resultData = new List<byte>();
-                try
+                if (paths[0].Contains(".txt"))
                 {
-                    foreach (var filePath in paths)
-                    {
-                        resultData.AddRange(File.ReadAllBytes(filePath).Skip(256));
-                        var pathFile = filePath.Split("\\");
-                        lblDepthFile.Text += pathFile[pathFile.Length - 1] + "\n";
-                    }
-
-                    for (int i = 0; i < resultData.Count; i = i + 16) // 16 байт в одной строке
-                    {
-                        int flag = BitConverter.ToInt16(resultData.Skip(i + 12).Take(2).ToArray());
-                        //long x = BitConverter.ToInt64(resultData.Skip(i).Take(8).ToArray());
-                        double x = BitConverter.Int64BitsToDouble(BitConverter.ToInt64(resultData.Skip(i).Take(8).ToArray()));
-                        DateTime dateLine = DateTime.FromOADate(x);
-                        double depth = (BitConverter.ToInt32(resultData.Skip(i + 8).Take(4).ToArray())) * 1.0 / 100;
-                        string activ = "неопр.";
-                        string push = "неопр.";
-                        switch (flag)
-                        {
-                            case 0:
-                                activ = "неактив";
-                                push = "отж";
-                                break;
-                            case 1:
-                                activ = "актив";
-                                push = "отж";
-                                break;
-                            case 2:
-                                activ = "неактив";
-                                push = "наж";
-                                break;
-                            case 3:
-                                activ = "актив";
-                                push = "наж";
-                                break;
-                            default:
-                                break;
-                        }
-                        string[] arr = new string[5] { dateLine.ToString("G"), dateLine.Millisecond.ToString(), depth.ToString(), activ, push };
-                        dtl.Data.Add(arr);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Ошибка чтения файла");
-                    ScrollStatusLasTextBox(ex.Message);
-                    return;
-                }
-
-                PercentLas = 60;
-                DataTable dt = new DataTable();
-
-                if (dtl.Data.Count == 0)
-                {
-                    MessageBox.Show("Возникла ошибка чтения файла");
-                    PercentLas = 0;
-                    return;
-                }
-
-                EditColAndFillTalbe(dtl, dt);
-                DataTable = dt;
-                PercentLas = 100;
-
-                ScrollStatusLasTextBox("Загрузка завершена");
-                StartTimeRead = DateTime.Parse(dt.Rows[0]["Дата"].ToString());
-                EndTimeRead = DateTime.Parse(dt.Rows[dt.Rows.Count - 1]["Дата"].ToString());
-                IsMoveTime = true;
-                PercentLas = 0;
-            }
-            IsOpenFile = true;
-            grLimit.IsEnabled = true;
-            // Процедура проверки одинаковых имен столбцов
-            // И заполнение табличных данных
-            void EditColAndFillTalbe(DepthTimeLas dtf, DataTable dt)
-            {
-                byte counterColumn = 1;
-
-                for (int i = 0; i < dtf.ColNames.Count; i++)
-                {
-                    string nameCol1 = dtf.ColNames[i];
-                    for (int j = i + 1; j < dtf.ColNames.Count - 1; j++)
-                    {
-                        string nameCol2 = dtf.ColNames[j];
-                        if (nameCol2 == nameCol1)
-                        {
-                            dtf.ColNames[j] = $"{dtf.ColNames[j].Trim()}{++counterColumn}";
-                        }
-                    }
-                    if (counterColumn != 1)
-                    {
-                        dtf.ColNames[i] = $"{dtf.ColNames[i].Trim()}1";
-                        counterColumn = 1;
-                    }
-                }
-
-                for (int i = 0; i < dtf.ColNames.Count; i++)
-                {
-                    DataColumn dataColumn = new DataColumn();
-                    dataColumn.ColumnName = dtf.ColNames[i].Trim();
-                    dt.Columns.Add(dataColumn);
-                }
-
-                if (dtf.Data.Count > 2)
-                {
-                    for (int i = 0; i < dtf.Data.Count; i++)
-                    {
-                        var rowTable = dt.NewRow();
-                        for (int j = 0; j < dtf.Data[i].Length; j++)
-                        {
-                            rowTable[j] = dtf.Data[i][j];
-                        }
-                        dt.Rows.Add(rowTable);
-                    }
+                    OpenGlubFileTxt(paths.ToList());
                 }
                 else
                 {
-                    ScrollStatusLasTextBox("Файл не содержит достаточное количество данных");
-                }
+                    OpenGlubFile(paths.ToList());
+                }                              
             }
 
+            if (MyCalibrFile != null) btnLasStart.IsEnabled = true;
         }
-        void btn_LoadDepthAndTime_Click2(object sender, RoutedEventArgs e)
-        {
-            GC.Collect();
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Файл глубина-время|*.txt";
-            openFileDialog.Title = "Выберите файл с глубиной и временем";
-            openFileDialog.Multiselect = true;         
+        //void btn_LoadDepthTimeFile_Click(object sender, RoutedEventArgs e)
+        //{
+        //    GC.Collect();
+        //    OpenFileDialog openFileDialog = new OpenFileDialog();
+        //    openFileDialog.Filter = "Файл глубина-время|*.txt";
+        //    openFileDialog.Title = "Выберите файл с глубиной и временем";
+        //    openFileDialog.Multiselect = true;         
                        
-            // выводим данные из файла на экран
-            if (openFileDialog.ShowDialog() == true)
+        //    // выводим данные из файла на экран
+        //    if (openFileDialog.ShowDialog() == true)
+        //    {
+        //        lblDepthFile.Text = "";                
+        //        var paths = openFileDialog.FileNames;
+        //        OpenGlubFileTxt(paths.ToList());                
+        //    }                               
+        //}
+
+        private void OpenGlubFileTxt(List<string> pathFiles)
+        {
+            lblDepthFile.Text = "";
+            dtl = new DepthTimeLas();
+
+            try
             {
-                lblDepthFile.Text = "";                
-                var paths = openFileDialog.FileNames;
-                ScrollStatusLasTextBox($"Загрузка файла началась: {openFileDialog.SafeFileName}");
-                dtl = new DepthTimeLas();                
-
-                try
+                foreach (var filePath in pathFiles)
                 {
-                    foreach (var filePath in paths)
-                    {
-                        bool isData = false;
+                    ScrollStatusLasTextBox($"Загрузка файла началась: {filePath}");
+                    bool isData = false;
 
-                        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-                        using (var reader = new StreamReader(filePath, Encoding.GetEncoding(1251)))
+                    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                    using (var reader = new StreamReader(filePath, Encoding.GetEncoding(1251)))
+                    {
+                        while (!reader.EndOfStream)
                         {
-                            while (!reader.EndOfStream)
+                            var row = reader.ReadLine();
+                            if (!string.IsNullOrEmpty(row))
                             {
-                                var row = reader.ReadLine();
-                                if (!string.IsNullOrEmpty(row))
+                                if (!isData)
                                 {
-                                    if (!isData)
+                                    if (row.Contains("Дата") && row.Contains("Время") && row.Contains("Забой") && row.Contains("|"))
                                     {
-                                        if (row.Contains("Дата") && row.Contains("Время") && row.Contains("Забой") && row.Contains("|"))
+                                        if (string.IsNullOrEmpty(dtl.Year))
                                         {
-                                            if (string.IsNullOrEmpty(dtl.Year))
+                                            break;
+                                        }
+                                        dtl.Separator = '|';
+                                        grLimit.IsEnabled = false;
+                                        dtl.LoadDepthFromZtkProg(row);
+                                        isData = true;
+                                        continue;
+                                    }
+                                    else if (row.Contains("дата") && row.Contains("время") && row.Contains("забой") && !row.Contains("|"))
+                                    {
+                                        dtl.Separator = ' ';
+                                        grLimit.IsEnabled = true;
+                                        dtl.LoadDepthFromGlub(row);
+                                        isData = true;
+                                        continue;
+                                    }
+                                    // ищем год по выражению
+                                    else if (row.ToLower().Contains("данные с"))
+                                    {
+                                        string[] arrayDate = row.Split();
+                                        foreach (string date in arrayDate)
+                                        {
+                                            if (DateTime.TryParse(date, out DateTime result))
                                             {
+                                                dtl.Year = result.Year.ToString();
                                                 break;
                                             }
-                                            dtl.Separator = '|';
-                                            grLimit.IsEnabled = false;
-                                            dtl.LoadDepthFromZtkProg(row);
-                                            isData = true;
-                                            continue;
-                                        }
-                                        else if (row.Contains("дата") && row.Contains("время") && row.Contains("забой") && !row.Contains("|"))
-                                        {
-                                            dtl.Separator = ' ';
-                                            grLimit.IsEnabled = true;
-                                            dtl.LoadDepthFromGlub(row);
-                                            isData = true;
-                                            continue;
-                                        }
-                                        // ищем год по выражению
-                                        else if (row.ToLower().Contains("данные с"))
-                                        {
-                                            string[] arrayDate = row.Split();
-                                            foreach (string date in arrayDate)
-                                            {
-                                                if (DateTime.TryParse(date, out DateTime result))
-                                                {
-                                                    dtl.Year = result.Year.ToString();
-                                                    break;
-                                                }
-                                            }
                                         }
                                     }
-                                    // записываем табличные данные
-                                    else
-                                    {
-                                        dtl.addData.Invoke(row);
-                                    }
+                                }
+                                // записываем табличные данные
+                                else
+                                {
+                                    dtl.addData.Invoke(row);
                                 }
                             }
                         }
-                        var pathFile = filePath.Split("\\");
-                        lblDepthFile.Text += pathFile[pathFile.Length - 1] + "\n";
                     }
-                    
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Ошибка чтения файла");
-                    ScrollStatusLasTextBox(ex.Message);
+                    var pathFile = filePath.Split("\\");
+                    lblDepthFile.Text += pathFile[pathFile.Length - 1] + "\n";
                 }
 
-                PercentLas = 60;
-                DataTable dt = new DataTable();
-
-                if (dtl.Data.Count == 0)
-                {
-                    MessageBox.Show("Возникла ошибка чтения файла");
-                    PercentLas = 0;
-                    return;
-                }
-
-                EditColAndFillTalbe(dtl, dt);
-                DataTable = dt;
-                PercentLas = 100;
-
-                ScrollStatusLasTextBox("Загрузка завершена");
-                StartTimeRead = DateTime.Parse(dt.Rows[0]["Дата"].ToString());
-                EndTimeRead = DateTime.Parse(dt.Rows[dt.Rows.Count - 1]["Дата"].ToString());
-                IsMoveTime = true;
-                PercentLas = 0;
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка чтения файла");
+                ScrollStatusLasTextBox(ex.Message);
+            }
+
+            PercentLas = 60;
+            DataTable dt = new DataTable();
+
+            if (dtl.Data.Count == 0)
+            {
+                MessageBox.Show("Возникла ошибка чтения файла");
+                PercentLas = 0;
+                return;
+            }
+
+            EditColAndFillTalbe(dtl, dt);
+            DataTable = dt;
+            PercentLas = 100;
+
+            ScrollStatusLasTextBox("Загрузка завершена");
+            StartTimeRead = DateTime.Parse(dt.Rows[0]["Дата"].ToString());
+            EndTimeRead = DateTime.Parse(dt.Rows[dt.Rows.Count - 1]["Дата"].ToString());
+            IsMoveTime = true;
+            PercentLas = 0;            
             IsOpenFile = true;
+        }
 
-            // Процедура проверки одинаковых имен столбцов
-            // И заполнение табличных данных
-            void EditColAndFillTalbe(DepthTimeLas dtf, DataTable dt)
-            {                
-                byte counterColumn = 1;
+        // Процедура проверки одинаковых имен столбцов
+        // И заполнение табличных данных
+        private void EditColAndFillTalbe(DepthTimeLas dtf, DataTable dt)
+        {
+            byte counterColumn = 1;
 
-                for (int i = 0; i < dtf.ColNames.Count; i++)
+            for (int i = 0; i < dtf.ColNames.Count; i++)
+            {
+                string nameCol1 = dtf.ColNames[i];
+                for (int j = i + 1; j < dtf.ColNames.Count - 1; j++)
                 {
-                    string nameCol1 = dtf.ColNames[i];
-                    for (int j = i + 1; j < dtf.ColNames.Count - 1; j++)
+                    string nameCol2 = dtf.ColNames[j];
+                    if (nameCol2 == nameCol1)
                     {
-                        string nameCol2 = dtf.ColNames[j];
-                        if (nameCol2 == nameCol1)
+                        dtf.ColNames[j] = $"{dtf.ColNames[j].Trim()}{++counterColumn}";
+                    }
+                }
+                if (counterColumn != 1)
+                {
+                    dtf.ColNames[i] = $"{dtf.ColNames[i].Trim()}1";
+                    counterColumn = 1;
+                }
+            }
+
+            for (int i = 0; i < dtf.ColNames.Count; i++)
+            {
+                DataColumn dataColumn = new DataColumn();
+                dataColumn.ColumnName = dtf.ColNames[i].Trim();
+                dt.Columns.Add(dataColumn);
+            }
+
+            if (dtf.Data.Count > 2)
+            {
+                for (int i = 0; i < dtf.Data.Count; i++)
+                {
+                    var rowTable = dt.NewRow();
+                    for (int j = 0; j < dtf.Data[i].Length; j++)
+                    {
+                        if (j == 2)
                         {
-                            dtf.ColNames[j] = $"{dtf.ColNames[j].Trim()}{++counterColumn}";
+                            dtf.Data[i][j] = dtf.Data[i][j].Replace('.', ',');
+                            rowTable[j] = dtf.Data[i][j];
                         }
-                    }
-                    if (counterColumn != 1)
-                    {
-                        dtf.ColNames[i] = $"{dtf.ColNames[i].Trim()}1";
-                        counterColumn = 1;
-                    }
-                }
-
-                for (int i = 0; i < dtf.ColNames.Count; i++)
-                {
-                    DataColumn dataColumn = new DataColumn();
-                    dataColumn.ColumnName = dtf.ColNames[i].Trim();
-                    dt.Columns.Add(dataColumn);
-                }
-
-                if (dtf.Data.Count > 2)
-                {
-                    for (int i = 0; i < dtf.Data.Count; i++)
-                    {
-                        var rowTable = dt.NewRow();
-                        for (int j = 0; j < dtf.Data[i].Length; j++)
+                        else
                         {
                             rowTable[j] = dtf.Data[i][j];
                         }
-                        dt.Rows.Add(rowTable);
                     }
+                    dt.Rows.Add(rowTable);
                 }
-                else
-                {
-                    ScrollStatusLasTextBox("Файл не содержит достаточное количество данных");
-                }
+            }
+            else
+            {
+                ScrollStatusLasTextBox("Файл не содержит достаточное количество данных");
             }
         }
 
@@ -1577,8 +1532,7 @@ namespace FlashView2
             }
         }
                      
-
-       // кнопка обновить данные таблицы
+       // кнопка обновить данные таблицы (сдвиг по времени)
         private void btn_UpdateCurrentData_Click(object sender, RoutedEventArgs e)
         {
             int posTime = -1;
@@ -1693,8 +1647,7 @@ namespace FlashView2
 
                 if (IsOpenCalibFile)
                 {
-                    btnLasStart.IsEnabled = true;
-                    //txtBoxShift.IsEnabled = true;
+                    btnLasStart.IsEnabled = true;                   
                 }
             }
             else
@@ -1703,7 +1656,188 @@ namespace FlashView2
             }
 
         }
-              
+        
+        //private void OpenCalibFile(string path)
+        //{
+        //    List<string> FileColibrData = new List<string>();        
+        //    try
+        //    {
+        //        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        //        // надо переделать выбор калибровочного файла                    
+        //        using (var reader = new StreamReader(path, Encoding.GetEncoding(1251)))
+        //        {
+        //            while (!reader.EndOfStream)
+        //            {
+        //                string line = reader.ReadLine();
+        //                if (!string.IsNullOrEmpty(line))
+        //                {                           
+        //                    FileColibrData.Add(line);                            
+        //                }
+        //            }
+        //        }
+        //        MyCalibrFile = new CalibrFile();
+        //        bool isSupportedVers = MyCalibrFile.CheckCalibrVers(FileColibrData);
+        //        if (!isSupportedVers)
+        //        {
+        //            MessageBox.Show("Текущий калибровочный файл не поддерживается");
+        //            ScrollStatusLasTextBox("Невозможно обработать текущий конфигурационный файл");
+        //            return;
+        //        }
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        StatusLasMenu += $"{DateTime.Now}: {ex.Message}\n";
+        //        return;
+        //    }
+        //    ScrollStatusLasTextBox($"Калибровочный файл {path} успешно считан");
+        //    lblCalibrFile.Text = path;
+        //    IsOpenCalibFile = true;
+
+        //    if (IsOpenCalibFile)
+        //    {
+        //        btnLasStart.IsEnabled = true;
+        //    }
+        //}
+
+        private void OpenGlubFile(List<string> pathsFiles)
+        {
+            GC.Collect();
+            lblDepthFile.Text = "";
+            dtl = new DepthTimeLas();
+            dtl.FillStandColumn();
+            List<byte> resultData = new List<byte>();
+            try
+            {
+                foreach (var filePath in pathsFiles)
+                {
+                    ScrollStatusLasTextBox($"Загрузка файла началась: {filePath}");
+                    resultData.AddRange(File.ReadAllBytes(filePath).Skip(256));
+                    var pathFile = filePath.Split("\\");
+                    lblDepthFile.Text += pathFile[pathFile.Length - 1] + "\n";
+                }
+
+                for (int i = 0; i < resultData.Count; i = i + 16) // 16 байт в одной строке
+                {
+                    int flag = BitConverter.ToInt16(resultData.Skip(i + 12).Take(2).ToArray());
+                    double x = BitConverter.Int64BitsToDouble(BitConverter.ToInt64(resultData.Skip(i).Take(8).ToArray()));
+                    DateTime dateLine = DateTime.FromOADate(x);
+                    double depth = (BitConverter.ToInt32(resultData.Skip(i + 8).Take(4).ToArray())) * 1.0 / 100;
+                    string activ = "неопр.";
+                    string push = "неопр.";
+                    switch (flag)
+                    {
+                        case 0:
+                            activ = "неакт.";
+                            push = "отж.";
+                            break;
+                        case 1:
+                            activ = "акт.";
+                            push = "отж.";
+                            break;
+                        case 2:
+                            activ = "неакт.";
+                            push = "наж.";
+                            break;
+                        case 3:
+                            activ = "акт.";
+                            push = "наж.";
+                            break;
+                        default:
+                            break;
+                    }
+                    string[] arr = new string[5] { dateLine.ToString("G"), dateLine.Millisecond.ToString(), depth.ToString(), activ, push };
+                    dtl.Data.Add(arr);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка чтения файла");
+                ScrollStatusLasTextBox(ex.Message);
+                return;
+            }
+
+            PercentLas = 60;
+            DataTable dt = new DataTable();
+
+            if (dtl.Data.Count == 0)
+            {
+                MessageBox.Show("Возникла ошибка чтения файла");
+                PercentLas = 0;
+                return;
+            }
+
+            EditColAndFillTalbe(dtl, dt);
+            DataTable = dt;
+            PercentLas = 100;
+
+            ScrollStatusLasTextBox("Загрузка завершена");
+            StartTimeRead = DateTime.Parse(dt.Rows[0]["Дата"].ToString());
+            EndTimeRead = DateTime.Parse(dt.Rows[dt.Rows.Count - 1]["Дата"].ToString());
+            IsMoveTime = true;
+            PercentLas = 0;         
+
+            IsOpenFile = true;
+            grLimit.IsEnabled = true;
+
+            // Процедура проверки одинаковых имен столбцов
+            // И заполнение табличных данных
+            //void EditColAndFillTalbe(DepthTimeLas dtf, DataTable dt)
+            //{
+            //    byte counterColumn = 1;
+
+            //    for (int i = 0; i < dtf.ColNames.Count; i++)
+            //    {
+            //        string nameCol1 = dtf.ColNames[i];
+            //        for (int j = i + 1; j < dtf.ColNames.Count - 1; j++)
+            //        {
+            //            string nameCol2 = dtf.ColNames[j];
+            //            if (nameCol2 == nameCol1)
+            //            {
+            //                dtf.ColNames[j] = $"{dtf.ColNames[j].Trim()}{++counterColumn}";
+            //            }
+            //        }
+            //        if (counterColumn != 1)
+            //        {
+            //            dtf.ColNames[i] = $"{dtf.ColNames[i].Trim()}1";
+            //            counterColumn = 1;
+            //        }
+            //    }
+
+            //    for (int i = 0; i < dtf.ColNames.Count; i++)
+            //    {
+            //        DataColumn dataColumn = new DataColumn();
+            //        dataColumn.ColumnName = dtf.ColNames[i].Trim();
+            //        dt.Columns.Add(dataColumn);
+            //    }
+
+            //    if (dtf.Data.Count > 2)
+            //    {
+            //        for (int i = 0; i < dtf.Data.Count; i++)
+            //        {
+            //            var rowTable = dt.NewRow();
+            //            for (int j = 0; j < dtf.Data[i].Length; j++)
+            //            {
+            //                if (j == 2)
+            //                {
+            //                    dtf.Data[i][j] = dtf.Data[i][j].Replace('.', ',');
+            //                    rowTable[j] = dtf.Data[i][j];
+            //                }
+            //                else
+            //                {
+            //                    rowTable[j] = dtf.Data[i][j];
+            //                }
+            //            }
+            //            dt.Rows.Add(rowTable);
+            //        }
+            //    }
+            //    else
+            //    {
+            //        ScrollStatusLasTextBox("Файл не содержит достаточное количество данных");
+            //    }
+            //}
+
+        }
         private void OnClosing(object sender, CancelEventArgs e)
         {
             Owner.Activate();

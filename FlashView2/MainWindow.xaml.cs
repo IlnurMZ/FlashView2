@@ -32,7 +32,7 @@ using System.Collections.ObjectModel;
 using FlashView2;
 using FlashView2.Model;
 using DocumentFormat.OpenXml.Vml;
-using FlashZTK_I;
+using FlashView2;
 using DocumentFormat.OpenXml.Office2013.Drawing.ChartStyle;
 
 namespace FlashView2
@@ -56,6 +56,20 @@ namespace FlashView2
             }
         }
 
+        CalibrFile calibrFile;
+        public CalibrFile MyCalibrFile
+        {
+            get
+            {
+                return calibrFile;
+            }
+            set
+            {
+                calibrFile = value;
+                OnPropertyChanged("MyCalibrFile");
+            }
+        }
+
         private bool isLasFile;
         public bool IsLasFile
         {
@@ -69,9 +83,23 @@ namespace FlashView2
                 OnPropertyChanged("IsLasFile");
             }
         }
-              
-        private int percent; // проценты загрузки для прогресбара
-        public int Percent
+
+        //private bool isAddCol;
+        //public bool IsAddCol
+        //{
+        //    get
+        //    {
+        //        return isAddCol;
+        //    }
+        //    set
+        //    {
+        //        isAddCol = value;
+        //        OnPropertyChanged("IsAddCol");
+        //    }
+        //}
+
+        private byte percent; // проценты загрузки для прогресбара
+        public byte Percent
         {
             get
             {
@@ -96,7 +124,10 @@ namespace FlashView2
                 dataTable = value;
                 OnPropertyChanged("DataTable");
             }
-        }        
+        }
+
+        public List<string> DepthPathFiles { get; private set; }
+
         LasMenuForm _lasMenuForm;
 
         List<(DateTime?, DateTime?)> periods;
@@ -147,11 +178,11 @@ namespace FlashView2
 
                 // пропускаем значение неопределенности
                 mainPacket.TypeCalculate.Add(list[5]);
-                double[] data = new double[4];
+                float[] data = new float[4];
 
                 for (int j = 6; j <= 9; j++)
                     {
-                        bool isParseDouble = double.TryParse(list[j], NumberStyles.Any, CultureInfo.InvariantCulture, out double value);
+                        bool isParseDouble = float.TryParse(list[j], NumberStyles.Any, CultureInfo.InvariantCulture, out float value);
                         if (!isParseDouble)
                         {                            
                             MessageBox.Show("Ошибка парсинга чисел для пересчета данного");                            
@@ -199,7 +230,7 @@ namespace FlashView2
         private void menuButtonFormLas_Click(object sender, RoutedEventArgs e)
         {           
             GC.Collect();
-            _lasMenuForm = new LasMenuForm(dataTable);
+            _lasMenuForm = new LasMenuForm(dataTable, MyCalibrFile, DepthPathFiles);
             _lasMenuForm.Owner = this;
             _lasMenuForm.Show();            
         }
@@ -240,15 +271,7 @@ namespace FlashView2
             DepthTimeFlash? saveDTF = null;
             myTable.Columns.Add("N");            
             foreach (var item in mainPacket.HeaderColumns)
-            {
-                //string[] splitHeader = item.Split('_');                
-                //if (splitHeader.Length == 2)
-                //{
-                //    //string s = splitHeader[0] + "\n" + splitHeader[1];
-                //    myTable.Columns.Add((splitHeader[0]  + "\n" + splitHeader[1]), typeof(string));
-                //}
-                //else
-                //{
+            {               
                 if (item == "Дата")
                 {                   
                     myTable.Columns.Add(item, typeof(DateTime), "");                   
@@ -379,7 +402,7 @@ namespace FlashView2
                 DateTime dtFlash = DateTime.Parse(data);
                 TimeSpan timeSpan = TimeSpan.FromSeconds(1);
                 int NAdepth = -999;
-                int NAstatus = -1;
+                short NAstatus = -1;
                 // находим актуальный лист с данными
                 if (Depth.Count > 0)
                 {
@@ -947,6 +970,7 @@ namespace FlashView2
                 {
                     try
                     {
+                        DepthPathFiles = newFlashWindow.DepthPath.ToList();
                         DepthData = OpenDepthFiles(newFlashWindow.DepthPath.ToList());                        
                     }
                     catch (Exception ex)
@@ -960,7 +984,7 @@ namespace FlashView2
 
                 try
                 {
-                    FlashFile = File.ReadAllBytes(newFlashWindow.FlashPath).Skip(384).ToArray();
+                    FlashFile = File.ReadAllBytes(newFlashWindow.FlashPath).Skip(384).ToArray();                    
                     ScrollStatusTextBox($"{newFlashWindow.FlashPath} данные flash считаны успешно");
                     mainPacket = new Packet();
                     dataConfig = FillDateConf(FlashFile, mainPacket);
@@ -974,11 +998,7 @@ namespace FlashView2
                     MessageBox.Show("В ходе обработки данных произошла ошибка");
                     return;
                 }                               
-            }
-
-            
-
-            
+            }            
         }
 
         List<List<string>> FillDateConf(byte[]? FlashFile, Packet mainPacket)
@@ -1101,6 +1121,65 @@ namespace FlashView2
         private void btnResetFilter_Click(object sender, RoutedEventArgs e)
         {
             DataTable.DefaultView.RowFilter = "";
+        }
+
+        private void btnSetting_Click(object sender, RoutedEventArgs e)
+        {
+            if (MyCalibrFile == null) MyCalibrFile = new CalibrFile();
+            var settingWindow = new SettingWindow(MyCalibrFile);
+            settingWindow.Owner = this;
+            settingWindow.ShowDialog();
+            MyCalibrFile = settingWindow.MyCalibrFile;
+            if (MyCalibrFile.IsAddColum)
+            {
+                if (!DataTable.Columns.Contains("Коэф_пористости"))
+                {
+                    DataTable.Columns.Add("Коэф_пористости");
+                    datagrid1.ItemsSource = null;
+                    datagrid1.ItemsSource = DataTable.DefaultView;
+                }                     
+                
+                if (MyCalibrFile.IsChangedCalc)
+                {
+                    var choisedCoef = MyCalibrFile.CoefsCalibr[MyCalibrFile.CurrentChoise];
+                    for (int i = 0; i < DataTable.Rows.Count; i++)
+                    {
+                        DataRow row = DataTable.Rows[i];
+                        // вычисляем МЗ и БЗ и находим КП
+                        double KP1 = 0;
+                        double mz = double.Parse(row["ННК1/_ННК1(вода)"].ToString()) / 333.0;
+                        double bz = double.Parse(row["ННК2/_ННК2(вода)"].ToString()) / 33.0;
+
+                        if (bz != 0)
+                        {
+                            double x = mz / bz;
+                            if (choisedCoef.Length == 2)
+                            {
+                                KP1 = choisedCoef[0] * x + choisedCoef[1];
+                            }
+                            else if (choisedCoef.Length == 3)
+                            {
+                                KP1 = choisedCoef[0] * x * x + choisedCoef[1] * x + choisedCoef[2];
+                            }
+
+                            DataTable.Rows[i]["Коэф_пористости"] = Math.Round(KP1, 2);
+                        }
+                        else
+                        {
+                            DataTable.Rows[i]["Коэф_пористости"] = -999;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (DataTable.Columns.Contains("Коэф_пористости"))
+                {
+                    DataTable.Columns.Remove("Коэф_пористости");
+                    datagrid1.ItemsSource = null;
+                    datagrid1.ItemsSource = DataTable.DefaultView;
+                }
+            }
         }
     }
 }

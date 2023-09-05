@@ -21,6 +21,7 @@
     <None Remove="Icons\Flash.ico" />
     <None Remove="Icons\OpenDepthFile.png" />
     <None Remove="Icons\SeachData2.png" />
+    <None Remove="Icons\Setting.png" />
     <None Remove="Icons\Shift Time.png" />
     <None Remove="Icons\Time2.png" />
     <None Remove="Icons\UpdateData.png" />
@@ -89,6 +90,7 @@
     <Resource Include="Icons\OpenDepthFile.png" />
     <Resource Include="Icons\Save As.png" />
     <Resource Include="Icons\SeachData2.png" />
+    <Resource Include="Icons\Setting.png" />
     <Resource Include="Icons\Shift Time.png" />
     <Resource Include="Icons\Time2.png" />
     <Resource Include="Icons\UpdateData.png" />

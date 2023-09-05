@@ -94,7 +94,7 @@ namespace FlashView2
                 StatusMainWindow += "Загрузка завершена!";
             });           
         }
-        string CalculateValueByType(string typeCalc, string value, double[] data) // по типу вычисления выдаем результат
+        string CalculateValueByType(string typeCalc, string value, float[] data) // по типу вычисления выдаем результат
         {
             string result = "";
             switch (typeCalc) // смотрим тип вычисления
@@ -165,8 +165,7 @@ namespace FlashView2
             hour = dateTime[4].ToString() + dateTime[5].ToString();
             day = dateTime[6].ToString() + dateTime[7].ToString();
             month = dateTime[8].ToString() + dateTime[9].ToString();
-            year = dateTime[10].ToString() + dateTime[11].ToString();
-            //date = new DateTime(year, month, day, hour, minute, second);
+            year = dateTime[10].ToString() + dateTime[11].ToString();            
             date = $"{hour}:{minute}:{second} {day}.{month}.{year}";
             if (!DateTime.TryParse(date, out DateTime timeTest))
             {

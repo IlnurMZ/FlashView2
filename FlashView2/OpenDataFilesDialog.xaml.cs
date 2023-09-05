@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -14,6 +15,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using FlashView2.Model;
 using Microsoft.Win32;
 
 namespace FlashView2
@@ -23,6 +25,20 @@ namespace FlashView2
     /// </summary>
     public partial class OpenDataFilesDialog : Window, INotifyPropertyChanged
     {
+        //CalibrFile calibrFile;
+        //public CalibrFile MyCalibrFile
+        //{
+        //    get
+        //    {
+        //        return calibrFile;
+        //    }
+        //    set
+        //    {
+        //        calibrFile = value;
+        //        OnPropertyChanged("MyCalibrFile");
+        //    }
+        //}
+
         string? flashPath;
         public string? FlashPath
         {
@@ -55,6 +71,7 @@ namespace FlashView2
             }
         }
 
+        //кнопка открытия флеш файла
         private void btnOpenFlashFile_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -67,13 +84,12 @@ namespace FlashView2
             }            
         }
 
+        // кнопка открытия файла с глубиной
         private void btnOpenDepthFile_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            //openFileDialog.Filter = "Файл глубина-время";
+            OpenFileDialog openFileDialog = new OpenFileDialog();           
             openFileDialog.Title = "Выберите файл с глубиной и временем";
-            openFileDialog.Multiselect = true;
-            //openFileDialog.Title = "Выберите flash-файл с данными";           
+            openFileDialog.Multiselect = true;                     
             
             if (openFileDialog.ShowDialog() == true)
             {
@@ -87,6 +103,7 @@ namespace FlashView2
             }
         }
 
+        // кнопка удаления файла с глубиной
         private void btnDeletDepthFile_Click(object sender, RoutedEventArgs e)
         {
             if (listDepthFiles.SelectedItem == null) return;
@@ -116,5 +133,46 @@ namespace FlashView2
                 Close();
             }            
         }
+
+        //private void btnOpenCalibrFile_Click(object sender, RoutedEventArgs e)
+        //{
+        //    List<string> FileColibrData = new List<string>();
+        //    OpenFileDialog openCalibrFile = new OpenFileDialog();
+        //    openCalibrFile.Filter = "Калибровочный файл|*.nk";
+        //    openCalibrFile.Title = "Выберите подходящий калибровочный файл";
+        //    // считываем данные из калибровочного файла
+        //    if (openCalibrFile.ShowDialog() == true)
+        //    {
+        //        try
+        //        {
+        //            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        //            // надо переделать выбор калибровочного файла                    
+        //            using (var reader = new StreamReader(openCalibrFile.FileName, Encoding.GetEncoding(1251)))
+        //            {
+        //                while (!reader.EndOfStream)
+        //                {
+        //                    string line = reader.ReadLine();
+        //                    if (!string.IsNullOrEmpty(line))
+        //                    {                             
+        //                        FileColibrData.Add(line);                               
+        //                    }
+        //                }
+        //            }
+        //            MyCalibrFile = new CalibrFile();
+        //            bool isSupportedVers = MyCalibrFile.CheckCalibrVers(FileColibrData);
+        //            if (!isSupportedVers)
+        //            {
+        //                MessageBox.Show("Текущий калибровочный файл не поддерживается");                        
+        //                return;
+        //            }
+        //        }
+        //        catch
+        //        {
+        //            MessageBox.Show($"Произошла ошибка чтения файла");                    
+        //            return;
+        //        }                
+        //        txtBlCalibr.Text = openCalibrFile.FileName;                
+        //    }            
+        //}
     }
 }

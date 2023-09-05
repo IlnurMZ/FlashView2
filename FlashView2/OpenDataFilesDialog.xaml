@@ -10,7 +10,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="70"/>
-            <RowDefinition Height="140"/>
+            <RowDefinition Height="140"/>            
             <RowDefinition/>
         </Grid.RowDefinitions>
 
@@ -18,14 +18,16 @@
             <ColumnDefinition Width="120"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Button x:Name="btnOpenFlashFile" Content="Добавить файл&#x0a;       flash" Margin="5" Height="35" VerticalAlignment="Top"
+        <Button x:Name="btnOpenFlashFile" Content="Добавить файл&#x0a;       flash" Margin="5" Height="40" VerticalAlignment="Top"
                 Click="btnOpenFlashFile_Click" />
         <TextBox x:Name="txtBlFlash" Grid.Column="1" Margin="5" VerticalAlignment="Top" Height="50" Text="{Binding FlashPath, UpdateSourceTrigger=PropertyChanged}" 
                 HorizontalScrollBarVisibility="Auto" IsReadOnly="True"/>
 
         <StackPanel Orientation="Vertical" Grid.Column="0" Grid.Row="1">
-            <Button x:Name="btnOpenDepthFile" Content="Добавить файл&#x0a;  с глубиной" Height="40" Margin="5" VerticalAlignment="top" Click="btnOpenDepthFile_Click" />
-            <Button x:Name="btnDeletDepthFile" Content="Удалить файл&#x0a;  с глубиной" Height="40" Margin="5" VerticalAlignment="top" Click="btnDeletDepthFile_Click" />
+            <Button x:Name="btnOpenDepthFile" Content="Добавить файл&#x0a;  с глубиной" Height="40" Margin="5" VerticalAlignment="top" 
+                    Click="btnOpenDepthFile_Click" />
+            <Button x:Name="btnDeletDepthFile" Content="Удалить файл&#x0a;  с глубиной" Height="40" Margin="5" VerticalAlignment="top" 
+                    Click="btnDeletDepthFile_Click" />
         </StackPanel>
         <ListBox x:Name="listDepthFiles" Grid.Column="1" Grid.Row="1" Margin="5" ItemsSource="{Binding DepthPath}" />
 

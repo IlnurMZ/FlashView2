@@ -16,7 +16,7 @@ using DocumentFormat.OpenXml.Drawing.Charts;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace FlashZTK_I
+namespace FlashView2
 {
     /// <summary>
     /// Interaction logic for FIlter.xaml
@@ -110,11 +110,11 @@ namespace FlashZTK_I
             {
                 if (string.IsNullOrEmpty(sqlQuerry))
                 {
-                    sqlQuerry += " AND СОСТОЯНИЕ = 3";
+                    sqlQuerry += "СОСТОЯНИЕ = 3";                    
                 }
                 else
                 {
-                    sqlQuerry += "СОСТОЯНИЕ = 3";
+                    sqlQuerry += " AND СОСТОЯНИЕ = 3";
                 }
             }
             

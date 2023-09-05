@@ -7,7 +7,9 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
         Title="FlashZTK_I: LAS" 
-        Height="920" Width="870" 
+        Height="765" 
+        Width="870"
+    
         WindowStartupLocation="CenterScreen" Background="#FFA2A1A1" Closing="OnClosing" >
     <Window.Resources>
         <Style x:Key="CenterGridHeaderStyle" TargetType="DataGridColumnHeader">
@@ -76,8 +78,7 @@
                     <Setter Property="IsEnabled" Value="False"/>                    
                 </DataTrigger>
             </Style.Triggers>
-        </Style>     
-        
+        </Style>             
         
     </Window.Resources>
     <TabControl Name="tabCtrlLas" Background="#FFA2A1A1">
@@ -89,21 +90,21 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="90"/>
-                        <RowDefinition Height="315"/>
-                        <RowDefinition Height="134"/>
-                        <RowDefinition Height="230"/>
+                        <RowDefinition Height="70"/>
+                        <RowDefinition Height="275"/>
+                        <RowDefinition Height="120"/>
+                        <RowDefinition Height="160"/>
                         <RowDefinition/>
                         <RowDefinition Height="85"/>
                     </Grid.RowDefinitions>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.ColumnSpan="2" Height="90" Width="827">
-                        <Button x:Name="btn_LoadDepthAndTime" Click="btn_LoadDepthAndTime_Click2" 
+                        <Button x:Name="btn_LoadDepthAndTime" Click="btn_LoadDepthTimeFile_Click" 
                                 Width="100" Height="70" Margin="10,2,2,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
                             <Button.Content>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                                     <Image Source="/Icons/File.png" Height="30"/>
-                                    <Label Content="Открыть файл&#x0a;в формате txt" />
+                                    <Label Content=" Открыть файл&#x0a;глубина-время" />
                                 </StackPanel>
                             </Button.Content>
                             <Button.ToolTip>
@@ -113,7 +114,7 @@
                             </Button.ToolTip>
                         </Button>
 
-                        <Button x:Name="btn_LoadGlubDate" Click="btn_LoadGlubDate_Click" 
+                        <!--<Button x:Name="btn_LoadGlubDate" Click="btn_LoadGlubFile_Click" 
                                 Width="100" Height="70" Margin="10,2,2,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1">
                             <Button.Content>
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
@@ -126,7 +127,7 @@
                                     Открыть файл с глубиной
                                 </ToolTip>
                             </Button.ToolTip>
-                        </Button>
+                        </Button>-->
 
                         <Button x:Name="btn_OpenCalibrFile" Click="btn_OpenCalibrFile_Click"  IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}"
                                 Width="100" Height="70" Margin="5,2,2,2" 
@@ -143,7 +144,18 @@
                                 </ToolTip>
                             </Button.ToolTip>
                         </Button>
-                        
+
+                        <Button x:Name="btnLasStart" Click="Button_FormLasClick"  IsEnabled="False"
+                                Width="100" Height="70" Margin="5,2,2,2" 
+                                Background="#FFA2A1A1" BorderBrush="#FFA2A1A1" Style="{StaticResource ButtonStyle1}">
+                            <Button.Content>
+                                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                                    <Image Source="/Icons/Form LAS.png" Height="30"/>
+                                    <Label Content="Сформировать&#x0a;          LAS" />
+                                </StackPanel>
+                            </Button.Content>
+                           
+                        </Button>
 
                         <Button x:Name="btn_HeadLasWrite" Click="btn_HeadLasWrite_Click"  IsEnabled="{Binding IsOpenCalibFile, UpdateSourceTrigger=PropertyChanged}"
                                 Width="80" Height="70" Margin="5,2,5,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
@@ -176,10 +188,10 @@
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical">
-                        <StackPanel Orientation="Horizontal" Margin="0,5,0,8">
+                        <!--<StackPanel Orientation="Horizontal" Margin="0,5,0,8">
                             <Label Content="NULL значение" Margin="10,0,5,5"/>
                             <TextBox Name="txtBoxNULL" Width="95" Text="-999,99" Margin="35,5,5,5" Height="20" HorizontalContentAlignment="Center"/>
-                        </StackPanel>
+                        </StackPanel>-->
 
                         <!--<StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                             <Label Content="Расстояние от долота&#x0a;до датчика" Margin="10,0,5,5" />
@@ -187,7 +199,7 @@
                                      IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>-->
 
-                        <GroupBox Padding="5" Width="250" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <GroupBox Padding="5" Width="250" Margin="0,5,0,0" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <GroupBox.Header>
                                 <StackPanel Orientation="Horizontal">
                                     <Image Source="/Icons/SeachData2.png" Height="20" Margin="5,0,5,0" />
@@ -238,15 +250,15 @@
                                           DataContext="{Binding MyCalibrFile}" ItemsSource="{Binding Path=SpisokTrub, UpdateSourceTrigger=PropertyChanged}"
                                           SelectedIndex="0" >                                   
                                 </ComboBox>
-                                <GroupBox Header="Расчет Кп" Margin="15,15,0,0" Padding="5" Width="220" HorizontalAlignment="Left">
+                                <GroupBox Header="Расчет Кп" Margin="15,5,0,0" Padding="5" Width="220" HorizontalAlignment="Left">
                                     <StackPanel>
                                         <RadioButton Name="rb1_Lin" IsChecked="{Binding isLineCalc, Mode=TwoWay}" Margin="5">По линейной зависимости</RadioButton>
-                                        <RadioButton Name="rb2_Kvad" Margin="5">По квадратичной зависимости</RadioButton>
+                                        <RadioButton Name="rb2_Kvad" Margin="5,5,0,0">По квадратичной зависимости</RadioButton>
                                     </StackPanel>
                                 </GroupBox>
                             </StackPanel>
                         </GroupBox>                        
-                        <Button Name="btnLasStart" Click="Button_FormLasClick" Height="40" Margin="5"
+                        <!--<Button Name="btnLasStart" Click="Button_FormLasClick" Height="40" Margin="5"
                                 Style="{StaticResource ButtonStyle1}" VerticalContentAlignment="Center"
                                 IsEnabled="False">
                             <Button.Content>
@@ -255,10 +267,10 @@
                                     <Label Content="Сформировать LAS" HorizontalContentAlignment="Center" />
                                 </StackPanel>
                             </Button.Content>
-                        </Button>
+                        </Button>-->
                     </StackPanel>
                     <StackPanel Orientation="Vertical" Grid.Row="2">
-                        <GroupBox Height="120" Width="250" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <GroupBox Height="110" Width="250" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <GroupBox.Header>
                                 <StackPanel Orientation="Horizontal">
                                     <Image Source="/Icons/Shift Time.png" Height="20" Margin="5,0,0,0"/>
@@ -270,16 +282,16 @@
                                 <StackPanel Orientation="Vertical">
                                     <RadioButton Name="rb1_Sdvig" Margin="5" Content="Вперед" IsChecked="{Binding IsMoveTimeUp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                     <RadioButton Name="rb2_Sdvig" Margin="5" Content="Назад"/>
-                                    <xctk:TimePicker Format="LongTime" Width="100" HorizontalAlignment="Left" Margin="5" Text="{Binding ShiftTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <xctk:TimePicker Format="LongTime" Width="100" HorizontalAlignment="Left" Margin="5,5,0,0" Text="{Binding ShiftTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 
                                 <Button x:Name="btn_UpdateCurrentData" Click="btn_UpdateCurrentData_Click" IsEnabled="{Binding IsOpenFile, UpdateSourceTrigger=PropertyChanged}"
-                                Width="100" Height="70" Margin="5,0,2,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
+                                Width="115" Height="70" Margin="7,0,2,2" Background="#FFA2A1A1" BorderBrush="#FFA2A1A1"
                                 Style="{StaticResource ButtonStyle1}">
                                     <Button.Content>
                                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                                             <Image Source="/Icons/UpdateData.png" Height="30"/>
-                                            <Label Content="Обновить&#x0a; таблицу" />
+                                            <Label Content="Обновить таблицу" />
                                         </StackPanel>
                                     </Button.Content>
                                 </Button>
@@ -313,7 +325,7 @@
                                          IsReadOnly="True"/>
                             </StatusBarItem>
                             <Separator Grid.Column="1" />
-                            <StatusBarItem Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,10,0,0">
+                            <StatusBarItem Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,0,0,0">
                                 <ProgressBar Name="progBarLas" Width="90" Height="20" Value="{Binding PercentLas, UpdateSourceTrigger=PropertyChanged}"/>
                             </StatusBarItem>
                         </StatusBar>

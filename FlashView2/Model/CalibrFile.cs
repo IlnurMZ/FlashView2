@@ -25,17 +25,17 @@ namespace FlashView2.Model
                 spisokTrub = value;
                 OnPropertChanged("SpisokTrub");
             }
-        } // Список труб для lb1_truba
-        //public List<DateTime> DateCalibr { get; set; } // Даты калибровок
-        public List<double[]> CoefsCalibr { get; set; } // Список коэффициентов калибровочного файла
+        } // Список труб для lb1_truba        
+        public List<float[]> CoefsCalibr { get; set; } // Список коэффициентов калибровочного файла
         public List<string[]> TrubaZav { get; set; } // Тип математической зависимости
         public int CurrentChoise { get; set; } = -1;
-
+        public bool IsAddColum { get; set; } = false;
+        public bool IsChangedCalc { get; set; } = false;
+        public string Path { get; set; }
         public CalibrFile()
         {
-            SpisokTrub = new List<string>();
-            //DateCalibr = new List<DateTime>();
-            CoefsCalibr = new List<double[]>();
+            SpisokTrub = new List<string>();           
+            CoefsCalibr = new List<float[]>();
             TrubaZav = new List<string[]>();
         }
 
@@ -84,12 +84,11 @@ namespace FlashView2.Model
             for (int i = 1; i < fileCalibrData.Count; i++)
             {
                 string[] splitLine = fileCalibrData[i].Trim().Split(':');
-
                 string[] lineCoefs = splitLine[0].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                double[] coefs = new double[lineCoefs.Length];
+                float[] coefs = new float[lineCoefs.Length];
                 for (int j = 0; j < lineCoefs.Length; j++)
                 {
-                    if (!double.TryParse(lineCoefs[j], NumberStyles.Any, CultureInfo.InvariantCulture, out double value))
+                    if (!float.TryParse(lineCoefs[j], NumberStyles.Any, CultureInfo.InvariantCulture, out float value))
                     {
                         throw new ArgumentException("Ошибка в линии данных коэффициентов");
                     }
@@ -103,12 +102,7 @@ namespace FlashView2.Model
                 var tempLine = splitLine[1].Trim().Split(',');
                 var zavis = tempLine[1].Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
 
-                TrubaZav.Add(new string[] { truba, zavis });
-                //if (!DateTime.TryParse(splitLine[3].Trim(), out DateTime time))
-                //{
-                //    throw new ArgumentException("Ошибка в линии данных времени калибровки");
-                //}
-                //DateCalibr.Add(time);
+                TrubaZav.Add(new string[] { truba, zavis });                
             }
             SpisokTrub = SpisokTrub.Distinct().ToList();
         }

@@ -5,11 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlashView2"
         mc:Ignorable="d"        
-        Title="FlashZTK_I: Main" Height="610" Width="1700" ResizeMode="CanResize" Background="#FFA2A1A1"
+        Title="FlashZTK_I: Main" Height="610" Width="1300" ResizeMode="CanResize" Background="#FFA2A1A1"
         WindowStartupLocation="CenterScreen">
-    <Window.Resources>
-
-        
+    <Window.Resources>        
         <Style TargetType="Button" x:Key="FocusVisual">
             <Setter Property="Control.Template">
                 <Setter.Value>
@@ -143,6 +141,16 @@
                 </Button.Content>
             </Button>
 
+            <Button Name="btnSetting" Click="btnSetting_Click" IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}"
+                    Style="{StaticResource ButtonStyle1}">
+                <Button.Content>
+                    <StackPanel Orientation="Vertical">
+                        <Image Source="/Icons/Setting.png" Height="30"/>
+                        <Label Content="Настройки" />
+                    </StackPanel>
+                </Button.Content>
+            </Button>
+
             <Button Name="btnFilterTime" Click="btnFilterTime_Click"  IsEnabled="{Binding IsLasFile, UpdateSourceTrigger=PropertyChanged}"
                     Style="{StaticResource ButtonStyle1}">
                 <Button.Content>
@@ -188,7 +196,7 @@
                     </ItemsPanelTemplate>
                 </StatusBar.ItemsPanel>
                 <StatusBarItem VerticalAlignment="Top" Margin="0,5,5,0">
-                    <TextBox Text="{Binding StatusMainWindow, UpdateSourceTrigger=PropertyChanged}" Name="txtBoxStatus" Width="1520" Height="55"
+                    <TextBox Text="{Binding StatusMainWindow, UpdateSourceTrigger=PropertyChanged}" Name="txtBoxStatus" Width="1140" Height="55"
                              HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible" 
                              TextWrapping="Wrap" IsReadOnly="True"/>
                 </StatusBarItem>
