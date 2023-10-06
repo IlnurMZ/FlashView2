@@ -204,6 +204,7 @@ namespace FlashView2
         }
 
         DataTable dataTable;
+        public double nullValue { get; }= -999.25;
         public DataTable DataTable 
         { 
             get
@@ -264,7 +265,7 @@ namespace FlashView2
                 PercentLas = 5;
                 //if (!double.TryParse(txtBoxNULL.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double nullValue))
                 //{
-                    double nullValue = -999.99;
+                    //double nullValue = -999.99;
                     //ScrollStatusLasTextBox($"Ошибка конвертации Null value. Установлено дефолтное значение {nullValue}");
                // }
 
@@ -274,7 +275,7 @@ namespace FlashView2
                     PercentLas = 20;
                     var dataLas = GetDataForLasType1(timeDepth);
                     PercentLas = 80;
-                    RecordDataLas(nullValue, dataLas);
+                    RecordDataLas(dataLas);
                     PercentLas = 0;
                 }
                 else if (dtl.Separator == ' ')
@@ -283,7 +284,7 @@ namespace FlashView2
                     PercentLas = 20;
                     var dataLas = GetDataForLasType2(listDepthDate);
                     PercentLas = 80;
-                    RecordDataLas2(nullValue, dataLas);
+                    RecordDataLas2(dataLas);
                     PercentLas = 0;
                 }
                 else
@@ -536,7 +537,7 @@ namespace FlashView2
                 }                
             }
         }
-        private void RecordDataLas2(double nullValue, SortedDictionary<double, List<double>> data)
+        private void RecordDataLas2(SortedDictionary<double, List<double>> data)
         {
             StringBuilder headLasFile = FormHeadLasFile(data.ElementAt(0).Key, data.ElementAt(data.Count-1).Key);
 
@@ -1062,7 +1063,7 @@ namespace FlashView2
         }
 
         // запись данных в файл las для старого типа файлов глубина-время
-        private void RecordDataLas(double nullValue, List<KeyValuePair<double, List<double>>> list2)
+        private void RecordDataLas(List<KeyValuePair<double, List<double>>> list2)
         {
             StringBuilder headLasFile = FormHeadLasFile(list2[0].Key, list2[list2.Count - 1].Key);
 
@@ -1122,46 +1123,60 @@ namespace FlashView2
             StringBuilder result = new StringBuilder();
             // Первый раздел
             int countSigns = 8;
-            result.AppendLine("~VERSION INFORMATION SECTION");
-            result.AppendLine($"VERS.{new string(' ', 11)}{txtBoxVers.Text}" +
-                $"{new string(' ', countSigns - txtBoxVers.Text.Length)} :" + $"{new string(' ', 3)}CWLS log ASCII Standard -VERSION 2.0");
-            result.AppendLine($"WRAP.{new string(' ', 11)}{txtBoxWrap.Text}" +
+            byte numSig = 31;
+            result.AppendLine("~Version information");
+            result.AppendLine($"VERS.{new string(' ', 2)}{txtBoxVers.Text}" +
+                $"{new string(' ', countSigns - txtBoxVers.Text.Length)} :" + $"{new string(' ', 3)}CWLS LOG ASCII STANDARD - VERSION 1.2");
+            result.AppendLine($"WRAP.{new string(' ', 2)}{txtBoxWrap.Text}" +
                 $"{new string(' ', (countSigns - txtBoxWrap.Text.Length))} :" + $"{new string(' ', 3)}One line per depth step");
-            result.AppendLine("-----------------------------------------------------------------------------");
-
+            
             // Второй раздел
             countSigns = 25;
-            double nullValue = -999;
-            result.AppendLine("~WELL INFORMATION SECTION");
-            result.AppendLine("#MNEM                    .UNIT   VALUE/NAME               : DESCRIPTION");
-            result.AppendLine("#----                     ----   -----------------        -----------------");
-            result.AppendLine($"STRT                     .M      {startM}{new string(' ', countSigns - startM.ToString().Length)}: START DEPTH");
-            result.AppendLine($"STOP                     .M      {stopM}{new string(' ', countSigns - stopM.ToString().Length)}: STOP DEPTH");
-            result.AppendLine($"STEP                     .M      {stepM.ToString("0.00")}{new string(' ', countSigns - stepM.ToString("0.00").Length)}: STEP");
-            result.AppendLine($"NULL                     .M      {nullValue}{new string(' ', countSigns - nullValue.ToString().Length)}: NULL VALUE");
-            result.AppendLine($"DATE                     .M      {StartTimeRead.ToString("yyyy-MM-dd HH:mm:ss")}{new string(' ', countSigns - 19)}: DATE");
-            result.AppendLine($"API                      .       {txtBoxAPI.Text}{new string(' ', countSigns - txtBoxAPI.Text.Length)}: API NUMBER");
-            result.AppendLine($"WELL                     .       {txtBoxWell.Text}{new string(' ', countSigns - txtBoxWell.Text.Length)}: WELL");
-            result.AppendLine($"FLD                      .       {txtBoxFLD.Text}{new string(' ', countSigns - txtBoxFLD.Text.Length)}: FIELD");
-            result.AppendLine($"CTRY                     .       {txtBoxCNTY.Text}{new string(' ', countSigns - txtBoxCNTY.Text.Length)}: COUNTRY");
-            result.AppendLine($"STAT                     .       {txtBoxSTATE.Text}{new string(' ', countSigns - txtBoxSTATE.Text.Length)}: STATE");
-            result.AppendLine($"SRVC                     .       {txtBoxSRVC.Text}{new string(' ', countSigns - txtBoxSRVC.Text.Length)}: SERVICE COMPANY");
-            result.AppendLine($"TRUBA                    .       {lb1_truba.SelectedItem.ToString()}{new string(' ', countSigns - lb1_truba.SelectedItem.ToString().Length)}: DIAMETR TRUBI");
+            result.AppendLine("~Well information");
+            result.AppendLine("# MNEM.UNIT");
+            result.AppendLine("# ====.================================:===================");
+            result.AppendLine($" STRT.M{new string(' ', numSig - startM.ToString("f2", CultureInfo.InvariantCulture).Length)}" +
+                              $"{startM.ToString("f2", CultureInfo.InvariantCulture)} : First depth in file");
+            result.AppendLine($" STOP.M{new string(' ', numSig - stopM.ToString("f2", CultureInfo.InvariantCulture).Length)}" +
+                              $"{stopM.ToString("f2", CultureInfo.InvariantCulture)} : Last depth in file");
+            result.AppendLine($" STEP.M{new string(' ', numSig - stepM.ToString("f2", CultureInfo.InvariantCulture).Length)}" +
+                              $"{stepM.ToString("f2", CultureInfo.InvariantCulture)} : Depth increment");
+            result.AppendLine($" NULL. {new string(' ', numSig - nullValue.ToString("f2", CultureInfo.InvariantCulture).Length)}" +
+                              $"{nullValue.ToString("f2", CultureInfo.InvariantCulture)} : Null values");
+            result.AppendLine($" COMP.{new string(' ', 17)}" + $"COMPANY         : {txtBoxComp.Text}");
+            result.AppendLine($" WELL.{new string(' ', 17)}" + $"WELL            : {txtBoxWell.Text}");
+            result.AppendLine($" FLD .{new string(' ', 17)}" + $"FIELD           : {txtBoxFLD.Text}");
+            result.AppendLine($" LOC .{new string(' ', 17)}" + $"LOCATION        : {txtBoxLOC.Text}");
+            result.AppendLine($" CTRY.{new string(' ', 17)}" + $"COUNTRY         : {txtBoxCNTY.Text}");
+            result.AppendLine($" STAT.{new string(' ', 17)}" + $"STATE           : {txtBoxSTATE.Text}");
+            result.AppendLine($" SRVC.{new string(' ', 17)}" + $"SERVICE COMPANY : {txtBoxSRVC.Text}");
+            result.AppendLine($" API .{new string(' ', 17)}" + $"API NUMBER      : {txtBoxAPI.Text}");
+            result.AppendLine($" DATE.{new string(' ', 17)}" + $"LOG DATE        : {StartTimeRead.ToString("dd.MM.yyyy")}");
+            result.AppendLine($" DATE.{new string(' ', 17)}" + $"CREATE DATE     : {DateTime.Now.ToString("dd.MM.yyyy")}");
 
-            string typeCalc = rb2_Kvad.IsChecked == true ? "квад.завис" : "лин.зав";
-            result.AppendLine($"CALC_W                   .       {typeCalc}{new string(' ', countSigns - typeCalc.Length)}: TYPE CALCULATE");
-            string fileCreadted = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            result.AppendLine($"FILECREATED              .       {fileCreadted}{new string(' ', countSigns - fileCreadted.Length)}: DATE");
-            result.AppendLine("#-----------------------------------------------------------------------------");
+            //result.AppendLine($"TRUBA                    .       {lb1_truba.SelectedItem.ToString()}{new string(' ', countSigns - lb1_truba.SelectedItem.ToString().Length)}: DIAMETR TRUBI");
+
+            //string typeCalc = rb2_Kvad.IsChecked == true ? "квад.завис" : "лин.зав";
+            //result.AppendLine($"CALC_W                   .       {typeCalc}{new string(' ', countSigns - typeCalc.Length)}: TYPE CALCULATE");
+            //result.AppendLine("#-----------------------------------------------------------------------------");
 
             // Третий раздел            
-            result.AppendLine("~CURVE INFORMATION SECTION");
-            result.AppendLine("MD                       .M     :DEPTH");
-            result.AppendLine("W                        .%     :CoefPoristosti");
-            result.AppendLine("#-----------------------------------------------------------------------------");
+            result.AppendLine("~Curve information");
+            result.AppendLine("# MNEM.UNIT");
+            result.AppendLine("# ====.================================:===================");
+            result.AppendLine("  DEPT.M                               : Depth");
+            result.AppendLine("    Kp.%                               : коэффициент пористости");
 
-            // Четвертый раздел    
-            result.AppendLine("#  MD         W ");
+            // Четвертый раздел  
+            string typeCalc = rb2_Kvad.IsChecked == true ? "квад.завис" : "лин.зав";
+
+            result.AppendLine("~Parameters information");
+            result.AppendLine("# MNEM.UNIT");
+            result.AppendLine("# ====.================================:===================");
+            result.AppendLine($"# Otdd. {new string(' ', numSig - lb1_truba.SelectedItem.ToString().Length + 5)}" +
+                              $"{lb1_truba.SelectedItem.ToString().Trim().Split(" ")[1]} : Наружний диаметр трубы");
+
+            // Пятый раздел
             result.Append("~ASCII Log Data");
             return result;
         }

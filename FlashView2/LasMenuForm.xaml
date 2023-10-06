@@ -378,7 +378,7 @@
                             </Grid.RowDefinitions>
 
                             <Label Content="Версия формата LAS" Grid.Column="0" Grid.Row="0"/>
-                            <TextBox Name="txtBoxVers" Text="2.0" Width="100" Height="20" HorizontalContentAlignment="Right" IsEnabled="False"
+                            <TextBox Name="txtBoxVers" Text="1.2" Width="100" Height="20" HorizontalContentAlignment="Right" IsEnabled="False"
                                              Grid.Column="1" Grid.Row="0"/>
                             <Label Content="(VERS.)" Grid.Column="2" Grid.Row="0"/>
 
@@ -410,7 +410,7 @@
                             </Grid.RowDefinitions>
 
                             <Label Content="Название компании" Grid.Column="0" Grid.Row="0" />
-                            <TextBox Name="txtBoxStartM" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right"
+                            <TextBox Name="txtBoxComp" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right"
                                              Grid.Column="1" Grid.Row="0"/>
                             <Label Content="(COMP.)" Grid.Column="2" Grid.Row="0"/>
 
@@ -448,7 +448,6 @@
                             <TextBox Name="txtBoxAPI" Text=" " Width="100" Height="20" HorizontalContentAlignment="Right" 
                              Grid.Column="1" Grid.Row="7"/>
                             <Label Content="(API)" Grid.Column="2" Grid.Row="7"/>
-
                         </Grid>
                     </GroupBox>
                     <!--<StackPanel Orientation="Vertical"  Grid.Column="1" Grid.Row="1" Grid.RowSpan="2">
